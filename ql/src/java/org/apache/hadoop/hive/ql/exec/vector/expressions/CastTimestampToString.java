@@ -18,10 +18,12 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -41,13 +43,26 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
     PRINT_FORMATTER = builder.toFormatter();
   }
+  
+  HiveDateTimeFormat format;
 
   public CastTimestampToString() {
     super();
+    initFormatter();
   }
 
   public CastTimestampToString(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
+    initFormatter();
+  }
+
+  private void initFormatter() {
+    try {
+      format = new HiveJavaDateTimeFormat();
+      format.setFormatter(PRINT_FORMATTER);
+    } catch (WrongFormatterException e) {
+      e.printStackTrace(); // todo frogmethod catch wrongformatterexception? runtimeexception?
+    }
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
@@ -57,16 +72,17 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
-    byte[] temp = LocalDateTime.ofInstant(Instant.ofEpochMilli(inV.time[i]), ZoneOffset.UTC)
-        .withNano(inV.nanos[i])
-        .format(PRINT_FORMATTER).getBytes();
+    String formattedLocalDateTime = format.format(
+        org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
+   
+    byte[] temp = formattedLocalDateTime.getBytes();
     assign(outV, i, temp, temp.length);
   }
 
-  public static String getTimestampString(Timestamp ts) {
+  public static String getTimestampString(java.sql.Timestamp ts) {
     return
         LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.getTime()), ZoneOffset.UTC)
         .withNano(ts.getNanos())
-        .format(PRINT_FORMATTER);
+        .format(PRINT_FORMATTER); //TODO ??> frogmethod
   }
 }

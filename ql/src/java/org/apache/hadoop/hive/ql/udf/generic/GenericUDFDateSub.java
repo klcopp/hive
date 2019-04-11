@@ -46,7 +46,6 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorUDFDateSubScalarC
         + "  '2009-07-29'")
 @VectorizedExpressions({VectorUDFDateSubColScalar.class, VectorUDFDateSubScalarCol.class, VectorUDFDateSubColCol.class})
 public class GenericUDFDateSub extends GenericUDFDateAdd {
-  private transient SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
   public GenericUDFDateSub() {
     this.signModifier = -1;

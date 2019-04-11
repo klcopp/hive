@@ -22,10 +22,10 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.STRING_GROUP;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.VOID_GROUP;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -38,7 +38,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.C
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
-import org.apache.hive.common.util.DateUtils;
 
 /**
  * GenericUDFAddMonths.
@@ -63,7 +62,7 @@ public class GenericUDFAddMonths extends GenericUDF {
   private transient Converter[] dtConverters = new Converter[3];
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[3];
   private final Text output = new Text();
-  private transient SimpleDateFormat formatter = null;
+  private transient HiveDateTimeFormat formatter = null;
   private final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
   private transient Integer numMonthsConst;
   private transient boolean isNumMonthsConst;
@@ -81,7 +80,8 @@ public class GenericUDFAddMonths extends GenericUDF {
         checkArgGroups(arguments, 2, tsInputTypes, STRING_GROUP);
         String fmtStr = getConstantStringValue(arguments, 2);
         if (fmtStr != null) {
-          formatter = new SimpleDateFormat(fmtStr);
+          formatter = getDateTimeFormat();
+          formatter.setPattern(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
       } else {
@@ -91,7 +91,10 @@ public class GenericUDFAddMonths extends GenericUDF {
     }
     if (formatter == null) {
       //If the DateFormat is not provided by the user or is invalid, use the default format YYYY-MM-dd
-      formatter = DateUtils.getDateFormat();
+//      formatter = DateUtils.getDateFormat(); //TODO frogmethod ?? this was a threadlocal
+      formatter = getDateTimeFormat();
+      formatter.setPattern("yyyy-MM-dd");
+      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // the function should support both short date and full timestamp format
@@ -143,7 +146,7 @@ public class GenericUDFAddMonths extends GenericUDF {
       }
     }
 
-    String res = formatter.format(calendar.getTime());
+    String res = formatter.format(Timestamp.ofEpochMilli(calendar.getTimeInMillis()));
 
     output.set(res);
     return output;
