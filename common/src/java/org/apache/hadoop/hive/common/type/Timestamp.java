@@ -17,9 +17,10 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
-import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -48,8 +49,8 @@ public class Timestamp implements Comparable<Timestamp> {
   
   private static final LocalDateTime EPOCH = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
 
-  private HiveDateTimeFormat printFormatter;
-  private HiveDateTimeFormat parseFormatter;
+  private HiveDateTimeFormatter printFormatter;
+  private HiveDateTimeFormatter parseFormatter;
   private static final DateTimeFormatter PARSE_DATETIME_FORMATTER;
   private static final DateTimeFormatter PRINT_DATETIME_FORMATTER;
 
@@ -100,9 +101,9 @@ public class Timestamp implements Comparable<Timestamp> {
 
   private void initFormatters() {
     try {
-      printFormatter = new HiveJavaDateTimeFormat();
+      printFormatter = new HiveJavaDateTimeFormatter();
       printFormatter.setFormatter(PRINT_DATETIME_FORMATTER);
-      parseFormatter = new HiveJavaDateTimeFormat();
+      parseFormatter = new HiveJavaDateTimeFormatter();
       parseFormatter.setFormatter(PARSE_DATETIME_FORMATTER);
     } catch (WrongFormatterException e) {
       e.printStackTrace(); //todo frogmethod: RuntimeException? or just print the stack trace
@@ -187,6 +188,16 @@ public class Timestamp implements Comparable<Timestamp> {
       }
     }
     return new Timestamp(localDateTime);
+  }
+
+  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter) {
+    s = s.trim();
+    try {
+      return new Timestamp(formatter.parse(s));
+    } catch (ParseException e) {
+      // Fall back to original
+      return valueOf(s);
+    }
   }
 
   public static Timestamp ofEpochSecond(long epochSecond) {

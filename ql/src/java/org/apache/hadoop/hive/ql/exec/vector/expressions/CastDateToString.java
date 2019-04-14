@@ -18,9 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
-import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormat;
-import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 
@@ -30,7 +29,7 @@ import java.util.TimeZone;
 public class CastDateToString extends LongToStringUnaryUDF {
   private static final long serialVersionUID = 1L;
   protected transient Date dt = new Date(0);
-  private transient HiveDateTimeFormat formatter;
+  private transient HiveDateTimeFormatter formatter;
 
   public CastDateToString() {
     super();
@@ -43,7 +42,7 @@ public class CastDateToString extends LongToStringUnaryUDF {
   }
 
   private void initFormatter() {
-    formatter = new HiveSimpleDateFormat(); //frogmethod move this??
+    formatter = new HiveSimpleDateFormatter(); //frogmethod move this??
     formatter.setPattern("yyyy-MM-dd");
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
@@ -55,8 +54,10 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, long[] vector, int i) {
+//    byte[] temp = formatter.format(Timestamp.ofEpochMilli(DateWritableV2.daysToMillis((int) vector[i]))).getBytes();
+
     dt.setTime(DateWritableV2.daysToMillis((int) vector[i]));
-    byte[] temp = formatter.format(Timestamp.ofEpochMilli(dt.getTime())).getBytes();
+    byte[] temp = formatter.format(dt).getBytes();
     assign(outV, i, temp, temp.length);
   }
 }

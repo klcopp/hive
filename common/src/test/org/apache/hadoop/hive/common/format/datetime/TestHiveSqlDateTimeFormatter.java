@@ -2,9 +2,9 @@ package org.apache.hadoop.hive.common.format.datetime;
 
 import org.junit.Test;
 
-public class TestHiveSqlDateTimeFormat {
+public class TestHiveSqlDateTimeFormatter {
 
-  private HiveDateTimeFormat formatter = new HiveSqlDateTimeFormat();
+  private HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
 
   @Test
   public void testFormat() {

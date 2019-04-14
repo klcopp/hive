@@ -10,18 +10,26 @@ import java.util.TimeZone;
 /**
  * Wrapper for java.text.SimpleDateFormat.
  */
-public class HiveSimpleDateFormat implements HiveDateTimeFormat {
+public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
   
   private SimpleDateFormat format = new SimpleDateFormat();
 
-  public HiveSimpleDateFormat() {}
+  public HiveSimpleDateFormatter() {}
   
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat) {
     this.format = simpleDateFormat;
   }
 
+  //frogmethod remove, because pre-1585 dates will be wrong?
   @Override public String format(Timestamp ts) {
     Date date = new Date(ts.toEpochMilli());
+    return format.format(date);
+  }
+
+  /**
+   * For vectorized functions
+   */
+  @Override public String format(Date date) {
     return format.format(date);
   }
 
@@ -47,7 +55,7 @@ public class HiveSimpleDateFormat implements HiveDateTimeFormat {
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
     throw new WrongFormatterException(
-        "HiveSimpleDateFormat formatter wraps an object of type java.text.SimpleDateFormat, " 
+        "HiveSimpleDateFormatter formatter wraps an object of type java.text.SimpleDateFormat, " 
             + "formatter cannot be of type java.time.format.DateTimeFormatter");
   }
 

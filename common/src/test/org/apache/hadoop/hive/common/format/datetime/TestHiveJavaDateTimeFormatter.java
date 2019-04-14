@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
-public class TestHiveJavaDateTimeFormat {
+public class TestHiveJavaDateTimeFormatter {
   
   private static DateTimeFormatter DATE_TIME_FORMATTER;
   static {
@@ -19,7 +19,7 @@ public class TestHiveJavaDateTimeFormat {
     builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
     DATE_TIME_FORMATTER = builder.toFormatter();
   }
-  private HiveDateTimeFormat formatter = new HiveJavaDateTimeFormat();
+  private HiveDateTimeFormatter formatter = new HiveJavaDateTimeFormatter();
   
   
   @Before

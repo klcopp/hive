@@ -4,17 +4,18 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.TimeZone;
 
-public interface HiveDateTimeFormat {
+public interface HiveDateTimeFormatter {
 
   /**
-   * Only used for HiveSimpleDateFormat, which is a wrapper for the given SimpleDateFormat object.
+   * Only used for HiveSimpleDateFormatter, which is a wrapper for the given SimpleDateFormat object.
    */
   void setFormatter(SimpleDateFormat simpleDateFormat) throws WrongFormatterException;
 
   /**
-   * Only used for HiveJavaDateTimeFormat, which is a wrapper for the given DateTimeFormatter object.
+   * Only used for HiveJavaDateTimeFormatter, which is a wrapper for the given DateTimeFormatter object.
    */
   void setFormatter(DateTimeFormatter dateTimeFormatter) throws WrongFormatterException;
 
@@ -24,6 +25,10 @@ public interface HiveDateTimeFormat {
   String format(Timestamp ts);
 
   /**
+   * Format the given date object  into a string.
+   */
+  String format(Date date);
+  /**
    * Parse the given string into a timestamp.
    * 
    * @throws ParseException if string cannot be parsed.
@@ -32,14 +37,22 @@ public interface HiveDateTimeFormat {
 
   /**
    * Set the format pattern to be used for formatting timestamps or parsing strings.
-   * Different HiveDateTimeFormat implementations interpret some patterns differently. For example,
-   * HiveSimpleDateFormat interprets the string "mm" as minute, while HiveSqlDateTimeFormat
+   * Different HiveDateTimeFormatter implementations interpret some patterns differently. For example,
+   * HiveSimpleDateFormatter interprets the string "mm" as minute, while HiveSqlDateTimeFormatter
    * interprets it as month.
    */
   void setPattern(String pattern);
 
   /**
-   * Set the time zone of the formatter. Only HiveSimpleDateFormat uses this.
+   * Set the time zone of the formatter. Only HiveSimpleDateFormatter uses this.
    */
   void setTimeZone(TimeZone timeZone);
+
+  public enum FormatterType {
+    SIMPLE_DATE_FORMAT,
+    JAVA_TIME_DATETIMEFORMATTER,
+    SQL_2016
+  }
+  
+  
 }

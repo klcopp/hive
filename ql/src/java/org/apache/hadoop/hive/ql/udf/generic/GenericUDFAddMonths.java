@@ -25,7 +25,7 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -62,7 +62,7 @@ public class GenericUDFAddMonths extends GenericUDF {
   private transient Converter[] dtConverters = new Converter[3];
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[3];
   private final Text output = new Text();
-  private transient HiveDateTimeFormat formatter = null;
+  private transient HiveDateTimeFormatter formatter = null;
   private final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
   private transient Integer numMonthsConst;
   private transient boolean isNumMonthsConst;

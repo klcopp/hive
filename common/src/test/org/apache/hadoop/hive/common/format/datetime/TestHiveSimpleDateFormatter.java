@@ -10,9 +10,9 @@ import java.time.ZoneOffset;
 import java.util.TimeZone;
 
 
-public class TestHiveSimpleDateFormat {
+public class TestHiveSimpleDateFormatter {
 
-  private HiveDateTimeFormat formatter = new HiveSimpleDateFormat();
+  private HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
   
   @Before
   public void setUp() throws WrongFormatterException {

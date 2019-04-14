@@ -7,12 +7,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.TimeZone;
 
 /**
  * Wrapper for DateTimeFormatter in the java.time package.
  */
-public class HiveJavaDateTimeFormat implements HiveDateTimeFormat {
+public class HiveJavaDateTimeFormatter implements HiveDateTimeFormatter {
 
   private DateTimeFormatter formatter;
 
@@ -27,9 +28,7 @@ public class HiveJavaDateTimeFormat implements HiveDateTimeFormat {
   }
 
   @Override public Timestamp parse(String string) {
-    LocalDateTime ldt = LocalDateTime.parse(string, formatter);
-    Instant instant = ldt.toInstant(ZoneId.of("UTC").getRules().getOffset(ldt));
-    return Timestamp.ofEpochMilli(instant.toEpochMilli(), instant.getNano());
+    return Timestamp.valueOf(string);
   }
 
   // unused methods
@@ -37,8 +36,10 @@ public class HiveJavaDateTimeFormat implements HiveDateTimeFormat {
   @Override public void setTimeZone(TimeZone timeZone) {}
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveJavaDateTimeFormat formatter wraps an object of type" 
+    throw new WrongFormatterException("HiveJavaDateTimeFormatter formatter wraps an object of type" 
         + "java.time.format.DateTimeFormatter, formatter cannot be of type " 
         + "java.text.SimpleDateFormat");
   }
+  //frogmethod should throw an exception???
+  @Override public String format(Date date) {return null;}
 }

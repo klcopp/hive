@@ -20,8 +20,8 @@ package org.apache.hadoop.hive.ql.udf;
 
 import java.util.TimeZone;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
-import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
@@ -39,7 +39,7 @@ import org.apache.hadoop.io.Text;
     + "  > SELECT _FUNC_(0, 'yyyy-MM-dd HH:mm:ss') FROM src LIMIT 1;\n"
     + "  '1970-01-01 00:00:00'")
 public class UDFFromUnixTime extends UDF {
-  private HiveDateTimeFormat formatter;
+  private HiveDateTimeFormatter formatter;
 
   private Text result = new Text();
   private Text lastFormat = new Text();
@@ -121,7 +121,7 @@ public class UDFFromUnixTime extends UDF {
   private Text eval(long unixtime, Text format) {
     if (!format.equals(lastFormat)) { //TODO frogmethod: and if semantics are the same?
       
-      formatter = new HiveSimpleDateFormat();
+      formatter = new HiveSimpleDateFormatter();
       formatter.setPattern(format.toString());
       formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
       lastFormat.set(format);

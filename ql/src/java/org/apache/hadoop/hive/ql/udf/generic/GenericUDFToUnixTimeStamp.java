@@ -21,7 +21,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
@@ -62,7 +62,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
   private transient Converter patternConverter;
 
   private transient String lasPattern = "yyyy-MM-dd HH:mm:ss";
-  private transient HiveDateTimeFormat formatter = null;
+  private transient HiveDateTimeFormatter formatter = null;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {

@@ -22,7 +22,7 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 
 import java.util.TimeZone;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -55,7 +55,7 @@ public class GenericUDFDateFormat extends GenericUDF {
   private transient Converter[] dtConverters = new Converter[2];
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[2];
   private final Text output = new Text();
-  private transient HiveDateTimeFormat formatter;
+  private transient HiveDateTimeFormatter formatter;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {

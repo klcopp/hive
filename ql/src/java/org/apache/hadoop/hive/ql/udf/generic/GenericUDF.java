@@ -23,8 +23,8 @@ import java.io.IOException;
 
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
-import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
@@ -641,7 +641,7 @@ public abstract class GenericUDF implements Closeable {
     }
   }
 
-  protected HiveDateTimeFormat getDateTimeFormat() {
-    return new HiveSimpleDateFormat();
+  protected HiveDateTimeFormatter getDateTimeFormat() {
+    return new HiveSimpleDateFormatter();
   }
 }

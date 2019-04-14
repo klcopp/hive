@@ -4,17 +4,18 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.TimeZone;
 
 /**
  * Formatter using SQL:2016 datetime patterns.
  */
 
-public class HiveSqlDateTimeFormat implements HiveDateTimeFormat {
+public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   
   private String pattern;
 
-  public HiveSqlDateTimeFormat() {}
+  public HiveSqlDateTimeFormatter() {}
   
   @Override public void setPattern(String pattern) {
     this.pattern = pattern;
@@ -34,12 +35,17 @@ public class HiveSqlDateTimeFormat implements HiveDateTimeFormat {
   @Override public void setTimeZone(TimeZone timeZone) {}
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormat is not a wrapper for " 
-        + "java.time.format.DateTimeFormatter, use HiveJavaDateTimeFormat instead.");
+    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for " 
+        + "java.time.format.DateTimeFormatter, use HiveJavaDateTimeFormatter instead.");
   }
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormat is not a wrapper for " 
-        + "java.text.SimpleDateFormat, use HiveSimpleDateFormat instead.");
+    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for " 
+        + "java.text.SimpleDateFormat, use HiveSimpleDateFormatter instead.");
+  }
+
+//frogmethod
+  @Override public String format(Date date) {
+    return null;
   }
 }

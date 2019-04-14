@@ -18,8 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormat;
-import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormat;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
@@ -44,7 +44,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     PRINT_FORMATTER = builder.toFormatter();
   }
   
-  HiveDateTimeFormat format;
+  HiveDateTimeFormatter format;
 
   public CastTimestampToString() {
     super();
@@ -58,7 +58,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
 
   private void initFormatter() {
     try {
-      format = new HiveJavaDateTimeFormat();
+      format = new HiveJavaDateTimeFormatter();
       format.setFormatter(PRINT_FORMATTER);
     } catch (WrongFormatterException e) {
       e.printStackTrace(); // todo frogmethod catch wrongformatterexception? runtimeexception?
@@ -79,6 +79,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     assign(outV, i, temp, temp.length);
   }
 
+  //frogmethod todo
   public static String getTimestampString(java.sql.Timestamp ts) {
     return
         LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.getTime()), ZoneOffset.UTC)

@@ -86,7 +86,8 @@ public class TestVectorTypeCasts {
     
     String expected, result;
     for (int i = 0; i < intValues.length; i++) {
-      expected = Date.ofEpochDay(intValues[i]).toString();
+//      expected = Date.ofEpochDay(intValues[i]).toString(); //frogmethod TODO: this is my original
+      expected = new java.sql.Date(DateWritableV2.daysToMillis(intValues[i]) + 28800000L /* +8 hours to GMT*/).toString();
       byte[] subbyte = Arrays.copyOfRange(resultV.vector[i], resultV.start[i],
           resultV.start[i] + resultV.length[i]);
       result = new String(subbyte, StandardCharsets.UTF_8);
