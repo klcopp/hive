@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
 public class TestHiveJavaDateTimeFormatter {
-  
+
   private static DateTimeFormatter DATE_TIME_FORMATTER;
   static {
     DateTimeFormatterBuilder
@@ -20,13 +20,11 @@ public class TestHiveJavaDateTimeFormatter {
     DATE_TIME_FORMATTER = builder.toFormatter();
   }
   private HiveDateTimeFormatter formatter = new HiveJavaDateTimeFormatter();
-  
-  
+
   @Before
   public void setUp() throws WrongFormatterException {
     formatter.setFormatter(DATE_TIME_FORMATTER);
   }
-
 
   @Test
   public void testFormat() {

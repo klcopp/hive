@@ -11,11 +11,11 @@ import java.util.TimeZone;
  * Wrapper for java.text.SimpleDateFormat.
  */
 public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
-  
+
   private SimpleDateFormat format = new SimpleDateFormat();
 
   public HiveSimpleDateFormatter() {}
-  
+
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat) {
     this.format = simpleDateFormat;
   }
@@ -47,7 +47,7 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
     throw new WrongFormatterException(
-        "HiveSimpleDateFormatter formatter wraps an object of type java.text.SimpleDateFormat, " 
+        "HiveSimpleDateFormatter formatter wraps an object of type java.text.SimpleDateFormat, "
             + "formatter cannot be of type java.time.format.DateTimeFormatter");
   }
 

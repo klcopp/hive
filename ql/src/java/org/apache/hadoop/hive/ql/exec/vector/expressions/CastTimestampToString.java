@@ -44,7 +44,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
     PRINT_FORMATTER = builder.toFormatter();
   }
-  
+
   HiveDateTimeFormatter format;
 
   public CastTimestampToString() {
@@ -75,7 +75,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
     String formattedLocalDateTime = format.format(
         org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
-   
+
     byte[] temp = formattedLocalDateTime.getBytes();
     assign(outV, i, temp, temp.length);
   }

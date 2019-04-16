@@ -25,7 +25,7 @@ public interface HiveDateTimeFormatter {
 
   /**
    * Parse the given string into a timestamp.
-   * 
+   *
    * @throws ParseException if string cannot be parsed.
    */
   Timestamp parse(String string) throws ParseException;
@@ -48,6 +48,5 @@ public interface HiveDateTimeFormatter {
     JAVA_TIME_DATETIMEFORMATTER,
     SQL_2016
   }
-  
-  
+
 }

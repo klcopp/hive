@@ -20,10 +20,8 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
-import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
-import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 
 import java.sql.Date;
 import java.util.TimeZone;
@@ -56,9 +54,6 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, long[] vector, int i) {
-//    dt.setTime(DateWritableV2.daysToMillis((int) vector[i]));
-//    byte[] temp = formatter.format(dt).getBytes();
-    
     byte[] temp = formatter.format(
         Timestamp.ofEpochMilli(
             org.apache.hadoop.hive.common.type.Date.ofEpochDay((int) vector[i]).toEpochMilli()))

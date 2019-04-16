@@ -156,7 +156,7 @@ public class Date implements Comparable<Date> {
     }
     return new Date(localDate);
   }
-  
+
   public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
     s = s.trim();
     try {

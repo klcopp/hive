@@ -62,7 +62,7 @@ public class TestGenericUDFDateFormat extends TestCase {
     runAndVerifyStr("2015-04-10 10:30:45.123", "Friday", udf);
     runAndVerifyStr("2015-04-11T10:30:45", "Saturday", udf);
     runAndVerifyStr("2015-04-12 10", "Sunday", udf);
-    
+
     //make sure hour is ok
     fmtText = new Text("hh");
     valueOI1 = PrimitiveObjectInspectorFactory

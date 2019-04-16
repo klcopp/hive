@@ -311,12 +311,12 @@ public class TestVectorMathFunctions {
     Random r = new Random(345);
     VectorizedRowBatch batch = new VectorizedRowBatch(2);
     batch.size = epochSecondValues.length;
-    
+
     TimestampColumnVector inV;
     BytesColumnVector outV;
     inV = new TimestampColumnVector(batch.size);
     outV = new BytesColumnVector(batch.size);
-    
+
     for (int i = 0; i < batch.size; i++) {
       Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
       epochSecondValues[i] = randTimestamp.toEpochSecond();
@@ -326,7 +326,7 @@ public class TestVectorMathFunctions {
 
     batch.cols[0] = inV;
     batch.cols[1] = outV;
-    
+
     return batch;
   }
 

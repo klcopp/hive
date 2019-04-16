@@ -35,8 +35,8 @@ public class HiveJavaDateTimeFormatter implements HiveDateTimeFormatter {
   @Override public void setTimeZone(TimeZone timeZone) {}
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveJavaDateTimeFormatter formatter wraps an object of type" 
-        + "java.time.format.DateTimeFormatter, formatter cannot be of type " 
+    throw new WrongFormatterException("HiveJavaDateTimeFormatter formatter wraps an object of type"
+        + "java.time.format.DateTimeFormatter, formatter cannot be of type "
         + "java.text.SimpleDateFormat");
   }
 }

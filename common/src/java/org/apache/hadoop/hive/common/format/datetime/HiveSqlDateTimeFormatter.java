@@ -11,11 +11,11 @@ import java.util.TimeZone;
  */
 
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
-  
+
   private String pattern;
 
   public HiveSqlDateTimeFormatter() {}
-  
+
   @Override public void setPattern(String pattern) {
     this.pattern = pattern;
   }
@@ -34,12 +34,12 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   @Override public void setTimeZone(TimeZone timeZone) {}
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for " 
+    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "
         + "java.time.format.DateTimeFormatter, use HiveJavaDateTimeFormatter instead.");
   }
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for " 
+    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "
         + "java.text.SimpleDateFormat, use HiveSimpleDateFormatter instead.");
   }
 }

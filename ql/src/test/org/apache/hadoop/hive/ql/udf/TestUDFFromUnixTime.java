@@ -45,7 +45,7 @@ public class TestUDFFromUnixTime {
     // proleptic Gregorian input: -62009366400
     verifyLong(-62009539200L, "0005-01-01 00:00:00", null, udf);
     verifyLong(253402300799L, "9999-12-31 23:59:59", null, udf);
-    
+
     //int with format
     String format = "HH:mm:ss";
     verifyInt(0, "00:00:00", format, udf);

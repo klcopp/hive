@@ -13,7 +13,7 @@ import java.util.TimeZone;
 public class TestHiveSimpleDateFormatter {
 
   private HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
-  
+
   @Before
   public void setUp() throws WrongFormatterException {
     formatter.setFormatter(new SimpleDateFormat());
@@ -26,7 +26,6 @@ public class TestHiveSimpleDateFormatter {
     verifyFormat("2019-01-01 01:01:01");
     verifyFormat("2019-01-01 00:00:00");
     verifyFormat("1960-01-01 23:00:00");
-    
   }
 
   private void verifyFormat(String s) {
