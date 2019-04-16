@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -40,6 +39,4 @@ public class HiveJavaDateTimeFormatter implements HiveDateTimeFormatter {
         + "java.time.format.DateTimeFormatter, formatter cannot be of type " 
         + "java.text.SimpleDateFormat");
   }
-  //frogmethod should throw an exception???
-  @Override public String format(Date date) {return null;}
 }

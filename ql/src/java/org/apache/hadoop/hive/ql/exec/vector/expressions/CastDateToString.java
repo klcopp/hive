@@ -20,6 +20,8 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
+import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 
@@ -42,7 +44,7 @@ public class CastDateToString extends LongToStringUnaryUDF {
   }
 
   private void initFormatter() {
-    formatter = new HiveSimpleDateFormatter(); //frogmethod move this??
+    formatter = new HiveSimpleDateFormatter();
     formatter.setPattern("yyyy-MM-dd");
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
@@ -54,10 +56,13 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, long[] vector, int i) {
-//    byte[] temp = formatter.format(Timestamp.ofEpochMilli(DateWritableV2.daysToMillis((int) vector[i]))).getBytes();
-
-    dt.setTime(DateWritableV2.daysToMillis((int) vector[i]));
-    byte[] temp = formatter.format(dt).getBytes();
+//    dt.setTime(DateWritableV2.daysToMillis((int) vector[i]));
+//    byte[] temp = formatter.format(dt).getBytes();
+    
+    byte[] temp = formatter.format(
+        Timestamp.ofEpochMilli(
+            org.apache.hadoop.hive.common.type.Date.ofEpochDay((int) vector[i]).toEpochMilli()))
+        .getBytes();
     assign(outV, i, temp, temp.length);
   }
 }

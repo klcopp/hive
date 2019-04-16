@@ -4,7 +4,6 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.TimeZone;
 
 public interface HiveDateTimeFormatter {
@@ -24,10 +23,6 @@ public interface HiveDateTimeFormatter {
    */
   String format(Timestamp ts);
 
-  /**
-   * Format the given date object  into a string.
-   */
-  String format(Date date);
   /**
    * Parse the given string into a timestamp.
    * 

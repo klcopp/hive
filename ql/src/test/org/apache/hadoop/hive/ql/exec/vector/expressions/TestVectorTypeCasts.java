@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.hadoop.hive.common.type.Date;
 import org.junit.Assert;
 
 import org.apache.hadoop.hive.common.type.DataTypePhysicalVariation;
@@ -75,6 +74,9 @@ public class TestVectorTypeCasts {
     Assert.assertEquals(1, resultV.vector[6]);
   }
 
+  // +8 hours from PST to GMT, needed because java.sql.Date will subtract 8 hours from final
+  // value because VM in test time zone is PST.
+  private static long TIME_DIFFERENCE = 28800000L; 
   @Test
   public void testCastDateToString() throws HiveException {
     int[] intValues = new int[100];
@@ -83,15 +85,15 @@ public class TestVectorTypeCasts {
     b.cols[0].noNulls = true;
     VectorExpression expr = new CastDateToString(0, 1);
     expr.evaluate(b);
-    
+
     String expected, result;
     for (int i = 0; i < intValues.length; i++) {
-//      expected = Date.ofEpochDay(intValues[i]).toString(); //frogmethod TODO: this is my original
-      expected = new java.sql.Date(DateWritableV2.daysToMillis(intValues[i]) + 28800000L /* +8 hours to GMT*/).toString();
+      expected =
+          new java.sql.Date(DateWritableV2.daysToMillis(intValues[i]) + TIME_DIFFERENCE).toString();
       byte[] subbyte = Arrays.copyOfRange(resultV.vector[i], resultV.start[i],
           resultV.start[i] + resultV.length[i]);
       result = new String(subbyte, StandardCharsets.UTF_8);
-      
+
       Assert.assertEquals("Index: " +  i + " Epoch day value: " + intValues[i], expected, result);
     }
   }

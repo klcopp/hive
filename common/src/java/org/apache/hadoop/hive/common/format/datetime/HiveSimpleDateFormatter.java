@@ -20,16 +20,8 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
     this.format = simpleDateFormat;
   }
 
-  //frogmethod remove, because pre-1585 dates will be wrong?
   @Override public String format(Timestamp ts) {
     Date date = new Date(ts.toEpochMilli());
-    return format.format(date);
-  }
-
-  /**
-   * For vectorized functions
-   */
-  @Override public String format(Date date) {
     return format.format(date);
   }
 

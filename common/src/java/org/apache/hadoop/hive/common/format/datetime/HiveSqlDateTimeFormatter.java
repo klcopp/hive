@@ -4,7 +4,6 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -42,10 +41,5 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       throws WrongFormatterException {
     throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for " 
         + "java.text.SimpleDateFormat, use HiveSimpleDateFormatter instead.");
-  }
-
-//frogmethod
-  @Override public String format(Date date) {
-    return null;
   }
 }

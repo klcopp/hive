@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 
@@ -61,7 +62,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
       format = new HiveJavaDateTimeFormatter();
       format.setFormatter(PRINT_FORMATTER);
     } catch (WrongFormatterException e) {
-      e.printStackTrace(); // todo frogmethod catch wrongformatterexception? runtimeexception?
+      throw new RuntimeException(e);
     }
   }
 
@@ -79,11 +80,17 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     assign(outV, i, temp, temp.length);
   }
 
-  //frogmethod todo
   public static String getTimestampString(java.sql.Timestamp ts) {
     return
         LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.getTime()), ZoneOffset.UTC)
         .withNano(ts.getNanos())
-        .format(PRINT_FORMATTER); //TODO ??> frogmethod
+        .format(PRINT_FORMATTER);
+  }
+
+  public static String getTimestampString(java.sql.Timestamp ts, HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return getTimestampString(ts);
+    }
+    return formatter.format(Timestamp.ofEpochMilli(ts.getTime(), ts.getNanos()));
   }
 }

@@ -91,12 +91,10 @@ public class Timestamp implements Comparable<Timestamp> {
 
   public Timestamp() {
     this(EPOCH);
-    initFormatters();
   }
 
   public Timestamp(Timestamp t) {
     this(t.localDateTime);
-    initFormatters();
   }
 
   private void initFormatters() {
@@ -106,9 +104,8 @@ public class Timestamp implements Comparable<Timestamp> {
       parseFormatter = new HiveJavaDateTimeFormatter();
       parseFormatter.setFormatter(PARSE_DATETIME_FORMATTER);
     } catch (WrongFormatterException e) {
-      e.printStackTrace(); //todo frogmethod: RuntimeException? or just print the stack trace
+      throw new RuntimeException("Wrong formatter", e);
     }
-    
   }
 
   public void set(Timestamp t) {
@@ -193,7 +190,7 @@ public class Timestamp implements Comparable<Timestamp> {
   public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter) {
     s = s.trim();
     try {
-      return new Timestamp(formatter.parse(s));
+      return formatter.parse(s);
     } catch (ParseException e) {
       // Fall back to original
       return valueOf(s);

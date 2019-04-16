@@ -74,6 +74,14 @@ public class TestGenericUDFToUnixTimestamp extends TestCase {
 
     // test null values
     runAndVerify(udf, null, null);
+
+    ts = Timestamp.valueOf("1111-02-03 01:02:03");
+    runAndVerify(udf,
+        new TimestampWritableV2(ts),
+        new LongWritable(ts.toEpochSecond()));
+
+    // test null values
+    runAndVerify(udf, null, null);
   }
 
   public void testDate() throws HiveException {

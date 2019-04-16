@@ -25,16 +25,19 @@ import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
@@ -641,7 +644,20 @@ public abstract class GenericUDF implements Closeable {
     }
   }
 
+  protected String getConfValue(HiveConf.ConfVars confVars) {
+    SessionState ss = SessionState.get();
+    if (ss != null) {
+      return ss.getConf().getVar(confVars);
+    }
+    return null;
+  }
+
   protected HiveDateTimeFormatter getDateTimeFormat() {
-    return new HiveSimpleDateFormatter();
+    boolean useLegacy = true; //TODO use getConfValue() to access legacy or SQL2016 datetime format
+    if (useLegacy) {
+      return new HiveSimpleDateFormatter();
+    } else {
+      return new HiveSqlDateTimeFormatter();
+    }
   }
 }

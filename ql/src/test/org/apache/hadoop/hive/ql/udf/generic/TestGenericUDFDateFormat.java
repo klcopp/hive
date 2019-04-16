@@ -97,14 +97,22 @@ public class TestGenericUDFDateFormat extends TestCase {
 
     udf.initialize(arguments);
 
-    runAndVerifyDate("2015-04-05", fmtText, "Sunday", udf);
-    runAndVerifyDate("2015-04-06", fmtText, "Monday", udf);
-    runAndVerifyDate("2015-04-07", fmtText, "Tuesday", udf);
-    runAndVerifyDate("2015-04-08", fmtText, "Wednesday", udf);
-    runAndVerifyDate("2015-04-09", fmtText, "Thursday", udf);
-    runAndVerifyDate("2015-04-10", fmtText, "Friday", udf);
-    runAndVerifyDate("2015-04-11", fmtText, "Saturday", udf);
-    runAndVerifyDate("2015-04-12", fmtText, "Sunday", udf);
+    runAndVerifyDate("2015-04-05", "Sunday", udf);
+    runAndVerifyDate("2015-04-06", "Monday", udf);
+    runAndVerifyDate("2015-04-07", "Tuesday", udf);
+    runAndVerifyDate("2015-04-08", "Wednesday", udf);
+    runAndVerifyDate("2015-04-09", "Thursday", udf);
+    runAndVerifyDate("2015-04-10", "Friday", udf);
+    runAndVerifyDate("2015-04-11", "Saturday", udf);
+    runAndVerifyDate("2015-04-12", "Sunday", udf);
+
+    // make sure year is ok
+    fmtText = new Text("yyyy");
+    valueOI1 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
+    arguments[1] = valueOI1;
+    udf.initialize(arguments);
+    runAndVerifyDate("2015-04-08", "2015", udf);
   }
 
   public void testDateFormatTs() throws HiveException {
@@ -128,12 +136,12 @@ public class TestGenericUDFDateFormat extends TestCase {
     runAndVerifyTs("2015-04-12 10:30:45", "Sunday", udf);
 
     // make sure hour of day is ok
-    fmtText = new Text("hh");
+    fmtText = new Text("HH");
     valueOI1 = PrimitiveObjectInspectorFactory
         .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
     arguments[1] = valueOI1;
     udf.initialize(arguments);
-    runAndVerifyTs("2015-04-08 10:30:45", "10", udf);
+    runAndVerifyTs("2015-04-08 00:30:45", "00", udf);
 
   }
 
@@ -171,11 +179,10 @@ public class TestGenericUDFDateFormat extends TestCase {
     assertEquals("date_format() test ", expResult, output != null ? output.toString() : null);
   }
 
-  private void runAndVerifyDate(String str, Text fmtText, String expResult, GenericUDF udf)
+  private void runAndVerifyDate(String str, String expResult, GenericUDF udf)
       throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new DateWritableV2(
         Date.valueOf(str)) : null);
-//    DeferredObject valueObj1 = new DeferredJavaObject(fmtText);
     DeferredObject[] args = { valueObj0 };
     Text output = (Text) udf.evaluate(args);
     assertEquals("date_format() test ", expResult, output != null ? output.toString() : null);

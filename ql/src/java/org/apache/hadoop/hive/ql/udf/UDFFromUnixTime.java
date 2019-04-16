@@ -18,13 +18,16 @@
 
 package org.apache.hadoop.hive.ql.udf;
 
+import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -40,6 +43,8 @@ import org.apache.hadoop.io.Text;
     + "  '1970-01-01 00:00:00'")
 public class UDFFromUnixTime extends UDF {
   private HiveDateTimeFormatter formatter;
+  private boolean useLegacyFormats = true;
+  private boolean lastUsedLegacyFormats = true;
 
   private Text result = new Text();
   private Text lastFormat = new Text();
@@ -119,9 +124,9 @@ public class UDFFromUnixTime extends UDF {
    * @return elapsed time in the given format.
    */
   private Text eval(long unixtime, Text format) {
-    if (!format.equals(lastFormat)) { //TODO frogmethod: and if semantics are the same?
-      
-      formatter = new HiveSimpleDateFormatter();
+    initFormatter();
+
+    if (!format.equals(lastFormat)) {
       formatter.setPattern(format.toString());
       formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
       lastFormat.set(format);
@@ -131,5 +136,20 @@ public class UDFFromUnixTime extends UDF {
     Timestamp ts = Timestamp.ofEpochMilli(unixtime * 1000L);
     result.set(formatter.format(ts));
     return result;
+  }
+
+  private void initFormatter() {
+    SessionState ss = SessionState.get();
+    if (ss != null) {
+      useLegacyFormats = ss.getConf().getBoolVar(null); //TODO frogmethod different var, of course
+    }
+    if (formatter == null || useLegacyFormats != lastUsedLegacyFormats) {
+      if (useLegacyFormats) {
+        formatter = new HiveSimpleDateFormatter();
+      } else {
+        formatter = new HiveSqlDateTimeFormatter();
+      }
+      lastUsedLegacyFormats = useLegacyFormats;
+    }
   }
 }

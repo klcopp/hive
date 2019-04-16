@@ -139,6 +139,7 @@ public class TestVectorMathFunctions {
   }
 
   public static VectorizedRowBatch getVectorizedRowBatchDateInStringOut(int[] intValues) {
+    // get date in timestamp out, and change timestamp out to string out
     VectorizedRowBatch batch =  getVectorizedRowBatchDateInTimestampOut(intValues);
     BytesColumnVector outV = new BytesColumnVector(intValues.length);
     batch.cols[1] = outV;

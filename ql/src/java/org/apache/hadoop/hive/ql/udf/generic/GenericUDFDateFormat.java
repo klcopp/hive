@@ -54,6 +54,7 @@ public class GenericUDFDateFormat extends GenericUDF {
   private transient PrimitiveCategory[] tsInputTypes = new PrimitiveCategory[2];
   private transient Converter[] dtConverters = new Converter[2];
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[2];
+  private final java.util.Date date = new java.util.Date();
   private final Text output = new Text();
   private transient HiveDateTimeFormatter formatter;
 
@@ -82,7 +83,8 @@ public class GenericUDFDateFormat extends GenericUDF {
           formatter.setPattern(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         } catch (IllegalArgumentException e) {
-          // ignore
+          //reset formatter if something went wrong
+          formatter = null;
         }
       }
     } else {

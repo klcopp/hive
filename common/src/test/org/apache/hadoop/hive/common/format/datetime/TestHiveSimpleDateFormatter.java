@@ -45,6 +45,4 @@ public class TestHiveSimpleDateFormatter {
     Timestamp ts = Timestamp.valueOf(s);
     Assert.assertEquals(ts, formatter.parse(s));
   }
-
-  //TODO frogmethod test parse exception?
 }
