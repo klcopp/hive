@@ -25,6 +25,9 @@ import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests UDFFromUnixTime.
+ */
 public class TestUDFFromUnixTime {
 
   @Test
@@ -70,7 +73,7 @@ public class TestUDFFromUnixTime {
     if (format == null) {
       res = udf.evaluate(input);
     } else {
-       res = udf.evaluate(input, new Text(format));
+      res = udf.evaluate(input, new Text(format));
     }
     Assert.assertEquals(expected, res.toString());
   }

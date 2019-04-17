@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.text.SimpleDateFormat;
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorUDFDateSubColCol;

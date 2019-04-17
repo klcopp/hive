@@ -45,7 +45,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     PRINT_FORMATTER = builder.toFormatter();
   }
 
-  HiveDateTimeFormatter format;
+  private transient HiveDateTimeFormatter format;
 
   public CastTimestampToString() {
     super();

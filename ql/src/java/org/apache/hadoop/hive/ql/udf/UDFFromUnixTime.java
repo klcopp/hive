@@ -18,7 +18,6 @@
 
 package org.apache.hadoop.hive.ql.udf;
 
-import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;

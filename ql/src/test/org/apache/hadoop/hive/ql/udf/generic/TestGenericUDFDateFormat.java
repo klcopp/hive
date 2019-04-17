@@ -174,7 +174,7 @@ public class TestGenericUDFDateFormat extends TestCase {
   private void runAndVerifyStr(String str, String expResult, GenericUDF udf)
       throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new Text(str) : null);
-    DeferredObject[] args = { valueObj0 };
+    DeferredObject[] args = {valueObj0};
     Text output = (Text) udf.evaluate(args);
     assertEquals("date_format() test ", expResult, output != null ? output.toString() : null);
   }
@@ -183,7 +183,7 @@ public class TestGenericUDFDateFormat extends TestCase {
       throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new DateWritableV2(
         Date.valueOf(str)) : null);
-    DeferredObject[] args = { valueObj0 };
+    DeferredObject[] args = {valueObj0};
     Text output = (Text) udf.evaluate(args);
     assertEquals("date_format() test ", expResult, output != null ? output.toString() : null);
   }
@@ -192,7 +192,7 @@ public class TestGenericUDFDateFormat extends TestCase {
       throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new TimestampWritableV2(
         Timestamp.valueOf(str)) : null);
-    DeferredObject[] args = { valueObj0 };
+    DeferredObject[] args = {valueObj0};
     Text output = (Text) udf.evaluate(args);
     assertEquals("date_format() test ", expResult, output != null ? output.toString() : null);
   }

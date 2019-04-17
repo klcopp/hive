@@ -76,7 +76,7 @@ public class TestVectorTypeCasts {
 
   // +8 hours from PST to GMT, needed because java.sql.Date will subtract 8 hours from final
   // value because VM in test time zone is PST.
-  private static long TIME_DIFFERENCE = 28800000L;
+  private final static long TIME_DIFFERENCE = 28800000L;
   @Test
   public void testCastDateToString() throws HiveException {
     int[] intValues = new int[100];
