@@ -1553,6 +1553,9 @@ public class HiveConf extends Configuration {
         "used instead. Time-zone IDs can be specified as region-based zone IDs (based on IANA time-zone data),\n" +
         "abbreviated zone IDs, or offset IDs."),
 
+    HIVE_USE_SQL_DATETIME_FORMAT("hive.use.sql.datetime.formats", false,
+        "or use the legacy ones frogmethod"),
+
     HIVE_SESSION_HISTORY_ENABLED("hive.session.history.enabled", false,
         "Whether to log Hive query, query plan, runtime statistics etc."),
 

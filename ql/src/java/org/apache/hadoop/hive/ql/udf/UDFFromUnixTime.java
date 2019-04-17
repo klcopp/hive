@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -140,7 +141,7 @@ public class UDFFromUnixTime extends UDF {
   private void initFormatter() {
     SessionState ss = SessionState.get();
     if (ss != null) {
-      useLegacyFormats = ss.getConf().getBoolVar(null); //TODO frogmethod different var, of course
+      useLegacyFormats = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
     if (formatter == null || useLegacyFormats != lastUsedLegacyFormats) {
       if (useLegacyFormats) {
