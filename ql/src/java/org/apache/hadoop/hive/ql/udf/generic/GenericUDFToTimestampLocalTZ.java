@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -50,7 +52,7 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
   private transient PrimitiveObjectInspectorConverter.TimestampLocalTZConverter converter;
 
   private TimestampLocalTZTypeInfo typeInfo;
-  private boolean useSQLFormats = false;
+  private HiveDateTimeFormatter formatter = null;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -78,10 +80,11 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
           "The function CAST as TIMESTAMP WITH LOCAL TIME ZONE takes only primitive types");
     }
 
-    SessionState ss = SessionState.get();
-    if (ss != null) {
-      useSQLFormats = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
+    HiveDateTimeFormatter formatter = getDateTimeFormatter();
+    if (formatter instanceof HiveSqlDateTimeFormatter) {
+      this.formatter = formatter;
     }
+
 
     SettableTimestampLocalTZObjectInspector outputOI = (SettableTimestampLocalTZObjectInspector)
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
@@ -96,12 +99,13 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
       return null;
     }
 
-    if (useSQLFormats && arguments.length > 1) {
+    if (formatter != null && arguments.length > 1) {
       Object o1 = arguments[1].get();
       //assuming the 2nd argument is the format and is a StringWritable
       Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
           PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      converter.useSqlDateTimeFormat(formatText.toString());
+      formatter.setPattern(formatText.toString());
+      converter.setDateTimeFormatter(formatter);
     }
     return converter.convert(o0);
   }

@@ -1200,14 +1200,13 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI, boolean intToTimestampInSeconds) {
-    return getTimestamp(o, inputOI, intToTimestampInSeconds, false, null);
+    return getTimestamp(o, inputOI, intToTimestampInSeconds, null);
   }
 
   public static Timestamp getTimestamp(Object o,
                                        PrimitiveObjectInspector inputOI,
                                        boolean intToTimestampInSeconds,
-                                       boolean useSqlFormat,
-                                       String sqlFormat) {
+                                       HiveDateTimeFormatter format) {
     if (o == null) {
       return null;
     }
@@ -1251,11 +1250,11 @@ public final class PrimitiveObjectInspectorUtils {
     case STRING:
       StringObjectInspector soi = (StringObjectInspector) inputOI;
       String s = soi.getPrimitiveJavaObject(o);
-      result = getTimestampFromString(s, useSqlFormat, sqlFormat);
+      result = getTimestampFromString(s, format);
       break;
     case CHAR:
     case VARCHAR:
-      result = getTimestampFromString(getString(o, inputOI), useSqlFormat, sqlFormat);
+      result = getTimestampFromString(getString(o, inputOI), format);
       break;
     case DATE:
       result = Timestamp.ofEpochMilli(
@@ -1281,13 +1280,10 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static Timestamp getTimestampFromString(String s) {
-    return getTimestampFromString(s, false, null);
+    return getTimestampFromString(s, null);
   }
 
-  public static Timestamp getTimestampFromString(String s, boolean useSqlFormats, String sqlFormat) {
-    // create formatter if necessary. Otherwise default (java.time.format.DateTimeFormatter) will
-    // be used.
-    HiveDateTimeFormatter formatter = getHiveDateTimeFormatter(useSqlFormats, sqlFormat);
+  public static Timestamp getTimestampFromString(String s, HiveDateTimeFormatter formatter) {
 
     s = s.trim();
     s = trimNanoTimestamp(s);
@@ -1328,11 +1324,11 @@ public final class PrimitiveObjectInspectorUtils {
 
   public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
           ZoneId timeZone) {
-    return getTimestampLocalTZ(o, oi, timeZone, false, null);
+    return getTimestampLocalTZ(o, oi, timeZone, null);
   }
 
   public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
-      ZoneId timeZone, boolean useSqlFormats, String sqlFormat) {
+      ZoneId timeZone, HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }

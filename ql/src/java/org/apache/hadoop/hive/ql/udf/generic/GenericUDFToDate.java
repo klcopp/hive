@@ -104,9 +104,6 @@ public class GenericUDFToDate extends GenericUDF {
           PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
       formatter.setPattern(formatText.toString());
       dc.setDateTimeFormatter(formatter);
-      
-      
-//      dc.useSqlDateTimeFormat(formatText.toString());
     }
     return dc.convert(o0);
   }

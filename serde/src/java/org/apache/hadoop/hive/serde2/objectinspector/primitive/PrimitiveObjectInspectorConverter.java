@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.serde2.objectinspector.primitive;
 
 import java.time.ZoneId;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -249,9 +250,8 @@ public class PrimitiveObjectInspectorConverter {
   public static class DateConverter implements Converter {
     PrimitiveObjectInspector inputOI;
     SettableDateObjectInspector outputOI;
-    boolean useSqlFormats = false;
-    String sqlFormat = null;
     Object r;
+    private HiveDateTimeFormatter formatter = null;
 
     public DateConverter(PrimitiveObjectInspector inputOI,
         SettableDateObjectInspector outputOI) {
@@ -268,9 +268,8 @@ public class PrimitiveObjectInspectorConverter {
           inputOI));
     }
 
-    public void useSqlDateTimeFormat(String sqlFormat) {
-      this.sqlFormat = sqlFormat;
-      this.useSqlFormats = true;
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
@@ -278,9 +277,8 @@ public class PrimitiveObjectInspectorConverter {
     PrimitiveObjectInspector inputOI;
     SettableTimestampObjectInspector outputOI;
     boolean intToTimestampInSeconds = false;
-    boolean useSqlFormats = false;
-    String sqlFormat = null;
     Object r;
+    private HiveDateTimeFormatter formatter = null;
 
     public TimestampConverter(PrimitiveObjectInspector inputOI,
         SettableTimestampObjectInspector outputOI) {
@@ -292,18 +290,17 @@ public class PrimitiveObjectInspectorConverter {
     public void setIntToTimestampInSeconds(boolean intToTimestampInSeconds) {
       this.intToTimestampInSeconds = intToTimestampInSeconds;
     }
-
-    public void useSqlFormat(String format) {
-      this.sqlFormat = format;
-      this.useSqlFormats = true;
-    }
  
     public Object convert(Object input) {
       if (input == null) {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestamp(input,
-          inputOI, intToTimestampInSeconds, useSqlFormats, sqlFormat));
+          inputOI));
+    }
+
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
@@ -312,8 +309,7 @@ public class PrimitiveObjectInspectorConverter {
     final SettableTimestampLocalTZObjectInspector outputOI;
     final Object r;
     final ZoneId timeZone;
-    private boolean useSqlFormats = false;
-    private String sqlFormat = null;
+    private HiveDateTimeFormatter formatter = null;
 
     public TimestampLocalTZConverter(
         PrimitiveObjectInspector inputOI,
@@ -331,13 +327,11 @@ public class PrimitiveObjectInspectorConverter {
       }
 
       return outputOI.set(r,
-          PrimitiveObjectInspectorUtils.getTimestampLocalTZ(
-              input, inputOI, timeZone, useSqlFormats, sqlFormat));
+          PrimitiveObjectInspectorUtils.getTimestampLocalTZ(input, inputOI, timeZone, formatter));
     }
 
-    public void useSqlDateTimeFormat(String sqlFormat) {
-      this.sqlFormat = sqlFormat;
-      this.useSqlFormats = true;
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
@@ -439,9 +433,7 @@ public class PrimitiveObjectInspectorConverter {
 
     private static byte[] trueBytes = {'T', 'R', 'U', 'E'};
     private static byte[] falseBytes = {'F', 'A', 'L', 'S', 'E'};
-    private boolean useSqlFormats;
-    private String sqlDateTimeFormat;
-
+    private HiveDateTimeFormatter formatter = null;
 
     public TextConverter(PrimitiveObjectInspector inputOI) {
       // The output ObjectInspector is writableStringObjectInspector.
@@ -547,9 +539,8 @@ public class PrimitiveObjectInspectorConverter {
       }
     }
 
-    public void useSqlDateTimeFormat(String format) {
-      useSqlFormats = true;
-      sqlDateTimeFormat = format;
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
