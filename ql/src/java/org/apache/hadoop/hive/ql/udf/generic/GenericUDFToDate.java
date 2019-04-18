@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -24,13 +27,16 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDate;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDate;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.DateConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping;
+import org.apache.hadoop.io.Text;
 
 /**
  * GenericUDFToDate
@@ -46,6 +52,7 @@ public class GenericUDFToDate extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient DateConverter dc;
+  private HiveDateTimeFormatter formatter = null;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -73,6 +80,11 @@ public class GenericUDFToDate extends GenericUDF {
           "The function CAST as DATE takes only primitive types");
     }
 
+    HiveDateTimeFormatter formatter = getDateTimeFormatter();
+    if (formatter instanceof HiveSqlDateTimeFormatter) {
+      this.formatter = formatter;
+    }
+
     dc = new DateConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableDateObjectInspector);
     return PrimitiveObjectInspectorFactory.writableDateObjectInspector;
@@ -85,6 +97,17 @@ public class GenericUDFToDate extends GenericUDF {
       return null;
     }
 
+    if (formatter != null && arguments.length > 1) {
+      Object o1 = arguments[1].get();
+      //assuming the 2nd argument is the format and is a StringWritable
+      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
+      formatter.setPattern(formatText.toString());
+      dc.setDateTimeFormatter(formatter);
+      
+      
+//      dc.useSqlDateTimeFormat(formatText.toString());
+    }
     return dc.convert(o0);
   }
 

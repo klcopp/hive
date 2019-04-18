@@ -29,6 +29,8 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -1113,6 +1115,10 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static Date getDate(Object o, PrimitiveObjectInspector oi) {
+    return getDate(o, oi, false, null);
+  }
+
+  public static Date getDate(Object o, PrimitiveObjectInspector oi, boolean useSqlFormat, String sqlFormat) {
     if (o == null) {
       return null;
     }
@@ -1125,13 +1131,9 @@ public final class PrimitiveObjectInspectorUtils {
       StringObjectInspector soi = (StringObjectInspector) oi;
       String s = soi.getPrimitiveJavaObject(o).trim();
       try {
-        if (s.length() == DATE_LENGTH) {
-          result = Date.valueOf(s);
-        } else {
-          Timestamp ts = getTimestampFromString(s);
-          if (ts != null) {
-            result = Date.ofEpochMilli(ts.toEpochMilli());
-          }
+        Date date = getDateFromString(s, useSqlFormat, sqlFormat);
+        if (date != null) {
+          result = date;
         }
       } catch (IllegalArgumentException e) {
         // Do nothing
@@ -1141,13 +1143,9 @@ public final class PrimitiveObjectInspectorUtils {
     case VARCHAR: {
       String val = getString(o, oi).trim();
       try {
-        if (val.length() == DATE_LENGTH) {
-          result = Date.valueOf(val);
-        } else {
-          Timestamp ts = getTimestampFromString(val);
-          if (ts != null) {
-            result = Date.ofEpochMilli(ts.toEpochMilli());
-          }
+        Date date = getDateFromString(val, useSqlFormat, sqlFormat);
+        if (date != null) {
+          result = date;
         }
       } catch (IllegalArgumentException e) {
         // Do nothing
@@ -1177,11 +1175,39 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
+  private final static int DATE_LENGTH = "YYYY-MM-DD".length();
+  private static Date getDateFromString(String s, boolean useSqlFormat, String sqlFormat) {
+
+    if (useSqlFormat) {
+      HiveDateTimeFormatter formatter = getHiveDateTimeFormatter(useSqlFormat, sqlFormat);
+      return Date.valueOf(s, formatter);
+    }
+
+    // Don't use alternative formats for parsing
+    if (s.length() == DATE_LENGTH) {
+      return Date.valueOf(s);
+    } else {
+      Timestamp ts = getTimestampFromString(s);
+      if (ts != null) {
+        return Date.ofEpochMilli(ts.toEpochMilli());
+      }
+    }
+    return null;
+  }
+
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector oi) {
     return getTimestamp(o, oi, false);
   }
 
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI, boolean intToTimestampInSeconds) {
+    return getTimestamp(o, inputOI, intToTimestampInSeconds, false, null);
+  }
+
+  public static Timestamp getTimestamp(Object o,
+                                       PrimitiveObjectInspector inputOI,
+                                       boolean intToTimestampInSeconds,
+                                       boolean useSqlFormat,
+                                       String sqlFormat) {
     if (o == null) {
       return null;
     }
@@ -1225,11 +1251,11 @@ public final class PrimitiveObjectInspectorUtils {
     case STRING:
       StringObjectInspector soi = (StringObjectInspector) inputOI;
       String s = soi.getPrimitiveJavaObject(o);
-      result = getTimestampFromString(s);
+      result = getTimestampFromString(s, useSqlFormat, sqlFormat);
       break;
     case CHAR:
     case VARCHAR:
-      result = getTimestampFromString(getString(o, inputOI));
+      result = getTimestampFromString(getString(o, inputOI), useSqlFormat, sqlFormat);
       break;
     case DATE:
       result = Timestamp.ofEpochMilli(
@@ -1254,16 +1280,32 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
-  private final static int TS_LENGTH = "yyyy-mm-dd hh:mm:ss".length();
-  private final static int DATE_LENGTH = "YYYY-MM-DD".length();
-
   public static Timestamp getTimestampFromString(String s) {
+    return getTimestampFromString(s, false, null);
+  }
+
+  public static Timestamp getTimestampFromString(String s, boolean useSqlFormats, String sqlFormat) {
+    // create formatter if necessary. Otherwise default (java.time.format.DateTimeFormatter) will
+    // be used.
+    HiveDateTimeFormatter formatter = getHiveDateTimeFormatter(useSqlFormats, sqlFormat);
+
     s = s.trim();
     s = trimNanoTimestamp(s);
 
     try {
-      return TimestampUtils.stringToTimestamp(s);
+      return TimestampUtils.stringToTimestamp(s, formatter);
     } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+  private static HiveDateTimeFormatter getHiveDateTimeFormatter(boolean useSqlFormats,
+      String sqlFormat) {
+    if (useSqlFormats && sqlFormat != null) {
+      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(sqlFormat);
+      return formatter;
+    } else {
       return null;
     }
   }
@@ -1284,21 +1326,13 @@ public final class PrimitiveObjectInspectorUtils {
     return s;
   }
 
-  private static boolean isValidTimeStamp(final String s) {
-    if (s.length() == TS_LENGTH ||
-            (s.contains(".") &&
-                    s.substring(0, s.indexOf('.')).length() == TS_LENGTH)) {
-      // Possible timestamp
-      if (s.charAt(DATE_LENGTH) == '-') {
-        return false;
-      }
-      return true;
-    }
-    return false;
+  public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
+          ZoneId timeZone) {
+    return getTimestampLocalTZ(o, oi, timeZone, false, null);
   }
 
   public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
-          ZoneId timeZone) {
+      ZoneId timeZone, boolean useSqlFormats, String sqlFormat) {
     if (o == null) {
       return null;
     }

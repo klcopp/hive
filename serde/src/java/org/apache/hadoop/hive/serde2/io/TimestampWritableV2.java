@@ -22,6 +22,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampUtils;
@@ -385,6 +386,10 @@ public class TimestampWritableV2 implements WritableComparable<TimestampWritable
     }
 
     return timestamp.format(DATE_TIME_FORMAT);
+  }
+  
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    
   }
 
   @Override

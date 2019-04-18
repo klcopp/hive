@@ -187,14 +187,14 @@ public class Timestamp implements Comparable<Timestamp> {
     return new Timestamp(localDateTime);
   }
 
-  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter) {
-    s = s.trim();
-    try {
-      return formatter.parse(s);
-    } catch (ParseException e) {
-      // Fall back to original
+  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter)
+      throws ParseException {
+    if (formatter == null) {
       return valueOf(s);
     }
+
+    s = s.trim();
+    return formatter.parse(s);
   }
 
   public static Timestamp ofEpochSecond(long epochSecond) {

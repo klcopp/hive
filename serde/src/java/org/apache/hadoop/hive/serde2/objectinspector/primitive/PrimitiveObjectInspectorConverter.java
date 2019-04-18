@@ -249,6 +249,8 @@ public class PrimitiveObjectInspectorConverter {
   public static class DateConverter implements Converter {
     PrimitiveObjectInspector inputOI;
     SettableDateObjectInspector outputOI;
+    boolean useSqlFormats = false;
+    String sqlFormat = null;
     Object r;
 
     public DateConverter(PrimitiveObjectInspector inputOI,
@@ -265,12 +267,19 @@ public class PrimitiveObjectInspectorConverter {
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getDate(input,
           inputOI));
     }
+
+    public void useSqlDateTimeFormat(String sqlFormat) {
+      this.sqlFormat = sqlFormat;
+      this.useSqlFormats = true;
+    }
   }
 
   public static class TimestampConverter implements Converter {
     PrimitiveObjectInspector inputOI;
     SettableTimestampObjectInspector outputOI;
     boolean intToTimestampInSeconds = false;
+    boolean useSqlFormats = false;
+    String sqlFormat = null;
     Object r;
 
     public TimestampConverter(PrimitiveObjectInspector inputOI,
@@ -283,13 +292,18 @@ public class PrimitiveObjectInspectorConverter {
     public void setIntToTimestampInSeconds(boolean intToTimestampInSeconds) {
       this.intToTimestampInSeconds = intToTimestampInSeconds;
     }
+
+    public void useSqlFormat(String format) {
+      this.sqlFormat = format;
+      this.useSqlFormats = true;
+    }
  
     public Object convert(Object input) {
       if (input == null) {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestamp(input,
-          inputOI, intToTimestampInSeconds));
+          inputOI, intToTimestampInSeconds, useSqlFormats, sqlFormat));
     }
   }
 
@@ -298,6 +312,8 @@ public class PrimitiveObjectInspectorConverter {
     final SettableTimestampLocalTZObjectInspector outputOI;
     final Object r;
     final ZoneId timeZone;
+    private boolean useSqlFormats = false;
+    private String sqlFormat = null;
 
     public TimestampLocalTZConverter(
         PrimitiveObjectInspector inputOI,
@@ -314,7 +330,14 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
 
-      return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestampLocalTZ(input, inputOI, timeZone));
+      return outputOI.set(r,
+          PrimitiveObjectInspectorUtils.getTimestampLocalTZ(
+              input, inputOI, timeZone, useSqlFormats, sqlFormat));
+    }
+
+    public void useSqlDateTimeFormat(String sqlFormat) {
+      this.sqlFormat = sqlFormat;
+      this.useSqlFormats = true;
     }
   }
 
@@ -416,6 +439,9 @@ public class PrimitiveObjectInspectorConverter {
 
     private static byte[] trueBytes = {'T', 'R', 'U', 'E'};
     private static byte[] falseBytes = {'F', 'A', 'L', 'S', 'E'};
+    private boolean useSqlFormats;
+    private String sqlDateTimeFormat;
+
 
     public TextConverter(PrimitiveObjectInspector inputOI) {
       // The output ObjectInspector is writableStringObjectInspector.
@@ -519,6 +545,11 @@ public class PrimitiveObjectInspectorConverter {
       default:
         throw new RuntimeException("Hive 2 Internal error: type = " + inputOI.getTypeName());
       }
+    }
+
+    public void useSqlDateTimeFormat(String format) {
+      useSqlFormats = true;
+      sqlDateTimeFormat = format;
     }
   }
 

@@ -17,10 +17,12 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.udf.SettableUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -30,6 +32,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableTimestamp
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.TimestampLocalTZConverter;
 import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.io.Text;
 
 /**
  * Convert from string to TIMESTAMP WITH LOCAL TIME ZONE.
@@ -47,6 +50,7 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
   private transient PrimitiveObjectInspectorConverter.TimestampLocalTZConverter converter;
 
   private TimestampLocalTZTypeInfo typeInfo;
+  private boolean useSQLFormats = false;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -73,6 +77,12 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
       throw new UDFArgumentException(
           "The function CAST as TIMESTAMP WITH LOCAL TIME ZONE takes only primitive types");
     }
+
+    SessionState ss = SessionState.get();
+    if (ss != null) {
+      useSQLFormats = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
+    }
+
     SettableTimestampLocalTZObjectInspector outputOI = (SettableTimestampLocalTZObjectInspector)
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
     converter = new TimestampLocalTZConverter(argumentOI, outputOI);
@@ -84,6 +94,14 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
     Object o0 = arguments[0].get();
     if (o0 == null) {
       return null;
+    }
+
+    if (useSQLFormats && arguments.length > 1) {
+      Object o1 = arguments[1].get();
+      //assuming the 2nd argument is the format and is a StringWritable
+      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
+      converter.useSqlDateTimeFormat(formatText.toString());
     }
     return converter.convert(o0);
   }

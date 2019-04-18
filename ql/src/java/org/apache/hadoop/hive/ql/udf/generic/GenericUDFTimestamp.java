@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
+import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -63,6 +65,7 @@ public class GenericUDFTimestamp extends GenericUDF {
    * otherwise, it's interpreted as timestamp in seconds.
    */
   private boolean intToTimestampInSeconds = false;
+  private boolean useSQLFormats = false;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -75,6 +78,7 @@ public class GenericUDFTimestamp extends GenericUDF {
     SessionState ss = SessionState.get();
     if (ss != null) {
       intToTimestampInSeconds = ss.getConf().getBoolVar(ConfVars.HIVE_INT_TIMESTAMP_CONVERSION_IN_SECONDS);
+      useSQLFormats = ss.getConf().getBoolVar(ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
 
     try {
@@ -98,6 +102,13 @@ public class GenericUDFTimestamp extends GenericUDF {
       return null;
     }
 
+    if (useSQLFormats && arguments.length > 1) {
+      Object o1 = arguments[1].get();
+      //assuming the 2nd argument is the format and is a StringWritable
+      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
+      tc.useSqlFormat(formatText.toString());
+    }
     return tc.convert(o0);
   }
 

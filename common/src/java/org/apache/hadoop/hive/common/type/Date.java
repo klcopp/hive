@@ -158,6 +158,9 @@ public class Date implements Comparable<Date> {
   }
 
   public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return valueOf(s);
+    }
     s = s.trim();
     try {
       return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
