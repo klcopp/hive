@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.serde2.io;
 
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
@@ -243,6 +244,11 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
 
   @Override
   public String toString() {
+    populateTimestampTZ();
+    return timestampTZ.toString();
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) { //TODO: no format method yet
     populateTimestampTZ();
     return timestampTZ.toString();
   }

@@ -652,9 +652,9 @@ public abstract class GenericUDF implements Closeable {
     }
 
     if (useSqlFormat) {
-      return new HiveSimpleDateFormatter();
-    } else {
       return new HiveSqlDateTimeFormatter();
+    } else {
+      return new HiveSimpleDateFormatter();
     }
   }
 }

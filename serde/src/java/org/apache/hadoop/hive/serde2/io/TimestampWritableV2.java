@@ -387,9 +387,16 @@ public class TimestampWritableV2 implements WritableComparable<TimestampWritable
 
     return timestamp.format(DATE_TIME_FORMAT);
   }
-  
+
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
-    
+    if (formatter == null) {
+      return toString();
+    }
+
+    if (timestampEmpty) {
+      populateTimestamp();
+    }
+    return formatter.format(timestamp);
   }
 
   @Override

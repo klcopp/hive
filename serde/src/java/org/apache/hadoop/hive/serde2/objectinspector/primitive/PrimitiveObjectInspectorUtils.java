@@ -1115,10 +1115,11 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static Date getDate(Object o, PrimitiveObjectInspector oi) {
-    return getDate(o, oi, false, null);
+    return getDate(o, oi, null);
   }
 
-  public static Date getDate(Object o, PrimitiveObjectInspector oi, boolean useSqlFormat, String sqlFormat) {
+  public static Date getDate(
+      Object o, PrimitiveObjectInspector oi, HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }
@@ -1131,7 +1132,7 @@ public final class PrimitiveObjectInspectorUtils {
       StringObjectInspector soi = (StringObjectInspector) oi;
       String s = soi.getPrimitiveJavaObject(o).trim();
       try {
-        Date date = getDateFromString(s, useSqlFormat, sqlFormat);
+        Date date = getDateFromString(s, formatter);
         if (date != null) {
           result = date;
         }
@@ -1143,7 +1144,7 @@ public final class PrimitiveObjectInspectorUtils {
     case VARCHAR: {
       String val = getString(o, oi).trim();
       try {
-        Date date = getDateFromString(val, useSqlFormat, sqlFormat);
+        Date date = getDateFromString(val, formatter);
         if (date != null) {
           result = date;
         }
@@ -1176,14 +1177,13 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   private final static int DATE_LENGTH = "YYYY-MM-DD".length();
-  private static Date getDateFromString(String s, boolean useSqlFormat, String sqlFormat) {
+  private static Date getDateFromString(String s, HiveDateTimeFormatter formatter) {
 
-    if (useSqlFormat) {
-      HiveDateTimeFormatter formatter = getHiveDateTimeFormatter(useSqlFormat, sqlFormat);
+    if (formatter != null) {
       return Date.valueOf(s, formatter);
     }
 
-    // Don't use alternative formats for parsing
+    // Else don't use alternative formats for parsing
     if (s.length() == DATE_LENGTH) {
       return Date.valueOf(s);
     } else {
@@ -1291,17 +1291,6 @@ public final class PrimitiveObjectInspectorUtils {
     try {
       return TimestampUtils.stringToTimestamp(s, formatter);
     } catch (IllegalArgumentException e) {
-      return null;
-    }
-  }
-
-  private static HiveDateTimeFormatter getHiveDateTimeFormatter(boolean useSqlFormats,
-      String sqlFormat) {
-    if (useSqlFormats && sqlFormat != null) {
-      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(sqlFormat);
-      return formatter;
-    } else {
       return null;
     }
   }

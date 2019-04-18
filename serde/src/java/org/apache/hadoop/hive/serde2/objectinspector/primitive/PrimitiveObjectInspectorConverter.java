@@ -265,7 +265,7 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getDate(input,
-          inputOI));
+          inputOI, formatter));
     }
 
     public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
@@ -504,14 +504,16 @@ public class PrimitiveObjectInspectorConverter {
         }
         return t;
       case DATE:
-        t.set(((DateObjectInspector) inputOI).getPrimitiveWritableObject(input).toString());
+        t.set(((DateObjectInspector) inputOI)
+            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case TIMESTAMP:
         t.set(((TimestampObjectInspector) inputOI)
-            .getPrimitiveWritableObject(input).toString());
+            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case TIMESTAMPLOCALTZ:
-        t.set(((TimestampLocalTZObjectInspector) inputOI).getPrimitiveWritableObject(input).toString());
+        t.set(((TimestampLocalTZObjectInspector) inputOI)
+            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case INTERVAL_YEAR_MONTH:
         t.set(((HiveIntervalYearMonthObjectInspector) inputOI)
