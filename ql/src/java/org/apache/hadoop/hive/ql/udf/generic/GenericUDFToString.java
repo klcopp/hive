@@ -17,13 +17,17 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.TextConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +41,8 @@ public class GenericUDFToString extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient TextConverter converter;
+  private boolean useSQLFormats = false;
+  private HiveDateTimeFormatter formatter = null;
 
   public GenericUDFToString() {
   }
@@ -53,6 +59,11 @@ public class GenericUDFToString extends GenericUDF {
           "The function STRING takes only primitive types");
     }
 
+    HiveDateTimeFormatter formatter = getDateTimeFormatter();
+    if (formatter instanceof HiveSqlDateTimeFormatter) {
+      this.formatter = formatter;
+    }
+
     converter = new TextConverter(argumentOI);
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
   }
@@ -64,6 +75,14 @@ public class GenericUDFToString extends GenericUDF {
         return null;
       }
 
+    if (formatter != null && arguments.length > 1) {
+      Object o1 = arguments[1].get();
+      //assuming the 2nd argument is the format and is a StringWritable
+      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
+      formatter.setPattern(formatText.toString());
+      converter.setDateTimeFormatter(formatter);
+    }
       return converter.convert(o0);
   }
 

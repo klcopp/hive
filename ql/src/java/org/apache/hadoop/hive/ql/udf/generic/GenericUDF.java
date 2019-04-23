@@ -644,20 +644,17 @@ public abstract class GenericUDF implements Closeable {
     }
   }
 
-  protected String getConfValue(HiveConf.ConfVars confVars) {
+  protected HiveDateTimeFormatter getDateTimeFormatter() {
+    boolean useSqlFormat = false;
     SessionState ss = SessionState.get();
     if (ss != null) {
-      return ss.getConf().getVar(confVars);
+      useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
-    return null;
-  }
 
-  protected HiveDateTimeFormatter getDateTimeFormat() {
-    boolean useLegacy = true; //TODO use getConfValue() to access legacy or SQL2016 datetime format
-    if (useLegacy) {
-      return new HiveSimpleDateFormatter();
-    } else {
+    if (useSqlFormat) {
       return new HiveSqlDateTimeFormatter();
+    } else {
+      return new HiveSimpleDateFormatter();
     }
   }
 }

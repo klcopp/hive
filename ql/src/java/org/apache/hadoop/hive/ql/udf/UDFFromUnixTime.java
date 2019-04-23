@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -42,8 +43,8 @@ import org.apache.hadoop.io.Text;
     + "  '1970-01-01 00:00:00'")
 public class UDFFromUnixTime extends UDF {
   private HiveDateTimeFormatter formatter;
-  private boolean useLegacyFormats = true;
-  private boolean lastUsedLegacyFormats = true;
+  private boolean useSqlFormat = true;
+  private boolean lastUsedSqlFormats = true;
 
   private Text result = new Text();
   private Text lastFormat = new Text();
@@ -140,15 +141,15 @@ public class UDFFromUnixTime extends UDF {
   private void initFormatter() {
     SessionState ss = SessionState.get();
     if (ss != null) {
-      useLegacyFormats = ss.getConf().getBoolVar(null); //TODO frogmethod different var, of course
+      useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
-    if (formatter == null || useLegacyFormats != lastUsedLegacyFormats) {
-      if (useLegacyFormats) {
+    if (formatter == null || useSqlFormat != lastUsedSqlFormats) {
+      if (useSqlFormat) {
         formatter = new HiveSimpleDateFormatter();
       } else {
         formatter = new HiveSqlDateTimeFormatter();
       }
-      lastUsedLegacyFormats = useLegacyFormats;
+      lastUsedSqlFormats = useSqlFormat;
     }
   }
 }
