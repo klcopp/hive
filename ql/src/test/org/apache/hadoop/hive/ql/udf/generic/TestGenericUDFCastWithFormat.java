@@ -27,7 +27,7 @@ public class TestGenericUDFCastWithFormat {
     if (ss == null) {
       ss = SessionState.start(new HiveConf());
     }
-    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, true);
+    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, false); //TODO set to true when implementation is done!
   }
 
   @Test
