@@ -20,9 +20,9 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.STRING_GROUP;
 
-import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -56,7 +56,7 @@ public class GenericUDFDateFormat extends GenericUDF {
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[2];
   private final java.util.Date date = new java.util.Date();
   private final Text output = new Text();
-  private transient SimpleDateFormat formatter;
+  private transient HiveDateTimeFormatter formatter;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -79,10 +79,12 @@ public class GenericUDFDateFormat extends GenericUDF {
       String fmtStr = getConstantStringValue(arguments, 1);
       if (fmtStr != null) {
         try {
-          formatter = new SimpleDateFormat(fmtStr);
+          formatter = getDateTimeFormat();
+          formatter.setPattern(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         } catch (IllegalArgumentException e) {
-          // ignore
+          //reset formatter if something went wrong
+          formatter = null;
         }
       }
     } else {
@@ -110,8 +112,7 @@ public class GenericUDFDateFormat extends GenericUDF {
       ts = Timestamp.ofEpochMilli(d.toEpochMilli());
     }
 
-    date.setTime(ts.toEpochMilli());
-    String res = formatter.format(date);
+    String res = formatter.format(ts);
     if (res == null) {
       return null;
     }

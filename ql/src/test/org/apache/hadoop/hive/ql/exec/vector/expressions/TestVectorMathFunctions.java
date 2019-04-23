@@ -115,18 +115,19 @@ public class TestVectorMathFunctions {
     Assert.assertEquals(1.2346d, resultV.vector[7], Double.MIN_VALUE);
   }
 
-  static int DAYS_LIMIT = 365 * 9999;
+  final static int DAYS_LIMIT = 365 * 9999;
+  final static int SMALLEST_EPOCH_DAY = -365 * 1969;  //approximate, so we get some negative values
 
   public static VectorizedRowBatch getVectorizedRowBatchDateInTimestampOut(int[] intValues) {
     Random r = new Random(12099);
     VectorizedRowBatch batch = new VectorizedRowBatch(2);
     LongColumnVector inV;
     TimestampColumnVector outV;
-    inV = new LongColumnVector();
-    outV = new TimestampColumnVector();
+    inV = new LongColumnVector(intValues.length);
+    outV = new TimestampColumnVector(intValues.length);
 
     for (int i = 0; i < intValues.length; i++) {
-      intValues[i] = r.nextInt() % DAYS_LIMIT;
+      intValues[i] = SMALLEST_EPOCH_DAY + r.nextInt() % DAYS_LIMIT;
       inV.vector[i] = intValues[i];
     }
 
@@ -134,6 +135,14 @@ public class TestVectorMathFunctions {
     batch.cols[1] = outV;
 
     batch.size = intValues.length;
+    return batch;
+  }
+
+  public static VectorizedRowBatch getVectorizedRowBatchDateInStringOut(int[] intValues) {
+    // get date in timestamp out, and change timestamp out to string out
+    VectorizedRowBatch batch =  getVectorizedRowBatchDateInTimestampOut(intValues);
+    BytesColumnVector outV = new BytesColumnVector(intValues.length);
+    batch.cols[1] = outV;
     return batch;
   }
 
@@ -294,6 +303,31 @@ public class TestVectorMathFunctions {
     batch.cols[1] = outV;
 
     batch.size = longValues.length;
+    return batch;
+  }
+
+
+  public static VectorizedRowBatch getVectorizedRowBatchTimestampInStringOut(
+      long[] epochSecondValues, int[] nanoValues) {
+    Random r = new Random(345);
+    VectorizedRowBatch batch = new VectorizedRowBatch(2);
+    batch.size = epochSecondValues.length;
+
+    TimestampColumnVector inV;
+    BytesColumnVector outV;
+    inV = new TimestampColumnVector(batch.size);
+    outV = new BytesColumnVector(batch.size);
+
+    for (int i = 0; i < batch.size; i++) {
+      Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      epochSecondValues[i] = randTimestamp.toEpochSecond();
+      nanoValues[i] = randTimestamp.getNanos();
+      inV.set(i, randTimestamp.toSqlTimestamp());
+    }
+
+    batch.cols[0] = inV;
+    batch.cols[1] = outV;
+
     return batch;
   }
 

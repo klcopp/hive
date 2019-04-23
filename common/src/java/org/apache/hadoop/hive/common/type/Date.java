@@ -17,6 +17,11 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
+import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -54,9 +59,12 @@ public class Date implements Comparable<Date> {
   }
 
   private LocalDate localDate;
+  private HiveDateTimeFormatter printFormatter;
+  private HiveDateTimeFormatter parseFormatter;
 
   private Date(LocalDate localDate) {
     this.localDate = localDate != null ? localDate : EPOCH;
+    initFormatters();
   }
 
   public Date() {
@@ -67,9 +75,21 @@ public class Date implements Comparable<Date> {
     this(d.localDate);
   }
 
+
+  private void initFormatters() {
+    try {
+      printFormatter = new HiveJavaDateTimeFormatter();
+      printFormatter.setFormatter(PRINT_FORMATTER);
+      parseFormatter = new HiveJavaDateTimeFormatter();
+      parseFormatter.setFormatter(PARSE_FORMATTER);
+    } catch (WrongFormatterException e) {
+      throw new RuntimeException("Wrong formatter", e);
+    }
+  }
+
   @Override
   public String toString() {
-    return localDate.format(PRINT_FORMATTER);
+    return printFormatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
   }
 
   public int hashCode() {
@@ -135,6 +155,16 @@ public class Date implements Comparable<Date> {
       throw new IllegalArgumentException("Cannot create date, parsing error");
     }
     return new Date(localDate);
+  }
+
+  public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
+    s = s.trim();
+    try {
+      return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
+    } catch (ParseException e) {
+      // Fall back to original
+      return valueOf(s);
+    }
   }
 
   public static Date ofEpochDay(int epochDay) {

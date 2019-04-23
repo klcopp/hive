@@ -18,11 +18,11 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -62,7 +62,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
   private transient Converter patternConverter;
 
   private transient String lasPattern = "yyyy-MM-dd HH:mm:ss";
-  private transient final SimpleDateFormat formatter = new SimpleDateFormat(lasPattern);
+  private transient HiveDateTimeFormatter formatter = null;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -82,6 +82,8 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
       }
     }
 
+    formatter = getDateTimeFormat();
+    formatter.setPattern(lasPattern);
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
     PrimitiveObjectInspector arg1OI = (PrimitiveObjectInspector) arguments[0];
@@ -145,12 +147,12 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
           return null;
         }
         if (!patternVal.equals(lasPattern)) {
-          formatter.applyPattern(patternVal);
+          formatter.setPattern(patternVal);
           lasPattern = patternVal;
         }
       }
       try {
-        retValue.set(formatter.parse(textVal).getTime() / 1000);
+        retValue.set(formatter.parse(textVal).toEpochMilli() / 1000);
         return retValue;
       } catch (ParseException e) {
         return null;
