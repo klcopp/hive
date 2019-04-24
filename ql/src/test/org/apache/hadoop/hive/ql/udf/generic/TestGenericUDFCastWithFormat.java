@@ -11,7 +11,9 @@ import org.apache.hadoop.hive.serde2.io.TimestampLocalTZWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritableV2;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.io.Text;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,14 +29,14 @@ public class TestGenericUDFCastWithFormat {
     if (ss == null) {
       ss = SessionState.start(new HiveConf());
     }
-    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, false); //TODO set to true when implementation is done!
+    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, true);
   }
 
   @Test
   public void testDateToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
-    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy-mm-dd", "2009-07-30");
+    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy-MM-dd", "2009-07-30");
     //TODO
   }
 
@@ -42,7 +44,7 @@ public class TestGenericUDFCastWithFormat {
   public void testStringToDateWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToDate();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30", "yyyy-mm-dd", "2009-07-30");
+    testCast(udf, inputOI, "2009-07-30", "yyyy-MM-dd", "2009-07-30");
     //TODO
   }
 
@@ -50,7 +52,7 @@ public class TestGenericUDFCastWithFormat {
   public void testStringToTimestampWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFTimestamp();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy-mm-dd hh:mm:ss", "2009-07-30 00:00:00");
+    testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
     //TODO
   }
 
@@ -59,7 +61,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
     ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/New_York"));
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-mm-dd hh:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
+    testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-MM-dd HH:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
     //TODO
   }
 
@@ -67,7 +69,7 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy-mm-dd hh:mm:ss", "2009-07-30 00:00:00");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
     //TODO
   }
 
@@ -75,7 +77,7 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampTZToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampTZObjectInspector;
-    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-mm-dd hh:mm:ss", "1969-12-31 16:00:00.0 US/Pacific");
+    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-MM-dd HH:mm:ss", "1969-12-31 16:00:00.0 US/Pacific");
     //TODO
   }
 
@@ -90,11 +92,11 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF.DeferredObject formatObj = new GenericUDF.DeferredJavaObject(new Text(format));
     GenericUDF.DeferredObject[] args = {valueObj, formatObj};
 
-    assertEquals(udf.getFuncName() + " test with input type " + inputOI.getCategory()
+    assertEquals(udf.getFuncName() + " test with input type " + inputOI.getTypeName()
             + " failed ", output, udf.evaluate(args).toString());
 
     // Try with null args
     GenericUDF.DeferredObject[] nullArgs = { new GenericUDF.DeferredJavaObject(null) };
-    assertNull(udf.getFuncName() + " with null arguments failed", udf.evaluate(nullArgs));
+    assertNull(udf.getFuncName() + " with NULL arguments failed", udf.evaluate(nullArgs));
   }
 }

@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.common.format.datetime;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
@@ -39,13 +40,19 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   @Override public String format(Timestamp ts) {
-    //TODO
-    return null;
+    //TODO replace with actual implementation:
+    HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
+    formatter.setPattern(pattern);
+    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    return formatter.format(ts);
   }
 
   @Override public Timestamp parse(String string) throws ParseException {
-    //TODO
-    return null;
+    //TODO replace with actual implementation:
+    HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
+    formatter.setPattern(pattern);
+    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    return formatter.parse(string);
   }
 
   // unused methods
