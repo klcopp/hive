@@ -89,6 +89,10 @@ public class GenericUDFTimestamp extends GenericUDF {
           "The function TIMESTAMP takes only primitive types");
     }
 
+    String timestampFormat = null;
+    if (arguments.length > 1 && arguments[1] != null) {
+      timestampFormat = getConstantStringValue(arguments, 1);
+    }
     HiveDateTimeFormatter formatter = getDateTimeFormatter();
     if (formatter instanceof HiveSqlDateTimeFormatter) {
       this.formatter = formatter;
