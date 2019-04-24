@@ -20,8 +20,11 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
+import org.apache.hadoop.hive.ql.session.SessionState;
 
 import java.sql.Date;
 import java.util.TimeZone;
@@ -42,9 +45,20 @@ public class CastDateToString extends LongToStringUnaryUDF {
   }
 
   private void initFormatter() {
-    formatter = new HiveSimpleDateFormatter();
-    formatter.setPattern("yyyy-MM-dd");
-    formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+    boolean useSqlFormat = false;
+    SessionState ss = SessionState.get();
+    if (ss != null) {
+      useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
+    }
+
+    if (useSqlFormat) {
+      formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern("yyyy-MM-dd"); //~TODO frogmethod
+    } else {
+      formatter = new HiveSimpleDateFormatter();
+      formatter.setPattern("yyyy-MM-dd");
+      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.

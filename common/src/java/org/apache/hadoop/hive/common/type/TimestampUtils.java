@@ -181,7 +181,8 @@ public class TimestampUtils {
     try {
       return Timestamp.valueOf(s, formatter);
     } catch (ParseException e) {
-      return stringToTimestamp(s); //frogmethod todo , yikes. this probably gets f'd up.
+      // TODO frogmethod throw exceptions here or return null
+      return null;
     }
   }
 

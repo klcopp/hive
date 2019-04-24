@@ -41,7 +41,6 @@ public class GenericUDFToString extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient TextConverter converter;
-  private boolean useSQLFormats = false;
   private HiveDateTimeFormatter formatter = null;
 
   public GenericUDFToString() {

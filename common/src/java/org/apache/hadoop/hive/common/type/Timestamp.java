@@ -118,8 +118,7 @@ public class Timestamp implements Comparable<Timestamp> {
 
   @Override
   public String toString() {
-    return printFormatter.format(
-        Timestamp.ofEpochMilli(localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli(), getNanos()));
+    return printFormatter.format(this);
   }
 
   public int hashCode() {
