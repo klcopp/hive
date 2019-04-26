@@ -55,7 +55,7 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-    if (arguments.length != 1) {
+    if (arguments.length < 1) {
       throw new UDFArgumentException("CHAR cast requires a value argument");
     }
     try {

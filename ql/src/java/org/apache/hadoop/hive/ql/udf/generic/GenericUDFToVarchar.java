@@ -55,7 +55,7 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-    if (arguments.length != 1) {
+    if (arguments.length < 1) {
       throw new UDFArgumentException("VARCHAR cast requires a value argument");
     }
     try {

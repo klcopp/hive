@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.util.TimeZone;
 
@@ -36,24 +37,32 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   public CastDateToString() {
     super();
-    initFormatter();
+    initFormatter(null);
   }
 
   public CastDateToString(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
-    initFormatter();
+    initFormatter(null);
   }
 
-  private void initFormatter() {
-    boolean useSqlFormat = false;
+  public CastDateToString(int inputColumn, byte[] formatBytes, int outputColumnNum) {
+    super(inputColumn, outputColumnNum);
+    initFormatter(formatBytes);
+  }
+
+  private void initFormatter(byte[] formatBytes) {
+    boolean useSqlFormat = HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT.defaultBoolVal;
     SessionState ss = SessionState.get();
     if (ss != null) {
       useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
 
     if (useSqlFormat) {
+      if (formatBytes == null) {
+        throw new IllegalArgumentException("Format string not found, can't use SQL formats");
+      }
       formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern("yyyy-MM-dd"); //~TODO frogmethod
+      formatter.setPattern(new String(formatBytes, StandardCharsets.UTF_8));
     } else {
       formatter = new HiveSimpleDateFormatter();
       formatter.setPattern("yyyy-MM-dd");
