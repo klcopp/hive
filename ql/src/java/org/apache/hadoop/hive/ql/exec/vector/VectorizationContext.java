@@ -3139,7 +3139,11 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() == 2) { //frogmethod todo
+//        return createVectorExpression(CastDateToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isTimestampFamily(inputType)) {
       return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isStringFamily(inputType)) {

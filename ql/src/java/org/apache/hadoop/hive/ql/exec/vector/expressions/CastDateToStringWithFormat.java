@@ -25,18 +25,18 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-public class CastDateToString extends LongToStringUnaryUDF {
+public class CastDateToStringWithFormat extends LongToStringUnaryUDF {
   private static final long serialVersionUID = 1L;
   protected transient Date dt = new Date(0);
   private transient SimpleDateFormat formatter;
 
-  public CastDateToString() {
+  public CastDateToStringWithFormat() {
     super();
     formatter = new SimpleDateFormat("yyyy-MM-dd");
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
-  public CastDateToString(int inputColumn, int outputColumnNum) {
+  public CastDateToStringWithFormat(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
     formatter = new SimpleDateFormat("yyyy-MM-dd");
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
