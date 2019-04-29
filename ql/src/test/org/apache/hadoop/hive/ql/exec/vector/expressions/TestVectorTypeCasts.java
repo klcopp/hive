@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.hadoop.hive.common.type.Date;
 import org.junit.Assert;
 
 import org.apache.hadoop.hive.common.type.DataTypePhysicalVariation;
@@ -98,6 +99,23 @@ public class TestVectorTypeCasts {
     }
   }
 
+  @Test
+  public void testCastDateToStringWithFormat() throws HiveException {
+    VectorizedRowBatch b = TestVectorMathFunctions.getVectorizedRowBatchDateInStringOutFormatted();
+    LongColumnVector inputV = (LongColumnVector) b.cols[2]; 
+    BytesColumnVector resultV = (BytesColumnVector) b.cols[1];
+    String expected, result;
+    VectorExpression expr = new CastDateToString(0, 1);
+    expr.evaluate(b);
+    for (int i = 0; i < b.size; i++) {
+      expected = Date.ofEpochMilli(inputV.vector[i]).toString();
+      byte[] subbyte = Arrays.copyOfRange(resultV.vector[i], resultV.start[i],
+          resultV.start[i] + resultV.length[i]);
+      result = new String(subbyte, StandardCharsets.UTF_8);
+
+      Assert.assertEquals("Index: " +  i + " Epoch day value: " + intValues[i], expected, result);
+    }
+  }
 
   @Test
   public void testCastDateToTimestamp() throws HiveException {

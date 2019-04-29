@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.apache.hadoop.hive.common.type.Date;
 import org.junit.Assert;
 
 import org.apache.hadoop.hive.serde2.RandomTypeUtil;
@@ -143,6 +144,25 @@ public class TestVectorMathFunctions {
     VectorizedRowBatch batch =  getVectorizedRowBatchDateInTimestampOut(intValues);
     BytesColumnVector outV = new BytesColumnVector(intValues.length);
     batch.cols[1] = outV;
+    return batch;
+  }
+
+  // For CastDateToStringWithFormat
+  public static VectorizedRowBatch getVectorizedRowBatchDateInStringOutFormatted() {
+    VectorizedRowBatch batch = new VectorizedRowBatch(2);
+    LongColumnVector dateColumnV;
+    BytesColumnVector stringColumnV;
+    dateColumnV = new LongColumnVector();
+    stringColumnV = new BytesColumnVector();
+
+    dateColumnV.vector[0] = Date.valueOf("2018-01-01").toEpochMilli();
+    stringColumnV.vector[0] = "2018-01-01".getBytes(); // inV.initBuffer();inV.setVal(0, StandardCharsets.UTF_8.encode("true").array());
+    
+
+    batch.cols[0] = dateColumnV;
+    batch.cols[1] = stringColumnV;
+
+    batch.size = 1; // todo
     return batch;
   }
 
