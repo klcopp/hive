@@ -26,7 +26,9 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 
 import java.nio.charset.StandardCharsets;
 
-
+/**
+ * Vectorized UDF for CAST (<TIMESTAMP> TO STRING WITH FORMAT <STRING>).
+ */
 public class CastTimestampToStringWithFormat extends CastTimestampToString {
   private static final long serialVersionUID = 1L;
   private transient HiveDateTimeFormatter formatter;
