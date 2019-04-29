@@ -18,11 +18,9 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestampWithFormat;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.io.Text;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -35,7 +33,6 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastLongToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.TimestampConverter;
@@ -54,7 +51,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 @Description(name = "timestamp",
 value = "cast(date as timestamp) - Returns timestamp")
 @VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class,
-  CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class})
+  CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class,
+  CastStringToTimestampWithFormat.class})
 public class GenericUDFTimestamp extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
@@ -95,10 +93,7 @@ public class GenericUDFTimestamp extends GenericUDF {
       timestampFormat = getConstantStringValue(arguments, 1);
     }
     //END MARTIS STUFF
-    HiveDateTimeFormatter formatter = getDateTimeFormatter();
-    if (formatter instanceof HiveSqlDateTimeFormatter) {
-      this.formatter = formatter;
-    }
+    formatter = getSqlDateTimeFormatterOrNull();
 
     tc = new TimestampConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector);

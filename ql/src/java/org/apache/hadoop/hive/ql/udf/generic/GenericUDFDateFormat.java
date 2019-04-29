@@ -79,7 +79,7 @@ public class GenericUDFDateFormat extends GenericUDF {
       String fmtStr = getConstantStringValue(arguments, 1);
       if (fmtStr != null) {
         try {
-          formatter = getDateTimeFormatter();
+          formatter = getHiveDateTimeFormatter();
           formatter.setPattern(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         } catch (IllegalArgumentException e) {

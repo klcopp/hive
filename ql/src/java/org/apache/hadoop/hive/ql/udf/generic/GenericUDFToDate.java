@@ -18,12 +18,12 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDate;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDateWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDate;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -45,7 +45,8 @@ import org.apache.hadoop.io.Text;
     + "Example:\n "
     + "  > SELECT CAST('2009-01-01' AS DATE) FROM src LIMIT 1;\n"
     + "  '2009-01-01'")
-@VectorizedExpressions({CastStringToDate.class, CastTimestampToDate.class})
+@VectorizedExpressions({CastStringToDate.class, CastTimestampToDate.class,
+    CastStringToDateWithFormat.class})
 public class GenericUDFToDate extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
@@ -78,10 +79,7 @@ public class GenericUDFToDate extends GenericUDF {
           "The function CAST as DATE takes only primitive types");
     }
 
-    HiveDateTimeFormatter formatter = getDateTimeFormatter();
-    if (formatter instanceof HiveSqlDateTimeFormatter) {
-      this.formatter = formatter;
-    }
+    formatter = getSqlDateTimeFormatterOrNull();
 
     dc = new DateConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableDateObjectInspector);

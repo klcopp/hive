@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -58,10 +57,7 @@ public class GenericUDFToString extends GenericUDF {
           "The function STRING takes only primitive types");
     }
 
-    HiveDateTimeFormatter formatter = getDateTimeFormatter();
-    if (formatter instanceof HiveSqlDateTimeFormatter) {
-      this.formatter = formatter;
-    }
+    HiveDateTimeFormatter formatter = getSqlDateTimeFormatterOrNull();
 
     converter = new TextConverter(argumentOI);
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;

@@ -73,6 +73,10 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
+    func(outV, inV, i, format);
+  }
+
+  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i, HiveDateTimeFormatter format) {
     String formattedLocalDateTime = format.format(
         org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
 

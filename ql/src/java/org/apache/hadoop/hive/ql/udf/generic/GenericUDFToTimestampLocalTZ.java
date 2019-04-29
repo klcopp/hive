@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -78,11 +77,7 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
           "The function CAST as TIMESTAMP WITH LOCAL TIME ZONE takes only primitive types");
     }
 
-    HiveDateTimeFormatter formatter = getDateTimeFormatter();
-    if (formatter instanceof HiveSqlDateTimeFormatter) {
-      this.formatter = formatter;
-    }
-
+    formatter = getSqlDateTimeFormatterOrNull();
 
     SettableTimestampLocalTZObjectInspector outputOI = (SettableTimestampLocalTZObjectInspector)
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);

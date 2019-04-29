@@ -19,25 +19,23 @@
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.type.Date;
-import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 
 import java.nio.charset.StandardCharsets;
 
 
-public class CastDateToStringWithFormat extends CastDateToString {
+public class CastTimestampToStringWithFormat extends CastTimestampToString {
   private static final long serialVersionUID = 1L;
-  protected transient Date dt;
   private transient HiveDateTimeFormatter formatter;
 
-  public CastDateToStringWithFormat() {
+  public CastTimestampToStringWithFormat() {
     super();
   }
 
-  public CastDateToStringWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
+  public CastTimestampToStringWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {
@@ -51,17 +49,9 @@ public class CastDateToStringWithFormat extends CastDateToString {
     formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8));
   }
 
-  // The assign method will be overridden for CHAR and VARCHAR.
-  protected void assign(BytesColumnVector outV, int i, byte[] bytes, int length) {
-    outV.setVal(i, bytes, 0, length);
-  }
-
   @Override
-  protected void func(BytesColumnVector outV, long[] vector, int i) {
-    byte[] temp = formatter.format(
-        Timestamp.ofEpochMilli(Date.ofEpochDay((int) vector[i]).toEpochMilli()))
-        .getBytes();
-    assign(outV, i, temp, temp.length);
+  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
+    super.func(outV, inV, i, formatter);
   }
 
   @Override
@@ -70,7 +60,7 @@ public class CastDateToStringWithFormat extends CastDateToString {
     b.setMode(VectorExpressionDescriptor.Mode.PROJECTION)
         .setNumArguments(2)
         .setArgumentTypes(
-            VectorExpressionDescriptor.ArgumentType.INT_FAMILY,
+            VectorExpressionDescriptor.ArgumentType.TIMESTAMP,
             VectorExpressionDescriptor.ArgumentType.STRING)
         .setInputExpressionTypes(
             VectorExpressionDescriptor.InputExpressionType.COLUMN,
@@ -78,3 +68,4 @@ public class CastDateToStringWithFormat extends CastDateToString {
     return b.build();
   }
 }
+

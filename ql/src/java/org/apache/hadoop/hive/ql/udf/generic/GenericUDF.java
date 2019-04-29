@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
@@ -644,17 +645,38 @@ public abstract class GenericUDF implements Closeable {
     }
   }
 
-  protected HiveDateTimeFormatter getDateTimeFormatter() {
-    boolean useSqlFormat = false;
+
+  /**
+   * For cast...(...with format...) UDFs between strings and datetime types.
+   * Vectorized UDFs also use this.
+   * @return
+   */
+  public static HiveDateTimeFormatter getHiveDateTimeFormatter() {
+    HiveDateTimeFormatter formatter;
+    boolean useSqlFormat = HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT.defaultBoolVal;
     SessionState ss = SessionState.get();
     if (ss != null) {
       useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
 
     if (useSqlFormat) {
-      return new HiveSqlDateTimeFormatter();
+      formatter = new HiveSqlDateTimeFormatter();
     } else {
-      return new HiveSimpleDateFormatter();
+      formatter = new HiveSimpleDateFormatter();
+      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
+    return formatter;
+  }
+
+  /**
+   * For functions that only need a HiveDateTimeFormatter if it is for SQL:2016 formats.
+   * Otherwise we return null.
+   */
+  public static HiveDateTimeFormatter getSqlDateTimeFormatterOrNull() {
+    HiveDateTimeFormatter formatter = getHiveDateTimeFormatter();
+    if (formatter instanceof HiveSqlDateTimeFormatter) {
+      return formatter;
+    }
+    return null;
   }
 }

@@ -79,8 +79,8 @@ public class GenericUDFAddMonths extends GenericUDF {
         checkArgPrimitive(arguments, 2);
         checkArgGroups(arguments, 2, tsInputTypes, STRING_GROUP);
         String fmtStr = getConstantStringValue(arguments, 2);
-        if (fmtStr != null) {
-          formatter = getDateTimeFormatter();
+        if (fmtStr != null) { //todo this needs redoing, too much repetition frogmethod
+          formatter = getHiveDateTimeFormatter();
           formatter.setPattern(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
@@ -92,7 +92,7 @@ public class GenericUDFAddMonths extends GenericUDF {
     if (formatter == null) {
       //If the DateFormat is not provided by the user or is invalid, use the default format yyyy-MM-dd
 //      formatter = DateUtils.getDateFormat(); //TODO frogmethod: this was the threadlocal
-      formatter = getDateTimeFormatter();
+      formatter = getHiveDateTimeFormatter();
       formatter.setPattern("yyyy-MM-dd");
       formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }

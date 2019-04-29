@@ -82,7 +82,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
       }
     }
 
-    formatter = getDateTimeFormatter();
+    formatter = getHiveDateTimeFormatter();
     formatter.setPattern(lasPattern);
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 

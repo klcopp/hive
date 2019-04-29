@@ -43,6 +43,7 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastBooleanToVarCharVia
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastCharToBinary;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToString;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToStringWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToVarChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToDecimal;
@@ -70,6 +71,7 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDouble;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToString;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToStringWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToVarChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.ConstantVectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.ConvertDecimal64ToDecimal;
@@ -2225,9 +2227,12 @@ import com.google.common.annotations.VisibleForTesting;
   private VectorExpression getIdentityForDateToDate(List<ExprNodeDesc> childExprs,
       TypeInfo returnTypeInfo)
           throws HiveException {
-    if (childExprs.size() != 1) {
+    if (childExprs.size() < 1) {
       return null;
+    } else if (childExprs.size() > 1) {
+      return null; //frogmethod todo i think castStringToDateWithFormat
     }
+    // one childExprs
     TypeInfo childTypeInfo = childExprs.get(0).getTypeInfo();
     if (childTypeInfo.getCategory() != Category.PRIMITIVE ||
         ((PrimitiveTypeInfo) childTypeInfo).getPrimitiveCategory() != PrimitiveCategory.DATE) {
@@ -3139,13 +3144,18 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      if (childExpr.size() == 2) { //frogmethod todo
-//        return createVectorExpression(CastDateToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
-      } else {
+      if (childExpr.size() < 2) { //second argument will be format string
         return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastDateToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
       }
     } else if (isTimestampFamily(inputType)) {
-      return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) { //second argument will be format string
+        return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastTimestampToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
+      
     } else if (isStringFamily(inputType)) {
 
       // STRING and VARCHAR types require no conversion, so use a no-op.
