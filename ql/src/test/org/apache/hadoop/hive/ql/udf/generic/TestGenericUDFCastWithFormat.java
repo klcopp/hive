@@ -37,7 +37,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
     testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy-MM-dd", "2009-07-30");
-    //TODO
+    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy", "2009");
   }
 
   @Test
@@ -45,6 +45,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToDate();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(udf, inputOI, "2009-07-30", "yyyy-MM-dd", "2009-07-30");
+    testCast(udf, inputOI, "2009-07-30", "yyyy", "2009-01-01");
     //TODO
   }
 
@@ -53,14 +54,16 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFTimestamp();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
+    testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy", "2009-01-01 00:00:00");
     //TODO
   }
 
   @Test
   public void testStringToTimestampTZWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
-    ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/New_York"));
+    ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/New_York")); //frogmethod probably needs to be local tz.
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
+    testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-MM-dd HH:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
     testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-MM-dd HH:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
     //TODO
   }
@@ -70,6 +73,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy", "2009");
     //TODO
   }
 
@@ -78,6 +82,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampTZObjectInspector;
     testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-MM-dd HH:mm:ss", "1969-12-31 16:00:00.0 US/Pacific");
+    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy", "1969");
     //TODO
   }
 

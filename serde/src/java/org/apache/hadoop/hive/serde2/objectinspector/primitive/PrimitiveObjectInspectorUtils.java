@@ -1199,6 +1199,10 @@ public final class PrimitiveObjectInspectorUtils {
     return getTimestamp(o, oi, false);
   }
 
+  public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector oi, HiveDateTimeFormatter formatter) {
+    return getTimestamp(o, oi, false, formatter);
+  }
+
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI, boolean intToTimestampInSeconds) {
     return getTimestamp(o, inputOI, intToTimestampInSeconds, null);
   }
@@ -1328,7 +1332,7 @@ public final class PrimitiveObjectInspectorUtils {
     case STRING: {
       StringObjectInspector soi = (StringObjectInspector) oi;
       String s = soi.getPrimitiveJavaObject(o).trim();
-      return TimestampTZUtil.parseOrNull(trimNanoTimestamp(s), timeZone);
+      return TimestampTZUtil.parseOrNull(trimNanoTimestamp(s), timeZone, formatter);
     }
     case CHAR:
     case VARCHAR: {

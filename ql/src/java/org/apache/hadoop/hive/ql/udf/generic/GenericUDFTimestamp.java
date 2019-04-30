@@ -87,17 +87,19 @@ public class GenericUDFTimestamp extends GenericUDF {
           "The function TIMESTAMP takes only primitive types");
     }
 
-    //MARTIS STUFF
-    String timestampFormat = null;
-    if (arguments.length > 1 && arguments[1] != null) {
-      timestampFormat = getConstantStringValue(arguments, 1);
-    }
-    //END MARTIS STUFF
-    formatter = getSqlDateTimeFormatterOrNull();
-
     tc = new TimestampConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector);
     tc.setIntToTimestampInSeconds(intToTimestampInSeconds);
+
+    formatter = getSqlDateTimeFormatterOrNull();
+    //frogmethod well i'm not sure
+//    if (arguments.length > 1 && arguments[1] != null) {
+//      formatter = getSqlDateTimeFormatterOrNull();
+//      if (formatter != null) {
+//        formatter.setPattern(getConstantStringValue(arguments, 1));
+//        tc.setDateTimeFormatter(formatter);
+//      }
+//    }
 
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
   }
@@ -109,7 +111,7 @@ public class GenericUDFTimestamp extends GenericUDF {
       return null;
     }
 
-    if (formatter != null && arguments.length > 1) {
+    if (formatter != null && arguments.length > 1 && arguments[1] != null) {
       Object o1 = arguments[1].get();
       //assuming the 2nd argument is the format and is a StringWritable
       Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(

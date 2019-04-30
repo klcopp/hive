@@ -34,6 +34,8 @@ import java.time.temporal.TemporalAccessor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +112,23 @@ public class TimestampTZUtil {
     return s;
   }
 
+  public static TimestampTZ parseOrNull(
+      String s, ZoneId convertToTimeZone, HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return parseOrNull(s, convertToTimeZone);
+    }
+
+    Timestamp ts;
+    try {
+      ts = formatter.parse(s);
+    } catch (ParseException e) {
+      return null;
+    }
+    TimestampTZ tsLTZ = new TimestampTZ(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
+    // change time zone to default timeZone, retaining same instant
+    tsLTZ.setZonedDateTime(tsLTZ.getZonedDateTime().withZoneSameInstant(convertToTimeZone));
+    return tsLTZ;
+  }
 
   public static TimestampTZ parseOrNull(String s, ZoneId defaultTimeZone) {
     try {

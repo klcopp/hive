@@ -56,7 +56,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   // unused methods
-  @Override public void setTimeZone(TimeZone timeZone) {}
+  @Override public void setTimeZone(TimeZone timeZone) {} //frogmethod might be needed for tsLocalTz
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
     throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "

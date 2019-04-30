@@ -19,7 +19,9 @@ package org.apache.hadoop.hive.serde2.io;
 
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
+import org.apache.hadoop.hive.common.type.TimestampTZUtil;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
 import org.apache.hadoop.io.WritableComparable;
@@ -30,6 +32,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.TimeZone;
 
 /**
  * Writable for TimestampTZ. Copied from TimestampWritableV2.
@@ -248,9 +251,17 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     return timestampTZ.toString();
   }
 
-  public String toStringFormatted(HiveDateTimeFormatter formatter) { //TODO: no format method yet
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+
     populateTimestampTZ();
-    return timestampTZ.toString();
+    Timestamp ts = Timestamp.ofEpochSecond(
+        timestampTZ.getZonedDateTime().toEpochSecond(),
+        timestampTZ.getNanos());
+    formatter.setTimeZone(TimeZone.getTimeZone(timestampTZ.getZonedDateTime().getZone())); //frogmethod only use if time zone is needed. also this isn't implemented in hivesqlformatter.
+    return formatter.format(ts);
   }
 
   @Override

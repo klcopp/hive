@@ -57,7 +57,7 @@ public class GenericUDFToString extends GenericUDF {
           "The function STRING takes only primitive types");
     }
 
-    HiveDateTimeFormatter formatter = getSqlDateTimeFormatterOrNull();
+    formatter = getSqlDateTimeFormatterOrNull();
 
     converter = new TextConverter(argumentOI);
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
