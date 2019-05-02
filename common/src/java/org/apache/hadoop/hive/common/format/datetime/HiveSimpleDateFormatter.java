@@ -57,6 +57,10 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
     format.applyPattern(pattern);
   }
 
+  @Override public String getPattern() {
+    return format.toPattern();
+  }
+
   @Override public void setTimeZone(TimeZone timeZone) {
     format.setTimeZone(timeZone);
   }

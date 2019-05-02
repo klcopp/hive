@@ -50,6 +50,9 @@ public class HiveJavaDateTimeFormatter implements HiveDateTimeFormatter {
 
   // unused methods
   @Override public void setPattern(String pattern) {}
+  @Override public String getPattern() {
+    return null;
+  }
   @Override public void setTimeZone(TimeZone timeZone) {}
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {

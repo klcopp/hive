@@ -60,11 +60,18 @@ public interface HiveDateTimeFormatter {
    * Different HiveDateTimeFormatter implementations interpret some patterns differently. For
    * example, HiveSimpleDateFormatter interprets the string "mm" as minute, while
    * HiveSqlDateTimeFormatter interprets it as month.
+   * This method parses the pattern into tokens, so it comes with some performance overhead.
    */
   void setPattern(String pattern);
+
+  /**
+   * Get the format pattern to be used for formatting timestamps or parsing strings.
+   */
+  String getPattern();
 
   /**
    * Set the time zone of the formatter. Only HiveSimpleDateFormatter uses this.
    */
   void setTimeZone(TimeZone timeZone);
+
 }

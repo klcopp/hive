@@ -18,11 +18,13 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.SettableUDF;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
@@ -76,12 +78,18 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
       throw new UDFArgumentException(
           "The function CAST as TIMESTAMP WITH LOCAL TIME ZONE takes only primitive types");
     }
-
-    formatter = getSqlDateTimeFormatterOrNull();
-
     SettableTimestampLocalTZObjectInspector outputOI = (SettableTimestampLocalTZObjectInspector)
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
     converter = new TimestampLocalTZConverter(argumentOI, outputOI);
+
+    // for CAST WITH FORMAT
+    formatter = new HiveSqlDateTimeFormatter(); //frogmethod getSqlDateTimeFormatterOrNull();
+    if (/*formatter != null && */arguments.length > 1 && arguments[1] != null) {
+      Text pattern = (Text) ((ConstantObjectInspector) arguments[1]).getWritableConstantValue();
+      formatter.setPattern(pattern.toString());
+      converter.setDateTimeFormatter(formatter);
+    }
+
     return outputOI;
   }
 
@@ -92,14 +100,25 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
       return null;
     }
 
-    if (formatter != null && arguments.length > 1) {
-      Object o1 = arguments[1].get();
-      //assuming the 2nd argument is the format and is a StringWritable
-      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
-          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      formatter.setPattern(formatText.toString());
-      converter.setDateTimeFormatter(formatter);
-    }
+//    // for CAST WITH FORMAT
+//    if (arguments.length > 1 && arguments[1] != null) {
+//      if (formatter == null) {
+//        formatter = getSqlDateTimeFormatterOrNull();
+//      }
+//      if (formatter != null) {
+//        //assume the 2nd argument is the format and is a StringWritable
+//        String formatString = new PrimitiveObjectInspectorConverter.TextConverter(
+//            PrimitiveObjectInspectorFactory.writableStringObjectInspector)
+//            .convert(arguments[1].get()).toString();
+//
+//        // update the pattern if it has changed
+//        if (formatter.getPattern() == null || !formatString.equals(formatter.getPattern())) {
+//          formatter.setPattern(formatString);
+//        }
+//        converter.setDateTimeFormatter(formatter);
+//      }
+//    }
+
     return converter.convert(o0);
   }
 

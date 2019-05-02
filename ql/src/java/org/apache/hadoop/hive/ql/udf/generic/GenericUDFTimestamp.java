@@ -116,7 +116,10 @@ public class GenericUDFTimestamp extends GenericUDF {
       //assuming the 2nd argument is the format and is a StringWritable
       Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
           PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      formatter.setPattern(formatText.toString());
+      //update pattern
+      if (!formatText.equals(formatter.getPattern())) {
+        formatter.setPattern(formatText.toString());
+      }
       tc.setDateTimeFormatter(formatter);
     }
     return tc.convert(o0);

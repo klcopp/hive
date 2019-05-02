@@ -296,7 +296,7 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestamp(input,
-          inputOI, formatter));
+          inputOI, intToTimestampInSeconds, formatter));
     }
 
     public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {

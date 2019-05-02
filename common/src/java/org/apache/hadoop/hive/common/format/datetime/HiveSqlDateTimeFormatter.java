@@ -40,12 +40,16 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     this.pattern = pattern;
   }
 
+  @Override public String getPattern() {
+    return pattern;
+  }
+
   @Override public String format(Timestamp ts) {
     //TODO replace with actual implementation:
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     formatter.setPattern(pattern);
-    formatter.setTimeZone(timeZone);
-//    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    if (timeZone != null) formatter.setTimeZone(timeZone);
+    else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     return formatter.format(ts);
   }
 
@@ -55,9 +59,13 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     formatter.setPattern(pattern);
-    formatter.setTimeZone(timeZone);
-//    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
-    return formatter.parse(string);
+    if (timeZone != null) formatter.setTimeZone(timeZone);
+    else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    try {
+      return formatter.parse(string);
+    } catch (Exception e) {
+      throw new ParseException(e);
+    }
   }
 
   @Override public void setTimeZone(TimeZone timeZone) {

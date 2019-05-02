@@ -124,6 +124,9 @@ public class TimestampTZUtil {
     } catch (ParseException e) {
       return null;
     }
+    if (ts == null) {
+      return null;
+    }
     TimestampTZ tsLTZ = new TimestampTZ(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
     // change time zone to default timeZone, retaining same instant
     tsLTZ.setZonedDateTime(tsLTZ.getZonedDateTime().withZoneSameInstant(convertToTimeZone));

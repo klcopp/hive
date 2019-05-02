@@ -9,8 +9,11 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.apache.hadoop.hive.serde2.io.TimestampLocalTZWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritableV2;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
@@ -63,7 +66,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
     ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles")); //frogmethod probably needs to be local tz.
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00.0 America/Los_Angeles"); //TODO frogmethod change to 04:00 because America/NewYork gets ignrored
+    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 04:00:00.0 America/Los_Angeles");
     //TODO
   }
 
@@ -89,7 +92,10 @@ public class TestGenericUDFCastWithFormat {
       GenericUDF udf, ObjectInspector inputOI, Object input, String format, String output)
       throws HiveException {
 
-    ObjectInspector[] arguments = {inputOI};
+    ConstantObjectInspector formatOI =
+        PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            TypeInfoFactory.getPrimitiveTypeInfo("string"), new Text(format));
+    ObjectInspector[] arguments = {inputOI, formatOI};
     udf.initialize(arguments);
 
     GenericUDF.DeferredObject valueObj = new GenericUDF.DeferredJavaObject(input);
