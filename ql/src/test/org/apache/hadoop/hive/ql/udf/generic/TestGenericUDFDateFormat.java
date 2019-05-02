@@ -171,6 +171,30 @@ public class TestGenericUDFDateFormat extends TestCase {
     runAndVerifyStr("2015-04-05", null, udf);
   }
 
+  public void testSqlDateFormats() throws HiveException {
+    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    GenericUDFDateFormat udf = new GenericUDFDateFormat();
+    ObjectInspector valueOI0 = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+
+    // format 1
+    Text fmtText = new Text("yyyy");
+    ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
+    ObjectInspector[] arguments = { valueOI0, valueOI1 };
+    udf.initialize(arguments);
+
+    runAndVerifyStr("2015-04-05", "2015", udf);
+
+    // format 2
+    fmtText = new Text("MM"); //TODO mm
+    valueOI1 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
+    arguments[1] = valueOI1;
+    udf.initialize(arguments);
+
+    runAndVerifyStr("2015-04-05", "04", udf);
+  }
+
   private void runAndVerifyStr(String str, String expResult, GenericUDF udf)
       throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new Text(str) : null);

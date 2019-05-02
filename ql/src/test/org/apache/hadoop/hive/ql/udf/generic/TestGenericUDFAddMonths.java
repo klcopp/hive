@@ -214,7 +214,34 @@ public class TestGenericUDFAddMonths extends TestCase {
     }
   }
 
+  public void testSqlDateFormats() throws HiveException {
+    //set hive.use.sql.datetime.formats to true //frogmethod todo need to reset this?
+    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
 
+    GenericUDFAddMonths udf = new GenericUDFAddMonths();
+    ObjectInspector valueOI0 = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+    ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.writableIntObjectInspector;
+
+    // format 1
+    Text formatPatternYear = new Text("yyyy");
+    ObjectInspector valueOI2 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo,
+            formatPatternYear);
+    ObjectInspector[] arguments = {valueOI0, valueOI1, valueOI2};
+    udf.initialize(arguments);
+
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear,"2013", udf);
+
+    // format 2
+    Text formatPatternHour = new Text("HH"); // frogmethod todo hh24
+    valueOI2 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo,
+            formatPatternHour);
+    arguments[2] = valueOI2;
+    udf.initialize(arguments);
+
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear,"23", udf);
+  }
 
   private void runAndVerify(String str, int months, String expResult, GenericUDF udf)
       throws HiveException {

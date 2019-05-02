@@ -32,6 +32,7 @@ import java.util.TimeZone;
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   private String pattern;
+  private TimeZone timeZone;
 
   public HiveSqlDateTimeFormatter() {}
 
@@ -43,20 +44,27 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     //TODO replace with actual implementation:
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     formatter.setPattern(pattern);
-    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    formatter.setTimeZone(timeZone);
+//    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     return formatter.format(ts);
   }
 
   @Override public Timestamp parse(String string) throws ParseException {
     //TODO replace with actual implementation:
+    // todo should be able to remove the time zone (city) from tstzs; if it doesn't then deal with it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId, org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
+
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     formatter.setPattern(pattern);
-    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+    formatter.setTimeZone(timeZone);
+//    formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     return formatter.parse(string);
   }
 
+  @Override public void setTimeZone(TimeZone timeZone) {
+    this.timeZone = timeZone;
+  }
+
   // unused methods
-  @Override public void setTimeZone(TimeZone timeZone) {} //frogmethod might be needed for tsLocalTz
   @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
       throws WrongFormatterException {
     throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "

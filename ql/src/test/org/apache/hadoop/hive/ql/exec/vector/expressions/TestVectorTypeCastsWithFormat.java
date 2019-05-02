@@ -2,13 +2,12 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFCastWithFormat;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,11 +19,8 @@ public class TestVectorTypeCastsWithFormat {
 
   @BeforeClass
   public static void setup() {
-    SessionState ss = SessionState.get();
-    if (ss == null) {
-      ss = SessionState.start(new HiveConf());
-    }
-    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, true);
+    //set hive.use.sql.datetime.formats to true
+    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
   }
 
   @Test

@@ -24,7 +24,7 @@ import static junit.framework.TestCase.assertNull;
 public class TestGenericUDFCastWithFormat {
 
   @BeforeClass
-  public static void setup() {
+  public static void turnOnSqlDateTimeFormats() {
     SessionState ss = SessionState.get();
     if (ss == null) {
       ss = SessionState.start(new HiveConf());
@@ -61,10 +61,9 @@ public class TestGenericUDFCastWithFormat {
   @Test
   public void testStringToTimestampTZWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
-    ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/New_York")); //frogmethod probably needs to be local tz.
+    ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles")); //frogmethod probably needs to be local tz.
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-MM-dd HH:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
-    testCast(udf, inputOI, "2009-07-30 00:00:00 America/Los_Angeles", "yyyy-MM-dd HH:mm:ss", "2009-07-30 03:00:00.0 America/New_York");
+    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00.0 America/Los_Angeles"); //TODO frogmethod change to 04:00 because America/NewYork gets ignrored
     //TODO
   }
 
@@ -81,7 +80,7 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampTZToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampTZObjectInspector;
-    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-MM-dd HH:mm:ss", "1969-12-31 16:00:00.0 US/Pacific");
+    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-MM-dd HH:mm:ss", "1969-12-31 16:00:00");
     testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy", "1969");
     //TODO
   }
