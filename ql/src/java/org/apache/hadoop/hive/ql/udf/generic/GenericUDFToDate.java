@@ -18,7 +18,10 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
@@ -29,12 +32,10 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.DateConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping;
-import org.apache.hadoop.io.Text;
 
 /**
  * GenericUDFToDate
@@ -52,6 +53,7 @@ public class GenericUDFToDate extends GenericUDF {
   private transient PrimitiveObjectInspector argumentOI;
   private transient DateConverter dc;
   private HiveDateTimeFormatter formatter = null;
+  private boolean useSql;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -79,7 +81,10 @@ public class GenericUDFToDate extends GenericUDF {
           "The function CAST as DATE takes only primitive types");
     }
 
-    formatter = getSqlDateTimeFormatterOrNull();
+    // for CAST WITH FORMAT
+    if (useSql || useSqlFormat()) {
+      formatter = new HiveSqlDateTimeFormatter();
+    }
 
     dc = new DateConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableDateObjectInspector);
@@ -93,12 +98,7 @@ public class GenericUDFToDate extends GenericUDF {
       return null;
     }
 
-    if (formatter != null && arguments.length > 1) {
-      Object o1 = arguments[1].get();
-      //assuming the 2nd argument is the format and is a StringWritable
-      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
-          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      formatter.setPattern(formatText.toString());
+    if (setFormatPattern(arguments, formatter)) {
       dc.setDateTimeFormatter(formatter);
     }
     return dc.convert(o0);
@@ -106,12 +106,27 @@ public class GenericUDFToDate extends GenericUDF {
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1);
+    assert (children.length == 1 || children.length == 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS DATE)");
+    sb.append(" AS DATE");
+    if (children.length == 2) {
+      sb.append(" FORMAT ");
+      sb.append(children[1]);
+    }
+    sb.append(")");
     return sb.toString();
   }
 
+  /**
+   * Get whether or not to use Sql formats.
+   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
+   * MapredContext conf. This is only called in runtime of MapRedTask.
+   */
+  @Override public void configure(MapredContext context) {
+    super.configure(context);
+    useSql =
+        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
+  }
 }

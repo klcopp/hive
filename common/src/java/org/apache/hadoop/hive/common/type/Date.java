@@ -157,17 +157,12 @@ public class Date implements Comparable<Date> {
     return new Date(localDate);
   }
 
-  public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
+  public static Date valueOf(String s, HiveDateTimeFormatter formatter) throws ParseException {
     if (formatter == null) {
       return valueOf(s);
     }
     s = s.trim();
-    try {
-      return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
-    } catch (ParseException e) {
-      // Fall back to original
-      return valueOf(s);
-    }
+    return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
   }
 
   public static Date ofEpochDay(int epochDay) {

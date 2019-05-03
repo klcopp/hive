@@ -3155,7 +3155,6 @@ import com.google.common.annotations.VisibleForTesting;
       } else {
         return createVectorExpression(CastTimestampToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
       }
-      
     } else if (isStringFamily(inputType)) {
 
       // STRING and VARCHAR types require no conversion, so use a no-op.

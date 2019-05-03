@@ -54,12 +54,14 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.C
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 
 /**
  * A Generic User-defined function (GenericUDF) for the use with Hive.
@@ -646,20 +648,22 @@ public abstract class GenericUDF implements Closeable {
   }
 
 
-  /**
-   * For cast...(...with format...) UDFs between strings and datetime types.
-   * Vectorized UDFs also use this.
-   * @return
-   */
-  public static HiveDateTimeFormatter getHiveDateTimeFormatter() {
-    HiveDateTimeFormatter formatter;
+  static boolean useSqlFormat() {
     boolean useSqlFormat = HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT.defaultBoolVal;
     SessionState ss = SessionState.get();
     if (ss != null) {
       useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
     }
+    return useSqlFormat;
+  }
 
-    if (useSqlFormat) {
+  /**
+   * For cast...(...with format...) UDFs between strings and datetime types.
+   * @return either a HiveSimpleDateFormatter or a HiveSqlDateTimeFormatter, depending on conf.
+   */
+  public static HiveDateTimeFormatter getHiveDateTimeFormatter() {
+    HiveDateTimeFormatter formatter;
+    if (useSqlFormat()) {
       formatter = new HiveSqlDateTimeFormatter();
     } else {
       formatter = new HiveSimpleDateFormatter();
@@ -670,7 +674,8 @@ public abstract class GenericUDF implements Closeable {
 
   /**
    * For functions that only need a HiveDateTimeFormatter if it is for SQL:2016 formats.
-   * Otherwise we return null.
+   * Otherwise return null.
+   * Vectorized UDFs also use this.
    */
   public static HiveDateTimeFormatter getSqlDateTimeFormatterOrNull() {
     HiveDateTimeFormatter formatter = getHiveDateTimeFormatter();
@@ -678,5 +683,31 @@ public abstract class GenericUDF implements Closeable {
       return formatter;
     }
     return null;
+  }
+
+  /**
+   * For CAST AS FORMAT. Takes the second (format pattern) argument if it exists and assigns it to
+   * the formatter.
+   * Can be called from GenericUDF#evaluate.
+   * @return true if formatter is succesfully set up with a non-null pattern.
+   */
+  static boolean setFormatPattern(DeferredObject[] arguments, HiveDateTimeFormatter formatter)
+      throws HiveException {
+
+    if (formatter != null && arguments.length > 1 && arguments[1] != null) {
+      Object o1 = arguments[1].get();
+      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
+      //update pattern if necessary
+      if (formatter.getPattern() == null ||
+          !formatText.toString().equals(formatter.getPattern())) {
+        formatter.setPattern(formatText.toString());
+      }
+      return formatter.getPattern() != null;
+    }
+    return false;
+    //frogmethod
+//    formatter.setPattern(getConstantStringValue(arguments, 1));
+    //        tc.setDateTimeFormatter(formatter);
   }
 }

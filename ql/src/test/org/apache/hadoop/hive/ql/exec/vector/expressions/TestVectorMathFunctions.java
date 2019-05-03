@@ -162,7 +162,7 @@ public class TestVectorMathFunctions {
     dateColumnV.vector[3] = Date.valueOf("1580-08-08").toEpochDay();
     dateColumnV.vector[4] = Date.valueOf("0005-01-01").toEpochDay();
     dateColumnV.vector[5] = Date.valueOf("9999-12-31").toEpochDay();
-    
+
     batch.cols[0] = dateColumnV;
     batch.cols[1] = stringColumnV;
     batch.size = 6;

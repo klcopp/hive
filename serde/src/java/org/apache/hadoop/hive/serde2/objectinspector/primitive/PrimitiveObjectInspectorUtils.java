@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -1179,11 +1180,16 @@ public final class PrimitiveObjectInspectorUtils {
   private final static int DATE_LENGTH = "YYYY-MM-DD".length();
   private static Date getDateFromString(String s, HiveDateTimeFormatter formatter) {
 
+    // with SQL formats
     if (formatter != null) {
-      return Date.valueOf(s, formatter);
+      try {
+        return Date.valueOf(s, formatter);
+      } catch (ParseException e) {
+        return null;
+      }
     }
 
-    // Else don't use alternative formats for parsing
+    // without SQL formats
     if (s.length() == DATE_LENGTH) {
       return Date.valueOf(s);
     } else {

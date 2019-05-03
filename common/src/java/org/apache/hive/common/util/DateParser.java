@@ -18,6 +18,7 @@
 package org.apache.hive.common.util;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Date;
 
 /**
@@ -44,7 +45,7 @@ public class DateParser {
     Date parsedVal;
     try {
       parsedVal = Date.valueOf(strValue, formatter);
-    } catch (IllegalArgumentException e) { // frogmethod or ParseException or whatever it will throw
+    } catch (IllegalArgumentException | ParseException e) {
       parsedVal = null;
     }
     if (parsedVal == null) {

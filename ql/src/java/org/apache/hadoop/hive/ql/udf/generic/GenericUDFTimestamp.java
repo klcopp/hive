@@ -18,9 +18,10 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestampWithFormat;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -57,6 +58,8 @@ public class GenericUDFTimestamp extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient TimestampConverter tc;
+  private HiveDateTimeFormatter formatter = null;
+  private boolean useSql;
   /*
    * Integer value was interpreted to timestamp inconsistently in milliseconds comparing
    * to float/double in seconds. Since the issue exists for a long time and some users may
@@ -65,7 +68,6 @@ public class GenericUDFTimestamp extends GenericUDF {
    * otherwise, it's interpreted as timestamp in seconds.
    */
   private boolean intToTimestampInSeconds = false;
-  private HiveDateTimeFormatter formatter = null;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -91,15 +93,10 @@ public class GenericUDFTimestamp extends GenericUDF {
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector);
     tc.setIntToTimestampInSeconds(intToTimestampInSeconds);
 
-    formatter = getSqlDateTimeFormatterOrNull();
-    //frogmethod well i'm not sure
-//    if (arguments.length > 1 && arguments[1] != null) {
-//      formatter = getSqlDateTimeFormatterOrNull();
-//      if (formatter != null) {
-//        formatter.setPattern(getConstantStringValue(arguments, 1));
-//        tc.setDateTimeFormatter(formatter);
-//      }
-//    }
+    // for CAST WITH FORMAT
+    if (useSql || useSqlFormat()) {
+      formatter = new HiveSqlDateTimeFormatter();
+    }
 
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
   }
@@ -110,16 +107,7 @@ public class GenericUDFTimestamp extends GenericUDF {
     if (o0 == null) {
       return null;
     }
-
-    if (formatter != null && arguments.length > 1 && arguments[1] != null) {
-      Object o1 = arguments[1].get();
-      //assuming the 2nd argument is the format and is a StringWritable
-      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
-          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      //update pattern
-      if (!formatText.equals(formatter.getPattern())) {
-        formatter.setPattern(formatText.toString());
-      }
+    if (setFormatPattern(arguments, formatter)) {
       tc.setDateTimeFormatter(formatter);
     }
     return tc.convert(o0);
@@ -127,15 +115,31 @@ public class GenericUDFTimestamp extends GenericUDF {
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1);
+    assert (1 <= children.length && children.length <= 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS TIMESTAMP)");
+    sb.append(" AS TIMESTAMP");
+    if (children.length == 2) {
+      sb.append(" FORMAT ");
+      sb.append(children[1]);
+    }
+    sb.append(")");
     return sb.toString();
   }
 
   public boolean isIntToTimestampInSeconds() {
     return intToTimestampInSeconds;
+  }
+
+  /**
+   * Get whether or not to use Sql formats.
+   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
+   * MapredContext conf. This is only called in runtime of MapRedTask.
+   */
+  @Override public void configure(MapredContext context) {
+    super.configure(context);
+    useSql =
+        HiveConf.getBoolVar(context.getJobConf(), ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }

@@ -70,4 +70,3 @@ public class CastTimestampToStringWithFormat extends CastTimestampToString {
     return b.build();
   }
 }
-

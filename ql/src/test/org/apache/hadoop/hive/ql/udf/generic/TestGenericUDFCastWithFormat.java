@@ -66,7 +66,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
     ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles")); //frogmethod probably needs to be local tz.
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 04:00:00.0 America/Los_Angeles");
+    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00.0 America/Los_Angeles"); //frogmethod change to HH=04 eventually
     //TODO
   }
 
