@@ -18,9 +18,7 @@
 package org.apache.hadoop.hive.common.type;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
-import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,12 +57,9 @@ public class Date implements Comparable<Date> {
   }
 
   private LocalDate localDate;
-  private HiveDateTimeFormatter printFormatter;
-  private HiveDateTimeFormatter parseFormatter;
 
   private Date(LocalDate localDate) {
     this.localDate = localDate != null ? localDate : EPOCH;
-    initFormatters();
   }
 
   public Date() {
@@ -75,21 +70,16 @@ public class Date implements Comparable<Date> {
     this(d.localDate);
   }
 
-
-  private void initFormatters() {
-    try {
-      printFormatter = new HiveJavaDateTimeFormatter();
-      printFormatter.setFormatter(PRINT_FORMATTER);
-      parseFormatter = new HiveJavaDateTimeFormatter();
-      parseFormatter.setFormatter(PARSE_FORMATTER);
-    } catch (WrongFormatterException e) {
-      throw new RuntimeException("Wrong formatter", e);
-    }
-  }
-
   @Override
   public String toString() {
-    return printFormatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
+    return localDate.format(PRINT_FORMATTER);
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+    return formatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
   }
 
   public int hashCode() {

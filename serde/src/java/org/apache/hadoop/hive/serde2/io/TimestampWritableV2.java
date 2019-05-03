@@ -389,14 +389,13 @@ public class TimestampWritableV2 implements WritableComparable<TimestampWritable
   }
 
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
-    if (formatter == null) {
+    if (formatter == null) { //frogmethod not sure (because toString() is pretty complicated)
       return toString();
     }
-
     if (timestampEmpty) {
       populateTimestamp();
     }
-    return formatter.format(timestamp);
+    return timestamp.toStringFormatted(formatter);
   }
 
   @Override

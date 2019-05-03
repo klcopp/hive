@@ -150,10 +150,7 @@ public class DateWritableV2 implements WritableComparable<DateWritableV2> {
   }
 
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
-    if (formatter == null) {
-      return toString();
-    }
-    return formatter.format(Timestamp.ofEpochMilli(date.toEpochMilli()));
+    return date.toStringFormatted(formatter);
   }
 
   @Override

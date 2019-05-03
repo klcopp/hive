@@ -17,10 +17,8 @@
  */
 package org.apache.hadoop.hive.common.type;
 
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
-import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -48,11 +46,8 @@ import static java.time.temporal.ChronoField.YEAR;
 public class Timestamp implements Comparable<Timestamp> {
   
   private static final LocalDateTime EPOCH = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
-
-  private HiveDateTimeFormatter printFormatter;
-  private HiveDateTimeFormatter parseFormatter;
-  private static final DateTimeFormatter PARSE_DATETIME_FORMATTER;
-  private static final DateTimeFormatter PRINT_DATETIME_FORMATTER;
+  private static final DateTimeFormatter PARSE_FORMATTER;
+  private static final DateTimeFormatter PRINT_FORMATTER;
 
   static {
     DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
@@ -72,13 +67,13 @@ public class Timestamp implements Comparable<Timestamp> {
         .appendValue(SECOND_OF_MINUTE, 1, 2, SignStyle.NORMAL)
         .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).optionalEnd()
         .optionalEnd();
-    PARSE_DATETIME_FORMATTER = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
+    PARSE_FORMATTER = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
     builder = new DateTimeFormatterBuilder();
     // Date and time parts
     builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     // Fractional part
     builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
-    PRINT_DATETIME_FORMATTER = builder.toFormatter();
+    PRINT_FORMATTER = builder.toFormatter();
   }
 
   private LocalDateTime localDateTime;
@@ -86,7 +81,6 @@ public class Timestamp implements Comparable<Timestamp> {
   /* Private constructor */
   private Timestamp(LocalDateTime localDateTime) {
     this.localDateTime = localDateTime != null ? localDateTime : EPOCH;
-    initFormatters();
   }
 
   public Timestamp() {
@@ -95,17 +89,6 @@ public class Timestamp implements Comparable<Timestamp> {
 
   public Timestamp(Timestamp t) {
     this(t.localDateTime);
-  }
-
-  private void initFormatters() {
-    try {
-      printFormatter = new HiveJavaDateTimeFormatter();
-      printFormatter.setFormatter(PRINT_DATETIME_FORMATTER);
-      parseFormatter = new HiveJavaDateTimeFormatter();
-      parseFormatter.setFormatter(PARSE_DATETIME_FORMATTER);
-    } catch (WrongFormatterException e) {
-      throw new RuntimeException("Wrong formatter", e);
-    }
   }
 
   public void set(Timestamp t) {
@@ -118,7 +101,14 @@ public class Timestamp implements Comparable<Timestamp> {
 
   @Override
   public String toString() {
-    return printFormatter.format(this);
+    return localDateTime.format(PRINT_FORMATTER);
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+    return formatter.format(this);
   }
 
   public int hashCode() {
@@ -174,7 +164,7 @@ public class Timestamp implements Comparable<Timestamp> {
     s = s.trim();
     LocalDateTime localDateTime;
     try {
-      localDateTime = LocalDateTime.parse(s, PARSE_DATETIME_FORMATTER);
+      localDateTime = LocalDateTime.parse(s, PARSE_FORMATTER);
     } catch (DateTimeParseException e) {
       // Try ISO-8601 format
       try {
