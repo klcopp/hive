@@ -18,11 +18,15 @@
 
 package org.apache.hadoop.hive.common.format.datetime;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -31,13 +35,78 @@ import java.util.TimeZone;
 
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
+  public static final int LONGEST_TOKEN_LENGTH = 5;
   private String pattern;
   private TimeZone timeZone;
+  private List<Token> tokens = new ArrayList<>();
 
   public HiveSqlDateTimeFormatter() {}
 
+  
+
+  private enum Token {
+    YEAR,
+    MONTH,
+    DAY_OF_MONTH,
+    HOUR_OF_DAY,
+    MINUTE,
+    SECOND
+  }
+  
+  private enum Separators {
+    //frogmethod not sure what this is for
+  }
+//  
+//  private final Map<Token, Set<String>> tokenMap1 = ImmutableMap.<Token, Set<String>>builder()
+//      .put(Token.YEAR, ImmutableSet.of("yyyy", "yyy", "yy", "y"))
+//      .put(Token.MONTH, ImmutableSet.of("mm"))
+//      .put(Token.DAY_OF_MONTH, ImmutableSet.of("dd"))
+//      .put(Token.HOUR_OF_DAY, ImmutableSet.of("hh"))
+//      .put(Token.MINUTE, ImmutableSet.of("mi"))
+//      .put(Token.SECOND, ImmutableSet.of("ss"))
+//      .build();
+
+  private final Map<String, Token> tokenMap = ImmutableMap.<String, Token>builder()
+      .put("yyyy", Token.YEAR)
+      .put("yyy", Token.YEAR)
+      .put("yy", Token.YEAR)
+      .put("y", Token.YEAR)
+      .put("mm", Token.MONTH)
+      .put("dd", Token.DAY_OF_MONTH)
+      .put("hh", Token.HOUR_OF_DAY)
+      .put("mi", Token.MINUTE)
+      .put("ss", Token.SECOND)
+      .build();
+  
+  
+
   @Override public void setPattern(String pattern) {
-    this.pattern = pattern;
+    this.pattern = pattern.toLowerCase().trim();
+
+    tokens.clear();
+    int curIndex = 0, end;
+    String candidate;
+    while (curIndex < pattern.length() - 1) {
+      for (int i=1; i < LONGEST_TOKEN_LENGTH; i++) { // todo check the range
+        end = curIndex + i; //range: 0, 0-1 ... 0-4
+        candidate = pattern.substring(curIndex, end); //todo init in loo;ps
+        if (tokenMap.keySet().contains(candidate)) {
+          tokens.add(tokenMap.get(candidate));
+          curIndex = end;
+          break;
+        }
+      }
+      
+    }
+//    find first separator (or beginning of string) in formatstring. save next separator existence and (length == 1)
+//    if not at formatstring end:
+//    parse next token . this means:
+//    for next substring (length: longesttokenlength to 1):
+//    if substring in token map:
+//    next token = (token value of substring)
+    
+    
+    
   }
 
   @Override public String getPattern() {
