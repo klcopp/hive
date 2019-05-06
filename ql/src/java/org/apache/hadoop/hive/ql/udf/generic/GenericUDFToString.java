@@ -62,23 +62,23 @@ public class GenericUDFToString extends GenericUDF {
     }
 
     // for CAST WITH FORMAT
-    if (useSql || useSqlFormat()) {
+    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(getConstantStringValue(arguments, 1));
+      converter.setDateTimeFormatter(formatter);
     }
 
     converter = new TextConverter(argumentOI);
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
   }
 
-  @Override public Object evaluate(DeferredObject[] arguments) throws HiveException {
+  @Override
+  public Object evaluate(DeferredObject[] arguments) throws HiveException {
     Object o0 = arguments[0].get();
     if (o0 == null) {
       return null;
     }
 
-    if (setFormatPattern(arguments, formatter)) {
-      converter.setDateTimeFormatter(formatter);
-    }
     return converter.convert(o0);
   }
 

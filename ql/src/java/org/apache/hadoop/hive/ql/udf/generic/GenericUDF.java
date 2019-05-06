@@ -685,30 +685,4 @@ public abstract class GenericUDF implements Closeable {
     }
     return null;
   }
-
-  /**
-   * For CAST AS FORMAT. Takes the second (format pattern) argument if it exists and assigns it to
-   * the formatter.
-   * Can be called from GenericUDF#evaluate.
-   * @return true if formatter is succesfully set up with a non-null pattern.
-   */
-  static boolean setFormatPattern(DeferredObject[] arguments, HiveDateTimeFormatter formatter)
-      throws HiveException {
-
-    if (formatter != null && arguments.length > 1 && arguments[1] != null) {
-      Object o1 = arguments[1].get();
-      Text formatText = new PrimitiveObjectInspectorConverter.TextConverter(
-          PrimitiveObjectInspectorFactory.writableStringObjectInspector).convert(o1);
-      //update pattern if necessary
-      if (formatter.getPattern() == null ||
-          !formatText.toString().equals(formatter.getPattern())) {
-        formatter.setPattern(formatText.toString());
-      }
-      return formatter.getPattern() != null;
-    }
-    return false;
-    //frogmethod
-//    formatter.setPattern(getConstantStringValue(arguments, 1));
-    //        tc.setDateTimeFormatter(formatter);
-  }
 }

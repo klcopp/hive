@@ -96,8 +96,10 @@ public class GenericUDFTimestamp extends GenericUDF {
     tc.setIntToTimestampInSeconds(intToTimestampInSeconds);
 
     // for CAST WITH FORMAT
-    if (useSql || useSqlFormat()) {
+    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(getConstantStringValue(arguments, 1));
+      tc.setDateTimeFormatter(formatter);
     }
 
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
@@ -108,9 +110,6 @@ public class GenericUDFTimestamp extends GenericUDF {
     Object o0 = arguments[0].get();
     if (o0 == null) {
       return null;
-    }
-    if (setFormatPattern(arguments, formatter)) {
-      tc.setDateTimeFormatter(formatter);
     }
     return tc.convert(o0);
   }

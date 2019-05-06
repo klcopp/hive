@@ -88,8 +88,10 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
     converter = new TimestampLocalTZConverter(argumentOI, outputOI);
 
     // for CAST WITH FORMAT
-    if (useSql || useSqlFormat()) {
+    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(getConstantStringValue(arguments, 1));
+      converter.setDateTimeFormatter(formatter);
     }
 
     return outputOI;
@@ -102,9 +104,6 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
       return null;
     }
 
-    if (setFormatPattern(arguments, formatter)) {
-      converter.setDateTimeFormatter(formatter);
-    }
     return converter.convert(o0);
   }
 

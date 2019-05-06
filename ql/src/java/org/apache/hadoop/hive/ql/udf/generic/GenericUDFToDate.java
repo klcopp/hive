@@ -84,8 +84,10 @@ public class GenericUDFToDate extends GenericUDF {
     }
 
     // for CAST WITH FORMAT
-    if (useSql || useSqlFormat()) {
+    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(getConstantStringValue(arguments, 1));
+      dc.setDateTimeFormatter(formatter);
     }
 
     dc = new DateConverter(argumentOI,
@@ -100,9 +102,6 @@ public class GenericUDFToDate extends GenericUDF {
       return null;
     }
 
-    if (setFormatPattern(arguments, formatter)) {
-      dc.setDateTimeFormatter(formatter);
-    }
     return dc.convert(o0);
   }
 
