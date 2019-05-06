@@ -39,14 +39,16 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
  * Convert from string to TIMESTAMP WITH LOCAL TIME ZONE.
  */
 @Description(name = "timestamp with local time zone",
-    value = "CAST(STRING as TIMESTAMP WITH LOCAL TIME ZONE [FORMAT STRING]) - returns the" +
-        "timestamp with local time zone represented by string. Optional Parsing according to " +
+    value = "CAST(<STRING> as TIMESTAMP WITH LOCAL TIME ZONE [FORMAT <STRING>]) - returns the" +
+        "timestamp with local time zone represented by string. Optional parsing according to " +
         "format string.",
-    extended = "The string should be of format 'yyyy-MM-dd HH:mm:ss[.SSS...] ZoneId/ZoneOffset'. " +
-        "Examples of ZoneId and ZoneOffset are Asia/Shanghai and GMT+08:00. " +
-        "The time and zone parts are optional. If time is absent, '00:00:00.0' will be used. " +
-        "If zone is absent, the system time zone will be used." +
-        "If ")
+    extended = "The string should be of format 'yyyy-MM-dd HH:mm:ss[.SSS...] ZoneId/ZoneOffset'," 
+        + "Examples of ZoneId and ZoneOffset are Asia/Shanghai and GMT+08:00. " 
+        + "The time and zone parts are optional. If time is absent, '00:00:00.0' will be used." 
+        + "If zone is absent, the system time zone will be used.\n"
+        + "If format is specified with FORMAT argument then SQL:2016 datetime formats will be " 
+        + "used. hive.use.sql.datetime.formats must be turned on to use formats.")
+
 public class GenericUDFToTimestampLocalTZ extends GenericUDF implements SettableUDF {
 
   private transient PrimitiveObjectInspector argumentOI;

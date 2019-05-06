@@ -28,7 +28,9 @@ import java.util.TimeZone;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -50,7 +52,10 @@ import org.apache.hadoop.io.Text;
     value = "_FUNC_(start_date, num_months, output_date_format) - "
         + "Returns the date that is num_months after start_date.",
     extended = "start_date is a string or timestamp indicating a valid date. "
-        + "num_months is a number. output_date_format is an optional String which specifies the format for output.\n"
+        + "num_months is a number.\noutput_date_format is an optional String which specifies the " 
+        + "format for output. If session-level setting hive.use.sql.datetime.formats is true, " 
+        + "output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will " 
+        + "be interpreted as java.text.SimpleDateFormat.\n"
         + "The default output format is 'yyyy-MM-dd'.\n"
         + "Example:\n  > SELECT _FUNC_('2009-08-31', 1) FROM src LIMIT 1;\n" + " '2009-09-30'."
         + "\n  > SELECT _FUNC_('2017-12-31 14:15:16', 2, 'yyyy-MM-dd HH:mm:ss') LIMIT 1;\n"
@@ -66,6 +71,7 @@ public class GenericUDFAddMonths extends GenericUDF {
   private final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
   private transient Integer numMonthsConst;
   private transient boolean isNumMonthsConst;
+  private boolean useSql;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -74,27 +80,24 @@ public class GenericUDFAddMonths extends GenericUDF {
     checkArgPrimitive(arguments, 0);
     checkArgPrimitive(arguments, 1);
 
+    formatter = getHiveDateTimeFormatter(useSql);
+    formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+
     if (arguments.length == 3) {
       if (arguments[2] instanceof ConstantObjectInspector) {
         checkArgPrimitive(arguments, 2);
         checkArgGroups(arguments, 2, tsInputTypes, STRING_GROUP);
         String fmtStr = getConstantStringValue(arguments, 2);
-        if (fmtStr != null) { //todo this needs redoing, too much repetition frogmethod
-          formatter = getHiveDateTimeFormatter();
+        if (fmtStr != null) {
           formatter.setPattern(fmtStr);
-          formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
       } else {
         throw new UDFArgumentTypeException(2, getFuncName() + " only takes constant as "
             + getArgOrder(2) + " argument");
       }
     }
-    if (formatter == null) {
-      //If the DateFormat is not provided by the user or is invalid, use the default format yyyy-MM-dd
-//      formatter = DateUtils.getDateFormat(); //TODO frogmethod: this was the threadlocal
-      formatter = getHiveDateTimeFormatter();
+    if (formatter.getPattern() == null) {
       formatter.setPattern("yyyy-MM-dd");
-      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // the function should support both short date and full timestamp format
@@ -190,5 +193,16 @@ public class GenericUDFAddMonths extends GenericUDF {
     int maxDd = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
     int dd = cal.get(Calendar.DAY_OF_MONTH);
     return dd == maxDd;
+  }
+
+  /**
+   * Get whether or not to use Sql formats.
+   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
+   * MapredContext conf. This is only called in runtime of MapRedTask.
+   */
+  @Override public void configure(MapredContext context) {
+    super.configure(context);
+    useSql =
+        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }

@@ -3,18 +3,13 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.apache.hadoop.hive.serde2.io.TimestampLocalTZWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritableV2;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.io.Text;
@@ -27,12 +22,8 @@ import static junit.framework.TestCase.assertNull;
 public class TestGenericUDFCastWithFormat {
 
   @BeforeClass
-  public static void turnOnSqlDateTimeFormats() {
-    SessionState ss = SessionState.get();
-    if (ss == null) {
-      ss = SessionState.start(new HiveConf());
-    }
-    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, true);
+  public static void setup() {
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
   }
 
   @Test

@@ -21,13 +21,10 @@ package org.apache.hadoop.hive.ql.udf;
 import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -38,7 +35,11 @@ import org.apache.hadoop.io.Text;
  */
 @Description(name = "from_unixtime",
     value = "_FUNC_(unix_time, format) - returns unix_time in the specified format",
-    extended = "Example:\n"
+    extended = "format is a String which specifies the format for output. If session-level " 
+        + "setting hive.use.sql.datetime.formats is true, "
+        + "output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will "
+        + "be interpreted as java.text.SimpleDateFormat.\n"
+        + "Example:\n"
     + "  > SELECT _FUNC_(0, 'yyyy-MM-dd HH:mm:ss') FROM src LIMIT 1;\n"
     + "  '1970-01-01 00:00:00'")
 public class UDFFromUnixTime extends UDF {
@@ -64,9 +65,8 @@ public class UDFFromUnixTime extends UDF {
    * @param unixtime
    *          The number of seconds from 1970-01-01 00:00:00
    * @param format
-   *          See
-   *          http://java.sun.com/j2se/1.4.2/docs/api/java/text/SimpleDateFormat
-   *          .html
+   *          See http://java.sun.com/j2se/1.4.2/docs/api/java/text/SimpleDateFormat.html,
+   *          or set hive.use.sql.datetime.formats=true to use SQL:2016 formats.
    * @return a String in the format specified.
    */
   public Text evaluate(LongWritable unixtime, Text format) {
@@ -98,9 +98,8 @@ public class UDFFromUnixTime extends UDF {
    * @param unixtime
    *          The number of seconds from 1970-01-01 00:00:00
    * @param format
-   *          See
-   *          http://java.sun.com/j2se/1.4.2/docs/api/java/text/SimpleDateFormat
-   *          .html
+   *          See http://java.sun.com/j2se/1.4.2/docs/api/java/text/SimpleDateFormat.html,
+   *          or set hive.use.sql.datetime.formats=true to use SQL:2016 formats.
    * @return a String in the format specified.
    */
   public Text evaluate(IntWritable unixtime, Text format) {
@@ -118,9 +117,9 @@ public class UDFFromUnixTime extends UDF {
    * @param unixtime
    *          seconds of type long from 1970-01-01 00:00:00
    * @param format
-   *          display format. See
-   *          http://java.sun.com/j2se/1.4.2/docs/api/java/text
-   *          /SimpleDateFormat.html
+   *          display format.
+   *          See http://java.sun.com/j2se/1.4.2/docs/api/java/text/SimpleDateFormat.html,
+   *          or set hive.use.sql.datetime.formats=true to use SQL:2016 formats.
    * @return elapsed time in the given format.
    */
   private Text eval(long unixtime, Text format) {
@@ -128,7 +127,6 @@ public class UDFFromUnixTime extends UDF {
 
     if (!format.equals(lastFormat)) {
       formatter.setPattern(format.toString());
-      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
       lastFormat.set(format);
     }
 
@@ -139,16 +137,10 @@ public class UDFFromUnixTime extends UDF {
   }
 
   private void initFormatter() {
-    SessionState ss = SessionState.get();
-    if (ss != null) {
-      useSqlFormat = ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
-    }
+    useSqlFormat = GenericUDF.useSqlFormat();
     if (formatter == null || useSqlFormat != lastUsedSqlFormats) {
-      if (useSqlFormat) {
-        formatter = new HiveSimpleDateFormatter();
-      } else {
-        formatter = new HiveSqlDateTimeFormatter();
-      }
+      formatter = GenericUDF.getHiveDateTimeFormatter(useSqlFormat);
+      formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
       lastUsedSqlFormats = useSqlFormat;
     }
   }

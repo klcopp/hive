@@ -2227,12 +2227,9 @@ import com.google.common.annotations.VisibleForTesting;
   private VectorExpression getIdentityForDateToDate(List<ExprNodeDesc> childExprs,
       TypeInfo returnTypeInfo)
           throws HiveException {
-    if (childExprs.size() < 1) {
+    if (childExprs.size() != 1) {
       return null;
-    } else if (childExprs.size() > 1) {
-      return null; //frogmethod todo i think castStringToDateWithFormat
     }
-    // one childExprs
     TypeInfo childTypeInfo = childExprs.get(0).getTypeInfo();
     if (childTypeInfo.getCategory() != Category.PRIMITIVE ||
         ((PrimitiveTypeInfo) childTypeInfo).getPrimitiveCategory() != PrimitiveCategory.DATE) {

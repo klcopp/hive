@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.junit.Assert;
 
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFUtils;
@@ -25,6 +27,14 @@ import org.apache.hadoop.io.Text;
 import org.junit.Test;
 
 public class TestGenericUDFUtils {
+
+  public static void setHiveUseSqlDateTimeFormats(boolean val) {
+    SessionState ss = SessionState.get();
+    if (ss == null) {
+      ss = SessionState.start(new HiveConf());
+    }
+    ss.getConf().setBoolVar(HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT, val);
+  }
 
   @Test
   public void testFindText() throws Exception {

@@ -50,7 +50,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
  *
  */
 @Description(name = "timestamp",
-value = "cast(date as timestamp) - Returns timestamp")
+value = "cast(<primitive> as timestamp [format <string>]) - Returns timestamp",
+extended = "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
+    + "used. hive.use.sql.datetime.formats must be turned on to use formats.")
 @VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class,
   CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class,
   CastStringToTimestampWithFormat.class})

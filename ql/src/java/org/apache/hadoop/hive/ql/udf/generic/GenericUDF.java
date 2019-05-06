@@ -648,7 +648,7 @@ public abstract class GenericUDF implements Closeable {
   }
 
 
-  static boolean useSqlFormat() {
+  public static boolean useSqlFormat() {
     boolean useSqlFormat = HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT.defaultBoolVal;
     SessionState ss = SessionState.get();
     if (ss != null) {
@@ -661,9 +661,9 @@ public abstract class GenericUDF implements Closeable {
    * For cast...(...with format...) UDFs between strings and datetime types.
    * @return either a HiveSimpleDateFormatter or a HiveSqlDateTimeFormatter, depending on conf.
    */
-  public static HiveDateTimeFormatter getHiveDateTimeFormatter() {
+  public static HiveDateTimeFormatter getHiveDateTimeFormatter(boolean definitelyUseSqlFormat) {
     HiveDateTimeFormatter formatter;
-    if (useSqlFormat()) {
+    if (useSqlFormat() || definitelyUseSqlFormat) {
       formatter = new HiveSqlDateTimeFormatter();
     } else {
       formatter = new HiveSimpleDateFormatter();
@@ -674,11 +674,12 @@ public abstract class GenericUDF implements Closeable {
 
   /**
    * For functions that only need a HiveDateTimeFormatter if it is for SQL:2016 formats.
+   * Only 
    * Otherwise return null.
    * Vectorized UDFs also use this.
    */
   public static HiveDateTimeFormatter getSqlDateTimeFormatterOrNull() {
-    HiveDateTimeFormatter formatter = getHiveDateTimeFormatter();
+    HiveDateTimeFormatter formatter = getHiveDateTimeFormatter(false);
     if (formatter instanceof HiveSqlDateTimeFormatter) {
       return formatter;
     }

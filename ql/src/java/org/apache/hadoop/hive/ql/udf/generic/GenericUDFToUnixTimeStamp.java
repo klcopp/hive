@@ -25,7 +25,9 @@ import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
@@ -51,7 +53,10 @@ import org.apache.hadoop.io.LongWritable;
  */
 @Description(name = "to_unix_timestamp",
     value = "_FUNC_(date[, pattern]) - Returns the UNIX timestamp",
-    extended = "Converts the specified time to number of seconds since 1970-01-01.")
+    extended = "Converts the specified time to number of seconds since 1970-01-01.\n"
+    + "pattern is an optional string which specifies the format for output. If session-level "
+    + "setting hive.use.sql.datetime.formats is true, pattern will be interpreted as SQL:2016 " 
+    + "datetime format. Otherwise it will be interpreted as java.text.SimpleDateFormat.")
 @VectorizedExpressions({VectorUDFUnixTimeStampDate.class, VectorUDFUnixTimeStampString.class, VectorUDFUnixTimeStampTimestamp.class})
 public class GenericUDFToUnixTimeStamp extends GenericUDF {
 
@@ -63,6 +68,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
 
   private transient String lasPattern = "yyyy-MM-dd HH:mm:ss";
   private transient HiveDateTimeFormatter formatter = null;
+  private boolean useSql;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -82,7 +88,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
       }
     }
 
-    formatter = getHiveDateTimeFormatter();
+    formatter = getHiveDateTimeFormatter(useSql);
     formatter.setPattern(lasPattern);
     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
@@ -184,5 +190,16 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
     sb.append(StringUtils.join(children, ','));
     sb.append(')');
     return sb.toString();
+  }
+
+  /**
+   * Get whether or not to use Sql formats.
+   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
+   * MapredContext conf. This is only called in runtime of MapRedTask.
+   */
+  @Override public void configure(MapredContext context) {
+    super.configure(context);
+    useSql =
+        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }

@@ -133,7 +133,7 @@ public class TestGenericUDFToUnixTimestamp extends TestCase {
 
   // format argument (2nd arg) is only used when 1st argument is string
   public void testStringWithSqlFormat() throws HiveException {
-    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
 
     ObjectInspector valueOI = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     String val;

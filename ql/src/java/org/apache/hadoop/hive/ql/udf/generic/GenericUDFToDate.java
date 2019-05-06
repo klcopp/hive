@@ -41,8 +41,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
  * GenericUDFToDate
  */
 @Description(name = "date",
-    value = "CAST(<Date string> as DATE) - Returns the date represented by the date string.",
-    extended = "date_string is a string in the format 'yyyy-MM-dd.'"
+    value = "CAST(<Date string> as DATE [FORMAT <STRING>]) - Returns the date represented by the date string.",
+    extended = "date_string is a string in the format 'yyyy-MM-dd.' "
+    + "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
+    + "used for parsing. hive.use.sql.datetime.formats must be turned on for this feature."
     + "Example:\n "
     + "  > SELECT CAST('2009-01-01' AS DATE) FROM src LIMIT 1;\n"
     + "  '2009-01-01'")

@@ -19,7 +19,7 @@
 package org.apache.hadoop.hive.ql.udf;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFCastWithFormat;
+import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -70,7 +70,7 @@ public class TestUDFFromUnixTime {
 
   @Test
   public void testFromUnixTimeWithSqlFormat() throws HiveException {
-    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
     UDFFromUnixTime udf = new UDFFromUnixTime();
 
     //int with format

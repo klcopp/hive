@@ -172,7 +172,7 @@ public class TestGenericUDFDateFormat extends TestCase {
   }
 
   public void testSqlDateFormats() throws HiveException {
-    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
     GenericUDFDateFormat udf = new GenericUDFDateFormat();
     ObjectInspector valueOI0 = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
 

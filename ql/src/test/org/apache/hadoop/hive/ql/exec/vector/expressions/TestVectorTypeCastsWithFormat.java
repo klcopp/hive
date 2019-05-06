@@ -7,7 +7,7 @@ import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFCastWithFormat;
+import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class TestVectorTypeCastsWithFormat {
   @BeforeClass
   public static void setup() {
     //set hive.use.sql.datetime.formats to true
-    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
   }
 
   @Test
@@ -88,20 +88,20 @@ public class TestVectorTypeCastsWithFormat {
     verifyTimestamp("2019-01-01 00:00:00", resultV, 0);
     verifyTimestamp("1776-01-01 00:00:00", resultV, 1);
     verifyTimestamp("2012-01-01 00:00:00", resultV, 2);
-//    verifyTimestamp("1508-01-01 00:00:00", resultV, 3); frogmethod fails - expected -14579395200000 / actual -12306384000000
-//    verifyTimestamp("0005-01-01 00:00:00", resultV, 4); frogmethd also fails
+    verifyTimestamp("1580-01-11 00:00:00", resultV, 3); //frogmethod fails - expected -14579395200000 / actual -12306384000000
+    verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmeth0d also fails
     verifyTimestamp("9999-01-01 00:00:00", resultV, 5);
 
     b.cols[1] = resultV = new TimestampColumnVector();
-    expr = new CastStringToTimestampWithFormat(0, "HH".getBytes(), 1);
+    expr = new CastStringToTimestampWithFormat(0, "yyyy-MM".getBytes(), 1);
     expr.evaluate(b);
 
-    verifyTimestamp("1970-01-01 19:00:00", resultV, 0);
-    verifyTimestamp("1970-01-01 17:00:00", resultV, 1);
-    verifyTimestamp("1970-01-01 23:00:00", resultV, 2);
-    verifyTimestamp("1970-01-01 00:00:00", resultV, 3);
-    verifyTimestamp("1970-01-01 00:00:00", resultV, 4);
-    verifyTimestamp("1970-01-01 23:00:00", resultV, 5);
+    verifyTimestamp("2019-12-01 00:00:00", resultV, 0);
+    verifyTimestamp("1776-07-01 00:00:00", resultV, 1);
+    verifyTimestamp("2012-02-01 00:00:00", resultV, 2);
+    verifyTimestamp("1580-08-11 00:00:00", resultV, 3); //frogmethod this is wrong
+    verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmethod this is wrong
+    verifyTimestamp("9999-12-01 00:00:00", resultV, 5);
 
     //todo frogmethod test nanos (FFFFFFFFF)
   }

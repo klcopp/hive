@@ -34,7 +34,10 @@ import org.apache.hadoop.io.LongWritable;
 @Description(name = "unix_timestamp",
     value = "_FUNC_(date[, pattern]) - Converts the time to a number",
     extended = "Converts the specified time to number of seconds "
-        + "since 1970-01-01. The _FUNC_(void) overload is deprecated, use current_timestamp.")
+        + "since 1970-01-01. The _FUNC_(void) overload is deprecated, use current_timestamp.\n"
+        + "pattern is an optional string which specifies the format for output. If session-level "
+        + "setting hive.use.sql.datetime.formats is true, pattern will be interpreted as SQL:2016 "
+        + "datetime format. Otherwise it will be interpreted as java.text.SimpleDateFormat.")
 public class GenericUDFUnixTimeStamp extends GenericUDFToUnixTimeStamp {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFUnixTimeStamp.class);
   private LongWritable currentTimestamp; // retValue is transient so store this separately.

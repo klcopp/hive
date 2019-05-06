@@ -31,6 +31,7 @@ import java.util.TimeZone;
 public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
 
   private SimpleDateFormat format = new SimpleDateFormat();
+  private String pattern;
 
   public HiveSimpleDateFormatter() {}
 
@@ -55,10 +56,11 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
 
   @Override public void setPattern(String pattern) {
     format.applyPattern(pattern);
+    this.pattern = pattern;
   }
 
   @Override public String getPattern() {
-    return format.toPattern();
+    return pattern;
   }
 
   @Override public void setTimeZone(TimeZone timeZone) {

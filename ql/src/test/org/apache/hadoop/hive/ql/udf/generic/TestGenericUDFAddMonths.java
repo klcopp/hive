@@ -216,7 +216,7 @@ public class TestGenericUDFAddMonths extends TestCase {
 
   public void testSqlDateFormats() throws HiveException {
     //set hive.use.sql.datetime.formats to true //frogmethod todo need to reset this?
-    TestGenericUDFCastWithFormat.turnOnSqlDateTimeFormats();
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
 
     GenericUDFAddMonths udf = new GenericUDFAddMonths();
     ObjectInspector valueOI0 = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
