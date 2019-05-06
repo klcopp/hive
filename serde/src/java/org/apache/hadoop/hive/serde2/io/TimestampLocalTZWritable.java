@@ -260,7 +260,7 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     Timestamp ts = Timestamp.ofEpochSecond(
         timestampTZ.getZonedDateTime().toEpochSecond(),
         timestampTZ.getNanos());
-    formatter.setTimeZone(TimeZone.getTimeZone(timestampTZ.getZonedDateTime().getZone())); //frogmethod only use if time zone is needed. also this isn't implemented in hivesqlformatter.
+    formatter.setTimeZone(TimeZone.getTimeZone(timestampTZ.getZonedDateTime().getZone()));
     return formatter.format(ts);
   }
 

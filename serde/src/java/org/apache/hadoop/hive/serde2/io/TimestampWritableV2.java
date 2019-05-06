@@ -389,7 +389,7 @@ public class TimestampWritableV2 implements WritableComparable<TimestampWritable
   }
 
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
-    if (formatter == null) { //frogmethod not sure (because toString() is pretty complicated)
+    if (formatter == null) {
       return toString();
     }
     if (timestampEmpty) {

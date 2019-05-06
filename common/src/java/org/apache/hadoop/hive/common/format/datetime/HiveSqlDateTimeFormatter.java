@@ -32,7 +32,7 @@ import java.util.TimeZone;
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   private String pattern;
-  private TimeZone timeZone = TimeZone.getTimeZone(ZoneOffset.UTC); //frogmethod not 100% sure about this
+  private TimeZone timeZone;
 
   public HiveSqlDateTimeFormatter() {}
 

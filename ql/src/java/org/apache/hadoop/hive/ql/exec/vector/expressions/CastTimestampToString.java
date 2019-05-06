@@ -45,7 +45,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     PRINT_FORMATTER = builder.toFormatter();
   }
 
-  private transient HiveDateTimeFormatter format; //frogmethod not initialized
+  private transient HiveDateTimeFormatter format;
 
   public CastTimestampToString() {
     super();
@@ -62,6 +62,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
       format = new HiveJavaDateTimeFormatter();
       format.setFormatter(PRINT_FORMATTER);
     } catch (WrongFormatterException e) {
+      // this will never happen
       throw new RuntimeException(e); //todo frogmethod
     }
   }
