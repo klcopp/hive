@@ -48,7 +48,7 @@ import org.apache.hadoop.io.Text;
 @Description(name = "date_format", value = "_FUNC_(date/timestamp/string, fmt) - converts a date/timestamp/string "
     + "to a value of string in the format specified by the date format fmt.",
     extended = "Supported formats are (1) SimpleDateFormat formats - "
-        + "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html, " 
+        + "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html, "
         + "or (2) SQL:2016 datetime formats if hive.use.sql.datetime.formats is set to true. "
         + "Second argument fmt should be constant.\n"
         + "Example: > SELECT _FUNC_('2015-04-08', 'y');\n '2015'")

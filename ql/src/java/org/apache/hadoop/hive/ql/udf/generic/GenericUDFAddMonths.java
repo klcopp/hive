@@ -52,9 +52,9 @@ import org.apache.hadoop.io.Text;
     value = "_FUNC_(start_date, num_months, output_date_format) - "
         + "Returns the date that is num_months after start_date.",
     extended = "start_date is a string or timestamp indicating a valid date. "
-        + "num_months is a number.\noutput_date_format is an optional String which specifies the " 
-        + "format for output. If session-level setting hive.use.sql.datetime.formats is true, " 
-        + "output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will " 
+        + "num_months is a number.\noutput_date_format is an optional String which specifies the "
+        + "format for output. If session-level setting hive.use.sql.datetime.formats is true, "
+        + "output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will "
         + "be interpreted as java.text.SimpleDateFormat.\n"
         + "The default output format is 'yyyy-MM-dd'.\n"
         + "Example:\n  > SELECT _FUNC_('2009-08-31', 1) FROM src LIMIT 1;\n" + " '2009-09-30'."

@@ -60,7 +60,7 @@ from timestamps select cast (t as string                         format "yyyy");
 set hive.fetch.task.conversion=none;
 set hive.vectorized.execution.enabled=true;
 
---from timestamps select cast (t as string    format "yyyy"); todo frogmethod uncomment after fixing 
+--from timestamps select cast (t as string    format "yyyy"); todo frogmethod uncomment after fixing
 --from dates      select cast (d as string    format "yyyy");
 from strings    select cast (s as timestamp format "yyyy");
 from strings    select cast (s as date      format "yyyy");

@@ -55,7 +55,7 @@ import org.apache.hadoop.io.LongWritable;
     value = "_FUNC_(date[, pattern]) - Returns the UNIX timestamp",
     extended = "Converts the specified time to number of seconds since 1970-01-01.\n"
     + "pattern is an optional string which specifies the format for output. If session-level "
-    + "setting hive.use.sql.datetime.formats is true, pattern will be interpreted as SQL:2016 " 
+    + "setting hive.use.sql.datetime.formats is true, pattern will be interpreted as SQL:2016 "
     + "datetime format. Otherwise it will be interpreted as java.text.SimpleDateFormat.")
 @VectorizedExpressions({VectorUDFUnixTimeStampDate.class, VectorUDFUnixTimeStampString.class, VectorUDFUnixTimeStampTimestamp.class})
 public class GenericUDFToUnixTimeStamp extends GenericUDF {

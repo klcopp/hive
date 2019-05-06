@@ -35,7 +35,7 @@ import org.apache.hadoop.io.Text;
  */
 @Description(name = "from_unixtime",
     value = "_FUNC_(unix_time, format) - returns unix_time in the specified format",
-    extended = "format is a String which specifies the format for output. If session-level " 
+    extended = "format is a String which specifies the format for output. If session-level "
         + "setting hive.use.sql.datetime.formats is true, "
         + "output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will "
         + "be interpreted as java.text.SimpleDateFormat.\n"

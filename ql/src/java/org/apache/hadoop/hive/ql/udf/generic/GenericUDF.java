@@ -674,7 +674,6 @@ public abstract class GenericUDF implements Closeable {
 
   /**
    * For functions that only need a HiveDateTimeFormatter if it is for SQL:2016 formats.
-   * Only 
    * Otherwise return null.
    * Vectorized UDFs also use this.
    */
