@@ -35,16 +35,16 @@ import java.util.TimeZone;
 
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
-  public static final int LONGEST_TOKEN_LENGTH = 5;
+  private static final int LONGEST_TOKEN_LENGTH = 5;
   private String pattern;
   private TimeZone timeZone;
-  private List<Token> tokens = new ArrayList<>();
+  // protected for testing
+  protected List<Token> tokens = new ArrayList<>();
 
   public HiveSqlDateTimeFormatter() {}
 
-  
-
-  private enum Token {
+  public enum Token {
+    SEPARATOR,
     YEAR,
     MONTH,
     DAY_OF_MONTH,
@@ -76,37 +76,66 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       .put("hh", Token.HOUR_OF_DAY)
       .put("mi", Token.MINUTE)
       .put("ss", Token.SECOND)
+      .put("-", Token.SEPARATOR)
+      .put(":", Token.SEPARATOR)
+      .put(" ", Token.SEPARATOR)
       .build();
-  
-  
 
-  @Override public void setPattern(String pattern) {
-    this.pattern = pattern.toLowerCase().trim();
+  @Override public void setPattern(String pattern) throws ParseException {
+    pattern = pattern.toLowerCase().trim();
+    this.pattern = pattern;
 
     tokens.clear();
-    int curIndex = 0, end;
+
+    // the substrings we will check (includes begin, does not include end)
+    int begin=0, end=0;
     String candidate;
-    while (curIndex < pattern.length() - 1) {
-      for (int i=1; i < LONGEST_TOKEN_LENGTH; i++) { // todo check the range
-        end = curIndex + i; //range: 0, 0-1 ... 0-4
-        candidate = pattern.substring(curIndex, end); //todo init in loo;ps
+    while (begin < pattern.length()) {
+      
+      // if begin hasn't progressed, then something is unparseable
+      if (begin != end) {
+        throw new ParseException("Bad date/time conversion format: " + pattern);
+      }
+      
+      for (int i=LONGEST_TOKEN_LENGTH; i > 0; i--) {
+        end = begin + i;
+        if (end > pattern.length()) {
+          continue;
+        }
+        candidate = pattern.substring(begin, end);
         if (tokenMap.keySet().contains(candidate)) {
           tokens.add(tokenMap.get(candidate));
-          curIndex = end;
+          begin = end;
           break;
         }
       }
-      
     }
-//    find first separator (or beginning of string) in formatstring. save next separator existence and (length == 1)
-//    if not at formatstring end:
-//    parse next token . this means:
-//    for next substring (length: longesttokenlength to 1):
-//    if substring in token map:
-//    next token = (token value of substring)
     
-    
-    
+    verifyTokenList();
+  }
+
+  /**
+   * frogmethod: errors:
+   * Invalid duplication of format element
+   * //https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
+   * 
+   * 
+   * "Multiple year token provided"
+   * "Both year and round year are provided"
+   * "Day of year provided with day or month token"
+   * "Multiple hour tokens provided"
+   * "Multiple median indicator tokens provided"
+   * "Conflict between median indicator and hour token"
+   * "Missing hour token"
+   * "Second of day token conflicts with other token(s)"
+   * 
+   * "The input format is too long"
+   * @return
+   */
+  
+  private boolean verifyTokenList() throws ParseException { // frogmethod
+    // no duplicates except SEPARATOR?
+    return true;
   }
 
   @Override public String getPattern() {
@@ -116,7 +145,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   @Override public String format(Timestamp ts) {
     //TODO replace with actual implementation:
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
-    formatter.setPattern(pattern);
+    try {
+      formatter.setPattern(pattern);
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
     if (timeZone != null) formatter.setTimeZone(timeZone);
     else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     return formatter.format(ts);

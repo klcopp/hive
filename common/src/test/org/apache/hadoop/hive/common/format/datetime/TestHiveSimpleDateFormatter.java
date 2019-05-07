@@ -35,7 +35,7 @@ public class TestHiveSimpleDateFormatter {
   private HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
 
   @Before
-  public void setUp() throws WrongFormatterException {
+  public void setUp() throws WrongFormatterException, ParseException {
     formatter.setFormatter(new SimpleDateFormat());
     formatter.setPattern("yyyy-MM-dd HH:mm:ss");
     formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
