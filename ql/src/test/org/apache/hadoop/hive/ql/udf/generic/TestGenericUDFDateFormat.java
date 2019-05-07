@@ -151,7 +151,7 @@ public class TestGenericUDFDateFormat extends TestCase {
     Text fmtText = null;
     ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory
         .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
-    ObjectInspector[] arguments = { valueOI0, valueOI1 };
+    ObjectInspector[] arguments = {valueOI0, valueOI1};
 
     udf.initialize(arguments);
 
@@ -164,7 +164,7 @@ public class TestGenericUDFDateFormat extends TestCase {
     Text fmtText = new Text("Q");
     ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory
         .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
-    ObjectInspector[] arguments = { valueOI0, valueOI1 };
+    ObjectInspector[] arguments = {valueOI0, valueOI1};
 
     udf.initialize(arguments);
 

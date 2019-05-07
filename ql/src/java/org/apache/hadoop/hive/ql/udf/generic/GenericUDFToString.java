@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -31,13 +31,13 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Description(name = "string",
-value = "CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.",
-extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
-    + "used. hive.use.sql.datetime.formats must be turned on to use formats.\n"
-    + "Example:\n "
-+ "  > SELECT CAST(1234 AS string) FROM src LIMIT 1;\n"
-+ "  '1234'")
+@Description(name = "string", 
+    value = "CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.",
+    extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
+        + "be used. hive.use.sql.datetime.formats must be turned on to use formats.\n"
+        + "Example:\n "
+        + "  > SELECT CAST(1234 AS string) FROM src LIMIT 1;\n"
+        + "  '1234'")
 public class GenericUDFToString extends GenericUDF {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFToString.class.getName());
 
@@ -61,6 +61,8 @@ public class GenericUDFToString extends GenericUDF {
           "The function STRING takes only primitive types");
     }
 
+    converter = new TextConverter(argumentOI);
+
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
@@ -68,7 +70,6 @@ public class GenericUDFToString extends GenericUDF {
       converter.setDateTimeFormatter(formatter);
     }
 
-    converter = new TextConverter(argumentOI);
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
   }
 

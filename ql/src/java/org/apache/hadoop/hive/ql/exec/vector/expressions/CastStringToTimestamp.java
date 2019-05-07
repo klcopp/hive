@@ -153,7 +153,8 @@ public class CastStringToTimestamp extends VectorExpression {
   /**
    * This is used by CastStringToTimestampWithFormat.
    */
-  protected void evaluate(TimestampColumnVector outputColVector, BytesColumnVector inputColVector, int i, HiveDateTimeFormatter formatter) {
+  protected void evaluate(TimestampColumnVector outputColVector, BytesColumnVector inputColVector,
+      int i, HiveDateTimeFormatter formatter) {
     try {
       org.apache.hadoop.hive.common.type.Timestamp timestamp =
           PrimitiveObjectInspectorUtils.getTimestampFromString(

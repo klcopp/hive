@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.type.Date;
@@ -15,6 +33,10 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+/**
+ * Tests vectorized type cast udfs CastDateToStringWithFormat, CastTimestampToStringWithFormat,
+ * CastStringToDateWithFormat, CastStringToTimestampWithFormat.
+ */
 public class TestVectorTypeCastsWithFormat {
 
   @BeforeClass
@@ -37,7 +59,8 @@ public class TestVectorTypeCastsWithFormat {
     verifyString(5, "9999", resultV);
 
     expr = new CastDateToStringWithFormat(0, "MM".getBytes(), 1);
-    b.cols[1] = resultV = new BytesColumnVector();
+    resultV = new BytesColumnVector();
+    b.cols[1] = resultV;
     expr.evaluate(b);
     verifyString(0, "12", resultV);
     verifyString(1, "07", resultV);
@@ -62,7 +85,8 @@ public class TestVectorTypeCastsWithFormat {
     Assert.assertEquals("0005", getStringFromBytesColumnVector(resultV, 4));
     Assert.assertEquals("9999", getStringFromBytesColumnVector(resultV, 5));
 
-    b.cols[1] = resultV = new BytesColumnVector();
+    resultV = new BytesColumnVector();
+    b.cols[1] = resultV;
     expr = new CastTimestampToStringWithFormat(0, "HH".getBytes(), 1);
     expr.evaluate(b);
 
@@ -81,7 +105,8 @@ public class TestVectorTypeCastsWithFormat {
     VectorizedRowBatch b =
         TestVectorMathFunctions.getVectorizedRowBatchStringInDateTimeOutFormatted();
     TimestampColumnVector resultV;
-    b.cols[1] = resultV = new TimestampColumnVector();
+    resultV = new TimestampColumnVector();
+    b.cols[1] = resultV;
     VectorExpression expr = new CastStringToTimestampWithFormat(0, "yyyy".getBytes(), 1);
     expr.evaluate(b);
 
@@ -92,7 +117,8 @@ public class TestVectorTypeCastsWithFormat {
     verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmeth0d also fails
     verifyTimestamp("9999-01-01 00:00:00", resultV, 5);
 
-    b.cols[1] = resultV = new TimestampColumnVector();
+    resultV = new TimestampColumnVector();
+    b.cols[1] = resultV;
     expr = new CastStringToTimestampWithFormat(0, "yyyy-MM".getBytes(), 1);
     expr.evaluate(b);
 
@@ -116,7 +142,8 @@ public class TestVectorTypeCastsWithFormat {
     VectorizedRowBatch b =
         TestVectorMathFunctions.getVectorizedRowBatchStringInDateTimeOutFormatted();
     LongColumnVector resultV;
-    b.cols[1] = resultV = new LongColumnVector();
+    resultV = new LongColumnVector();
+    b.cols[1] = resultV;
     VectorExpression expr = new CastStringToDateWithFormat(0, "yyyy".getBytes(), 1);
     expr.evaluate(b);
 

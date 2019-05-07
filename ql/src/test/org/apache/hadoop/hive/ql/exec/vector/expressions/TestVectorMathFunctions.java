@@ -116,8 +116,9 @@ public class TestVectorMathFunctions {
     Assert.assertEquals(1.2346d, resultV.vector[7], Double.MIN_VALUE);
   }
 
-  final static int DAYS_LIMIT = 365 * 9999;
-  final static int SMALLEST_EPOCH_DAY = -365 * 1969;  //approximate, so we get some negative values
+  private static final int DAYS_LIMIT = 365 * 9999;
+  //approximate, so we get some negative values:
+  private static final int SMALLEST_EPOCH_DAY = -365 * 1969;
 
   public static VectorizedRowBatch getVectorizedRowBatchDateInTimestampOut(int[] intValues) {
     Random r = new Random(12099);

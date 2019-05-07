@@ -83,6 +83,9 @@ public class GenericUDFToDate extends GenericUDF {
           "The function CAST as DATE takes only primitive types");
     }
 
+    dc = new DateConverter(argumentOI,
+        PrimitiveObjectInspectorFactory.writableDateObjectInspector);
+    
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
@@ -90,8 +93,6 @@ public class GenericUDFToDate extends GenericUDF {
       dc.setDateTimeFormatter(formatter);
     }
 
-    dc = new DateConverter(argumentOI,
-        PrimitiveObjectInspectorFactory.writableDateObjectInspector);
     return PrimitiveObjectInspectorFactory.writableDateObjectInspector;
   }
 

@@ -49,13 +49,13 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
  * Creates a TimestampWritableV2 object using PrimitiveObjectInspectorConverter
  *
  */
-@Description(name = "timestamp",
-value = "cast(<primitive> as timestamp [format <string>]) - Returns timestamp",
-extended = "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
+@Description(name = "timestamp", 
+    value = "cast(<primitive> as timestamp [format <string>]) - Returns timestamp", 
+    extended = "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
     + "used. hive.use.sql.datetime.formats must be turned on to use formats.")
-@VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class,
-  CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class,
-  CastStringToTimestampWithFormat.class})
+@VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class, 
+    CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class, 
+    CastStringToTimestampWithFormat.class})
 public class GenericUDFTimestamp extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;

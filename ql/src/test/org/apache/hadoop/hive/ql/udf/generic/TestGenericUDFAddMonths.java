@@ -229,7 +229,7 @@ public class TestGenericUDFAddMonths extends TestCase {
     ObjectInspector[] arguments = {valueOI0, valueOI1, valueOI2};
     udf.initialize(arguments);
 
-    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear,"2013", udf);
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear, "2013", udf);
 
     // format 2
     Text formatPatternHour = new Text("HH"); // frogmethod todo hh24
@@ -239,7 +239,7 @@ public class TestGenericUDFAddMonths extends TestCase {
     arguments[2] = valueOI2;
     udf.initialize(arguments);
 
-    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear,"23", udf);
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear, "23", udf);
   }
 
   private void runAndVerify(String str, int months, String expResult, GenericUDF udf)

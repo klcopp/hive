@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -55,7 +55,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   @Override public Timestamp parse(String string) throws ParseException {
     //TODO replace with actual implementation:
-    // todo should be able to remove the time zone (city) from tstzs; if it doesn't then deal with it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId, org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
+    // todo should be able to remove the time zone (city) from tstzs; if it doesn't then deal with
+    // it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId, 
+    // org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
 
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     formatter.setPattern(pattern);
