@@ -109,7 +109,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     parsePatternToTokens(pattern);
 
     verifyTokenTypeList();
-    squashSeparators();
     this.pattern = pattern;
   }
 
@@ -119,6 +118,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     // the substrings we will check (includes begin, does not include end)
     int begin=0, end=0;
     String candidate;
+    Token lastAddedToken = null;
+
     while (begin < pattern.length()) {
       
       // if begin hasn't progressed, then something is unparseable
@@ -133,57 +134,31 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         }
         throw new ParseException("Bad date/time conversion format: " + pattern);
       }
-      
+
       //process next token
-      for (int i=LONGEST_TOKEN_LENGTH; i > 0; i--) {
+      for (int i = LONGEST_TOKEN_LENGTH; i > 0; i--) {
         end = begin + i;
         if (end > pattern.length()) {
           continue;
         }
         candidate = pattern.substring(begin, end);
         if (VALID_TOKENS.keySet().contains(candidate)) {
-          tokens.add(new Token(VALID_TOKENS.get(candidate), candidate));
+          // if it's a separator, then clump it with immediately preceding separators (e.g. "---"
+          // counts as one separator). Otherwise add token to the list.
+          if (VALID_TOKENS.get(candidate) == TokenType.SEPARATOR &&
+              lastAddedToken != null &&
+              lastAddedToken.type == TokenType.SEPARATOR) {
+            lastAddedToken.string += candidate;
+          } else {
+            lastAddedToken = new Token(VALID_TOKENS.get(candidate), candidate);
+            tokens.add(lastAddedToken);
+          }
           begin = end;
           break;
         }
+        
       }
     }
-  }
-
-  /**
-   * Clumps of separators (e.g. "---") count as single separators ("-")
-   */
-  private void squashSeparators() {
-    List<Token> newList = new ArrayList<>();
-    Token lastToken = tokens.get(0);
-    Token lastSeparatorToken = null;
-
-    //take care of index 0
-    newList.add(lastToken); // add first token no matter what
-    if (lastToken.type == TokenType.SEPARATOR) {
-      lastSeparatorToken = lastToken;
-    }
-    
-    if (tokens.size() > 1) {
-      Token token;
-      for (int i = 1; i < tokens.size(); i++) {
-        token = tokens.get(i);
-        if (token.type == TokenType.SEPARATOR) { // deal with a separator
-          if (lastSeparatorToken == null) {
-            lastSeparatorToken = token;
-            newList.add(token);
-          } else if (lastToken.type == TokenType.SEPARATOR) {
-            lastSeparatorToken.string += token.string;
-          } else {
-            newList.add(token);
-          }
-        } else {
-          newList.add(token); // not a separator
-        }
-        lastToken = token;
-      }
-    }
-    tokens = newList;
   }
 
   /**
