@@ -85,7 +85,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   public class Token {
     TokenType type;
     String string;
-    //todo index? (update in squashseparators)
 
     public Token(TokenType type, String string) {
       this.type = type;
@@ -93,25 +92,28 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
 
     @Override public String toString() {
-      return string;
+      return string + " type: " + type;
     }
   }
 
   public HiveSqlDateTimeFormatter() {}
 
   /**
-   * 
+   * Parses the pattern. This is 
    */
   @Override public void setPattern(String pattern) throws ParseException {
-    assert pattern.length() < LONGEST_ACCEPTED_PATTERN;
+    assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
     pattern = pattern.toLowerCase().trim();
 
     parsePatternToTokens(pattern);
 
-    verifyTokenTypeList();
+    verifyTokenList(); // throw Exception if list of tokens doesn't make sense
     this.pattern = pattern;
   }
 
+  /**
+   * Updates list of tokens 
+   */
   private void parsePatternToTokens(String pattern) throws ParseException {
     tokens.clear();
 
@@ -125,13 +127,14 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       // if begin hasn't progressed, then something is unparseable
       if (begin != end) {
         tokens.clear();
-        try {
-          new SimpleDateFormat().applyPattern(pattern);
-          throw new ParseException("Unable to parse format. However, it would parse with hive.use....frogmethod=false. Have you forgot to turn it off?");
-          //todo this isn't true for cast statements
-        } catch (IllegalArgumentException e) {
-          //do nothing
-        }
+
+//        try {
+//          new SimpleDateFormat().applyPattern(pattern);
+//          throw new ParseException("Unable to parse format. However, it would parse with hive.use....frogmethod=false. Have you forgot to turn it off?");
+//          //todo this isn't true for cast statements
+//        } catch (IllegalArgumentException e) {
+//          //do nothing
+//        }
         throw new ParseException("Bad date/time conversion format: " + pattern);
       }
 
@@ -163,7 +166,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   /**
    * frogmethod: errors:
-   * Invalid duplication of format element
    * //https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
    * 
    * not done yet:
@@ -172,18 +174,15 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    * "Multiple median indicator tokenTypes provided"
    * "Conflict between median indicator and hour tokenType"
    * "Second of day tokenType conflicts with other tokenType(s)"
-   * 
-   * "The input format is too long"
-   * 
-   * 
-   * @return
    */
   
-  private boolean verifyTokenTypeList() throws ParseException { // frogmethod
+  private void verifyTokenList() throws ParseException { // frogmethod
     StringBuilder exceptionList = new StringBuilder();
     for (TokenType tokenType: TokenType.values()) {
       if (Collections.frequency(tokens, tokenType) > 1) {
-        exceptionList.append("Multiple " + tokenType.name() + " tokenTypes provided\n");
+        exceptionList.append("Invalid duplication of format element: multiple ");
+        exceptionList.append(tokenType.name());
+        exceptionList.append(" tokenTypes provided\n");
       }
     }
     if (tokens.contains(TokenType.HOUR_OF_DAY) && //todo iterate over these
@@ -194,7 +193,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (!exceptions.isEmpty()) {
       throw new ParseException(exceptions);
     }
-    return true; //todo probably not necessary
   }
 
   @Override public String getPattern() {
