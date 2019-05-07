@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -36,14 +37,42 @@ import java.util.TimeZone;
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   private static final int LONGEST_TOKEN_LENGTH = 5;
+  private static final int LONGEST_ACCEPTED_PATTERN = 100; // for sanity's sake
   private String pattern;
   private TimeZone timeZone;
-  // protected for testing
   protected List<Token> tokens = new ArrayList<>();
+  private final Map<String, TokenType> VALID_TOKENS = ImmutableMap.<String, TokenType>builder()
+      .put("-", TokenType.SEPARATOR)
+      .put(":", TokenType.SEPARATOR)
+      .put(" ", TokenType.SEPARATOR)
+      .put(".", TokenType.SEPARATOR)
+      .put("/", TokenType.SEPARATOR)
+      .put(";", TokenType.SEPARATOR)
+      .put("\'", TokenType.SEPARATOR)
+      .put(",", TokenType.SEPARATOR)
 
-  public HiveSqlDateTimeFormatter() {}
+      .put("yyyy", TokenType.YEAR)
+      .put("yyy", TokenType.YEAR)
+      .put("yy", TokenType.YEAR)
+      .put("y", TokenType.YEAR)
+      .put("mm", TokenType.MONTH)
+      .put("dd", TokenType.DAY_OF_MONTH)
+      .put("hh", TokenType.HOUR_OF_DAY)
+      .put("mi", TokenType.MINUTE)
+      .put("ss", TokenType.SECOND)
+      .build();
 
-  public enum Token {
+  private final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
+      .put("HH12", 2)
+      .put("HH24", 2)
+      .put("TZM", 2)
+      .put("FF", 9)
+      .put("FF1", 1).put("FF2", 2).put("FF3", 2)
+      .put("FF4", 2).put("FF5", 2).put("FF6", 2)
+      .put("FF7", 2).put("FF8", 2).put("FF9", 2)
+      .build();
+
+  public enum TokenType {
     SEPARATOR,
     YEAR,
     MONTH,
@@ -53,38 +82,38 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     SECOND
   }
   
-  private enum Separators {
-    //frogmethod not sure what this is for
+  public class Token {
+    TokenType type;
+    String string;
+    //todo index? (update in squashseparators)
+
+    public Token(TokenType type, String string) {
+      this.type = type;
+      this.string = string;
+    }
+
+    @Override public String toString() {
+      return string;
+    }
   }
-//  
-//  private final Map<Token, Set<String>> tokenMap1 = ImmutableMap.<Token, Set<String>>builder()
-//      .put(Token.YEAR, ImmutableSet.of("yyyy", "yyy", "yy", "y"))
-//      .put(Token.MONTH, ImmutableSet.of("mm"))
-//      .put(Token.DAY_OF_MONTH, ImmutableSet.of("dd"))
-//      .put(Token.HOUR_OF_DAY, ImmutableSet.of("hh"))
-//      .put(Token.MINUTE, ImmutableSet.of("mi"))
-//      .put(Token.SECOND, ImmutableSet.of("ss"))
-//      .build();
 
-  private final Map<String, Token> tokenMap = ImmutableMap.<String, Token>builder()
-      .put("yyyy", Token.YEAR)
-      .put("yyy", Token.YEAR)
-      .put("yy", Token.YEAR)
-      .put("y", Token.YEAR)
-      .put("mm", Token.MONTH)
-      .put("dd", Token.DAY_OF_MONTH)
-      .put("hh", Token.HOUR_OF_DAY)
-      .put("mi", Token.MINUTE)
-      .put("ss", Token.SECOND)
-      .put("-", Token.SEPARATOR)
-      .put(":", Token.SEPARATOR)
-      .put(" ", Token.SEPARATOR)
-      .build();
+  public HiveSqlDateTimeFormatter() {}
 
+  /**
+   * 
+   */
   @Override public void setPattern(String pattern) throws ParseException {
+    assert pattern.length() < LONGEST_ACCEPTED_PATTERN;
     pattern = pattern.toLowerCase().trim();
-    this.pattern = pattern;
 
+    parsePatternToTokens(pattern);
+
+    verifyTokenTypeList();
+    squashSeparators();
+    this.pattern = pattern;
+  }
+
+  private void parsePatternToTokens(String pattern) throws ParseException {
     tokens.clear();
 
     // the substrings we will check (includes begin, does not include end)
@@ -94,24 +123,67 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       
       // if begin hasn't progressed, then something is unparseable
       if (begin != end) {
+        tokens.clear();
+        try {
+          new SimpleDateFormat().applyPattern(pattern);
+          throw new ParseException("Unable to parse format. However, it would parse with hive.use....frogmethod=false. Have you forgot to turn it off?");
+          //todo this isn't true for cast statements
+        } catch (IllegalArgumentException e) {
+          //do nothing
+        }
         throw new ParseException("Bad date/time conversion format: " + pattern);
       }
       
+      //process next token
       for (int i=LONGEST_TOKEN_LENGTH; i > 0; i--) {
         end = begin + i;
         if (end > pattern.length()) {
           continue;
         }
         candidate = pattern.substring(begin, end);
-        if (tokenMap.keySet().contains(candidate)) {
-          tokens.add(tokenMap.get(candidate));
+        if (VALID_TOKENS.keySet().contains(candidate)) {
+          tokens.add(new Token(VALID_TOKENS.get(candidate), candidate));
           begin = end;
           break;
         }
       }
     }
+  }
+
+  /**
+   * Clumps of separators (e.g. "---") count as single separators ("-")
+   */
+  private void squashSeparators() {
+    List<Token> newList = new ArrayList<>();
+    Token lastToken = tokens.get(0);
+    Token lastSeparatorToken = null;
+
+    //take care of index 0
+    newList.add(lastToken); // add first token no matter what
+    if (lastToken.type == TokenType.SEPARATOR) {
+      lastSeparatorToken = lastToken;
+    }
     
-    verifyTokenList();
+    if (tokens.size() > 1) {
+      Token token;
+      for (int i = 1; i < tokens.size(); i++) {
+        token = tokens.get(i);
+        if (token.type == TokenType.SEPARATOR) { // deal with a separator
+          if (lastSeparatorToken == null) {
+            lastSeparatorToken = token;
+            newList.add(token);
+          } else if (lastToken.type == TokenType.SEPARATOR) {
+            lastSeparatorToken.string += token.string;
+          } else {
+            newList.add(token);
+          }
+        } else {
+          newList.add(token); // not a separator
+        }
+        lastToken = token;
+      }
+    }
+    tokens = newList;
   }
 
   /**
@@ -119,23 +191,35 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    * Invalid duplication of format element
    * //https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
    * 
-   * 
-   * "Multiple year token provided"
+   * not done yet:
    * "Both year and round year are provided"
-   * "Day of year provided with day or month token"
-   * "Multiple hour tokens provided"
-   * "Multiple median indicator tokens provided"
-   * "Conflict between median indicator and hour token"
-   * "Missing hour token"
-   * "Second of day token conflicts with other token(s)"
+   * "Day of year provided with day or month tokenType"
+   * "Multiple median indicator tokenTypes provided"
+   * "Conflict between median indicator and hour tokenType"
+   * "Second of day tokenType conflicts with other tokenType(s)"
    * 
    * "The input format is too long"
+   * 
+   * 
    * @return
    */
   
-  private boolean verifyTokenList() throws ParseException { // frogmethod
-    // no duplicates except SEPARATOR?
-    return true;
+  private boolean verifyTokenTypeList() throws ParseException { // frogmethod
+    StringBuilder exceptionList = new StringBuilder();
+    for (TokenType tokenType: TokenType.values()) {
+      if (Collections.frequency(tokens, tokenType) > 1) {
+        exceptionList.append("Multiple " + tokenType.name() + " tokenTypes provided\n");
+      }
+    }
+    if (tokens.contains(TokenType.HOUR_OF_DAY) && //todo iterate over these
+        !(tokens.contains(TokenType.MINUTE) || tokens.contains(TokenType.SECOND))) { // todo or doesn't contain other hour or contains other smaller thing
+      exceptionList.append("Missing hour tokenType\n");
+    }
+    String exceptions = exceptionList.toString();
+    if (!exceptions.isEmpty()) {
+      throw new ParseException(exceptions);
+    }
+    return true; //todo probably not necessary
   }
 
   @Override public String getPattern() {
