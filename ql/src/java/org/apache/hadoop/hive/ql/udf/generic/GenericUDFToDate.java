@@ -19,9 +19,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
@@ -44,7 +42,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
     value = "CAST(<Date string> as DATE [FORMAT <STRING>]) - Returns the date represented by the date string.",
     extended = "date_string is a string in the format 'yyyy-MM-dd.' "
     + "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
-    + "used for parsing. hive.use.sql.datetime.formats must be turned on for this feature."
+    + "used for parsing."
     + "Example:\n "
     + "  > SELECT CAST('2009-01-01' AS DATE) FROM src LIMIT 1;\n"
     + "  '2009-01-01'")
@@ -54,8 +52,6 @@ public class GenericUDFToDate extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient DateConverter dc;
-  private HiveDateTimeFormatter formatter = null;
-  private boolean useSql;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -87,8 +83,8 @@ public class GenericUDFToDate extends GenericUDF {
         PrimitiveObjectInspectorFactory.writableDateObjectInspector);
 
     // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
-      formatter = new HiveSqlDateTimeFormatter();
+    if (arguments.length > 1 && arguments[1] != null) {
+      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
       formatter.setPattern(getConstantStringValue(arguments, 1), true);
       dc.setDateTimeFormatter(formatter);
     }
@@ -121,14 +117,4 @@ public class GenericUDFToDate extends GenericUDF {
     return sb.toString();
   }
 
-  /**
-   * Get whether or not to use Sql formats.
-   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
-   * MapredContext conf. This is only called in runtime of MapRedTask.
-   */
-  @Override public void configure(MapredContext context) {
-    super.configure(context);
-    useSql =
-        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
-  }
 }

@@ -8,7 +8,6 @@ PREHOOK: type: DESCFUNCTION
 POSTHOOK: query: DESCRIBE FUNCTION EXTENDED from_unixtime
 POSTHOOK: type: DESCFUNCTION
 from_unixtime(unix_time, format) - returns unix_time in the specified format
-format is a String which specifies the format for output. If session-level setting hive.use.sql.datetime.formats is true, output_date_format will be interpreted as SQL:2016 datetime format. Otherwise it will be interpreted as java.text.SimpleDateFormat.
 Example:
   > SELECT from_unixtime(0, 'yyyy-MM-dd HH:mm:ss') FROM src LIMIT 1;
   '1970-01-01 00:00:00'

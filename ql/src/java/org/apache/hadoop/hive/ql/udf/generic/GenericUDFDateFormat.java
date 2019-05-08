@@ -20,14 +20,12 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping.STRING_GROUP;
 
+import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -47,9 +45,8 @@ import org.apache.hadoop.io.Text;
  */
 @Description(name = "date_format", value = "_FUNC_(date/timestamp/string, fmt) - converts a date/timestamp/string "
     + "to a value of string in the format specified by the date format fmt.",
-    extended = "Supported formats are (1) SimpleDateFormat formats - "
-        + "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html, "
-        + "or (2) SQL:2016 datetime formats if hive.use.sql.datetime.formats is set to true. "
+    extended = "Supported formats are SimpleDateFormat formats - "
+        + "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html. "
         + "Second argument fmt should be constant.\n"
         + "Example: > SELECT _FUNC_('2015-04-08', 'y');\n '2015'")
 public class GenericUDFDateFormat extends GenericUDF {
@@ -59,8 +56,7 @@ public class GenericUDFDateFormat extends GenericUDF {
   private transient PrimitiveCategory[] dtInputTypes = new PrimitiveCategory[2];
   private final java.util.Date date = new java.util.Date();
   private final Text output = new Text();
-  private transient HiveDateTimeFormatter formatter;
-  private boolean useSql;
+  private transient SimpleDateFormat formatter;
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -83,12 +79,10 @@ public class GenericUDFDateFormat extends GenericUDF {
       String fmtStr = getConstantStringValue(arguments, 1);
       if (fmtStr != null) {
         try {
-          formatter = getHiveDateTimeFormatter(useSql);
-          formatter.setPattern(fmtStr, false);
+          formatter = new SimpleDateFormat(fmtStr);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         } catch (IllegalArgumentException e) {
-          //reset formatter if something went wrong
-          formatter = null;
+          // ignore
         }
       }
     } else {
@@ -116,7 +110,8 @@ public class GenericUDFDateFormat extends GenericUDF {
       ts = Timestamp.ofEpochMilli(d.toEpochMilli());
     }
 
-    String res = formatter.format(ts);
+    date.setTime(ts.toEpochMilli());
+    String res = formatter.format(date);
     if (res == null) {
       return null;
     }
@@ -132,17 +127,5 @@ public class GenericUDFDateFormat extends GenericUDF {
   @Override
   protected String getFuncName() {
     return "date_format";
-  }
-
-
-  /**
-   * Get whether or not to use Sql formats.
-   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
-   * MapredContext conf. This is only called in runtime of MapRedTask.
-   */
-  @Override public void configure(MapredContext context) {
-    super.configure(context);
-    useSql =
-        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }

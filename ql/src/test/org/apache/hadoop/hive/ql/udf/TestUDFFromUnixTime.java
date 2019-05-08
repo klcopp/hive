@@ -68,28 +68,6 @@ public class TestUDFFromUnixTime {
 
   }
 
-  @Test
-  public void testFromUnixTimeWithSqlFormat() throws HiveException {
-    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
-    UDFFromUnixTime udf = new UDFFromUnixTime();
-
-    //int with format
-    String format = "HH:mm:ss"; //todo frogmethod this
-    verifyInt(0, "00:00:00", format, udf);
-    verifyInt(1296705906, "04:05:06", format, udf);
-    verifyInt(1514818800, "15:00:00", format, udf);
-
-    //long with format
-    verifyLong(0L, "00:00:00", format, udf);
-    verifyLong(1296705906L, "04:05:06", format, udf);
-    verifyLong(1514818800L, "15:00:00", format, udf);
-    // proleptic Gregorian input: -30767590800L
-    verifyLong(-30767158800L, "15:00:00", format, udf);
-    // proleptic Gregorian input: -62009366400
-    verifyLong(-62009539200L, "00:00:00", format, udf);
-    verifyLong(253402300799L, "23:59:59", format, udf);
-  }
-
   private void verifyInt(int value, String expected, String format, UDFFromUnixTime udf) {
     IntWritable input = new IntWritable(value);
     Text res;

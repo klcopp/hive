@@ -43,11 +43,6 @@ import static junit.framework.TestCase.assertNull;
  */
 public class TestGenericUDFCastWithFormat {
 
-  @BeforeClass
-  public static void setup() {
-    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
-  }
-
   @Test
   public void testDateToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();

@@ -1553,12 +1553,6 @@ public class HiveConf extends Configuration {
         "used instead. Time-zone IDs can be specified as region-based zone IDs (based on IANA time-zone data),\n" +
         "abbreviated zone IDs, or offset IDs."),
 
-    HIVE_USE_SQL_DATETIME_FORMAT("hive.use.sql.datetime.formats", false,
-        "Datetime <formats> used in \"CAST...AS...FORMAT <format>\" statements will be parsed " +
-        "and formatted according to the SQL:2016 semantics instead of the original " +
-        "SimpleDateFormatter format. This applies to functions that take a datetime format as " +
-        "well; e.g. date_format, add_months."),
-
     HIVE_SESSION_HISTORY_ENABLED("hive.session.history.enabled", false,
         "Whether to log Hive query, query plan, runtime statistics etc."),
 
