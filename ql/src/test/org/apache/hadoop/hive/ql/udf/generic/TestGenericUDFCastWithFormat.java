@@ -54,6 +54,7 @@ public class TestGenericUDFCastWithFormat {
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
     testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy-MM-dd", "2009-07-30");
     testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy", "2009");
+    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("1969-07-30")), "dd", "30");
   }
 
   @Test
@@ -62,16 +63,17 @@ public class TestGenericUDFCastWithFormat {
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(udf, inputOI, "2009-07-30", "yyyy-MM-dd", "2009-07-30");
     testCast(udf, inputOI, "2009-07-30", "yyyy", "2009-01-01");
-    //TODO
+    testCast(udf, inputOI, "30", "dd", "1970-01-30");
   }
 
   @Test
   public void testStringToTimestampWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFTimestamp();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
-    testCast(udf, inputOI, "2009-07-30 00:00:00", "yyyy", "2009-01-01 00:00:00");
-    //TODO
+    testCast(udf, inputOI, "2009-07-30 01:02:03", "yyyy-MM-dd HH:mm:ss", "2009-07-30 01:02:03");
+    testCast(udf, inputOI, "2009", "yyyy", "2009-01-01 00:00:00");
+    testCast(udf, inputOI, "07/30/2009 11:0200", "MM/dd/yyyy hh:mmss", "2009-07-30 11:02:00");
+    testCast(udf, inputOI, "69.07.30.", "yy.MM.dd.", "1969-07-30 00:00:00");
   }
 
   @Test
@@ -87,9 +89,10 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00");
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:00")), "yyyy", "2009");
-    //TODO
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:08")), "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:08");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 11:02:00")), "MM/dd/yyyy hhmmss", "07/30/2009 110200");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 01:02:03")), "MM", "07");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("1969-07-30 00:00:00")), "yy", "69");
   }
 
   @Test
@@ -115,8 +118,8 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF.DeferredObject formatObj = new GenericUDF.DeferredJavaObject(new Text(format));
     GenericUDF.DeferredObject[] args = {valueObj, formatObj};
 
-    assertEquals(udf.getFuncName() + " test with input type " + inputOI.getTypeName()
-            + " failed ", output, udf.evaluate(args).toString());
+    assertEquals("cast " + inputOI.getTypeName() + " to " + udf.getFuncName() + " failed ",
+        output, udf.evaluate(args).toString());
 
     // Try with null args
     GenericUDF.DeferredObject[] nullArgs = {new GenericUDF.DeferredJavaObject(null)};

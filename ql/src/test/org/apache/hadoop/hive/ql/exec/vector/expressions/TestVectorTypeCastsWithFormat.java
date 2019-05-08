@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFUtils;
+import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -96,8 +97,6 @@ public class TestVectorTypeCastsWithFormat {
     Assert.assertEquals("00", getStringFromBytesColumnVector(resultV, 3));
     Assert.assertEquals("00", getStringFromBytesColumnVector(resultV, 4));
     Assert.assertEquals("23", getStringFromBytesColumnVector(resultV, 5));
-
-    //todo frogmethod test nanos (FFFFFFFFF)
   }
 
   @Test
@@ -128,8 +127,6 @@ public class TestVectorTypeCastsWithFormat {
     verifyTimestamp("1580-08-11 00:00:00", resultV, 3); //frogmethod this is wrong
     verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmethod this is wrong
     verifyTimestamp("9999-12-01 00:00:00", resultV, 5);
-
-    //todo frogmethod test nanos (FFFFFFFFF)
   }
 
   private void verifyTimestamp(String tsString, TimestampColumnVector resultV, int index) {
@@ -150,8 +147,8 @@ public class TestVectorTypeCastsWithFormat {
     Assert.assertEquals(Date.valueOf("2019-01-01").toEpochDay(), resultV.vector[0]);
     Assert.assertEquals(Date.valueOf("1776-01-01").toEpochDay(), resultV.vector[1]);
     Assert.assertEquals(Date.valueOf("2012-01-01").toEpochDay(), resultV.vector[2]);
-//    Assert.assertEquals(Date.valueOf("1580-01-01").toEpochDay(), resultV.vector[3]); //frogmethod fails
-//    Assert.assertEquals(Date.valueOf("0005-01-01").toEpochDay(), resultV.vector[4]); //frogmethod also fails
+    Assert.assertEquals(DateWritableV2.dateToDays(java.sql.Date.valueOf("1580-01-01")), resultV.vector[3]); // pre-1582 dates use Julian calendar
+    Assert.assertEquals(DateWritableV2.dateToDays(java.sql.Date.valueOf("0005-01-01")), resultV.vector[4]);
     Assert.assertEquals(Date.valueOf("9999-01-01").toEpochDay(), resultV.vector[5]);
   }
 
