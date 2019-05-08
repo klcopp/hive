@@ -54,7 +54,7 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  @Override public void setPattern(String pattern) {
+  @Override public void setPattern(String pattern, boolean forParsing) {
     format.applyPattern(pattern);
     this.pattern = pattern;
   }

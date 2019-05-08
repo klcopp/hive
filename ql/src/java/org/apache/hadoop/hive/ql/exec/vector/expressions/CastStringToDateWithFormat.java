@@ -49,7 +49,7 @@ public class CastStringToDateWithFormat extends CastStringToDate {
       throw new RuntimeException(); //frogmethod, need a specific exception for this. the conf is off and you can't use this now
     }
 
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8));
+    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), true);
   }
 
   @Override

@@ -98,7 +98,7 @@ public class GenericUDFTimestamp extends GenericUDF {
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
       formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(getConstantStringValue(arguments, 1));
+      formatter.setPattern(getConstantStringValue(arguments, 1), true);
       tc.setDateTimeFormatter(formatter);
     }
 

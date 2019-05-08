@@ -37,7 +37,7 @@ public class TestHiveSimpleDateFormatter {
   @Before
   public void setUp() throws WrongFormatterException, ParseException {
     formatter.setFormatter(new SimpleDateFormat());
-    formatter.setPattern("yyyy-MM-dd HH:mm:ss");
+    formatter.setPattern("yyyy-MM-dd HH:mm:ss", false);
     formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
   }
 

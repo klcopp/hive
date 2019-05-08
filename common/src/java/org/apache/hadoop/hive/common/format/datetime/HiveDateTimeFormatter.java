@@ -62,7 +62,7 @@ public interface HiveDateTimeFormatter {
    * HiveSqlDateTimeFormatter interprets it as month.
    * This method parses the pattern into tokens, so it comes with some performance overhead.
    */
-  void setPattern(String pattern) throws IllegalArgumentException;
+  void setPattern(String pattern, boolean forParsing) throws IllegalArgumentException;
 
   /**
    * Get the format pattern to be used for formatting timestamps or parsing strings.

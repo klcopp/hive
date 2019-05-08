@@ -49,7 +49,7 @@ public class HiveJavaDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   // unused methods
-  @Override public void setPattern(String pattern) {}
+  @Override public void setPattern(String pattern, boolean forParsing) {}
   @Override public String getPattern() {
     return null;
   }

@@ -84,7 +84,7 @@ public class GenericUDFDateFormat extends GenericUDF {
       if (fmtStr != null) {
         try {
           formatter = getHiveDateTimeFormatter(useSql);
-          formatter.setPattern(fmtStr);
+          formatter.setPattern(fmtStr, false);
           formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         } catch (IllegalArgumentException e) {
           //reset formatter if something went wrong

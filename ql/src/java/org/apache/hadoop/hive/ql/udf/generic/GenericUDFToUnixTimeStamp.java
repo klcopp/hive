@@ -88,10 +88,6 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
       }
     }
 
-    formatter = getHiveDateTimeFormatter(useSql);
-    formatter.setPattern(lasPattern);
-    formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-
     PrimitiveObjectInspector arg1OI = (PrimitiveObjectInspector) arguments[0];
     switch (arg1OI.getPrimitiveCategory()) {
       case CHAR:
@@ -108,6 +104,10 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
           }
           patternConverter = ObjectInspectorConverters.getConverter(arg2OI,
               PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+
+          formatter = getHiveDateTimeFormatter(useSql);
+          formatter.setPattern(lasPattern, true);
+          formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
         break;
 
@@ -153,7 +153,7 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
           return null;
         }
         if (!patternVal.equals(lasPattern)) {
-          formatter.setPattern(patternVal);
+          formatter.setPattern(patternVal, true);
           lasPattern = patternVal;
         }
       }

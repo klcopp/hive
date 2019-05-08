@@ -103,13 +103,17 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   /**
    * Parses the pattern.
    */
-  @Override public void setPattern(String pattern) throws IllegalArgumentException {
+  @Override public void setPattern(String pattern, boolean forParsing)
+      throws IllegalArgumentException {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
     pattern = pattern.toLowerCase();
 
     parsePatternToTokens(pattern);
 
-    verifyTokenList(); // throw Exception if list of tokens doesn't make sense
+    // throw Exception if list of tokens doesn't make sense for parsing. Formatting is less picky.
+    if (forParsing) {
+      verifyTokenList();
+    }
     this.pattern = pattern;
   }
 
@@ -129,21 +133,13 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       // if begin hasn't progressed, then something is unparseable
       if (begin != end) {
         tokens.clear();
-
-//        try {
-//          new SimpleDateFormat().applyPattern(pattern);
-//          throw new ParseException("Unable to parse format. However, it would parse with hive.use....frogmethod=false. Have you forgot to turn it off?");
-//          //todo this isn't true for cast statements
-//        } catch (IllegalArgumentException e) {
-//          //do nothing
-//        }
         throw new IllegalArgumentException("Bad date/time conversion format: " + pattern);
       }
 
-      //process next token
+      //process next token: start with substring 
       for (int i = LONGEST_TOKEN_LENGTH; i > 0; i--) {
         end = begin + i;
-        if (end > pattern.length()) {
+        if (end > pattern.length()) { // don't go past the end of the pattern string
           continue;
         }
         candidate = pattern.substring(begin, end);
@@ -163,7 +159,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           begin = end;
           break;
         }
-
       }
     }
   }
@@ -224,8 +219,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     //TODO replace with actual implementation:
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
     try {
-      formatter.setPattern(pattern);
-    } catch (ParseException e) {
+      formatter.setPattern(pattern, false);
+    } catch (IllegalArgumentException e) {
       e.printStackTrace();
     }
     if (timeZone != null) formatter.setTimeZone(timeZone);
@@ -240,7 +235,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     // org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
 
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
-    formatter.setPattern(pattern);
+    formatter.setPattern(pattern, false);
     if (timeZone != null) formatter.setTimeZone(timeZone);
     else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     try {

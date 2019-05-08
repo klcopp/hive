@@ -89,7 +89,7 @@ public class GenericUDFAddMonths extends GenericUDF {
         checkArgGroups(arguments, 2, tsInputTypes, STRING_GROUP);
         String fmtStr = getConstantStringValue(arguments, 2);
         if (fmtStr != null) {
-          formatter.setPattern(fmtStr);
+          formatter.setPattern(fmtStr, false);
         }
       } else {
         throw new UDFArgumentTypeException(2, getFuncName() + " only takes constant as "
@@ -97,7 +97,7 @@ public class GenericUDFAddMonths extends GenericUDF {
       }
     }
     if (formatter.getPattern() == null) {
-      formatter.setPattern("yyyy-MM-dd");
+      formatter.setPattern("yyyy-MM-dd", false);
     }
 
     // the function should support both short date and full timestamp format

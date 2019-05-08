@@ -50,7 +50,7 @@ public class CastDateToStringWithFormat extends CastDateToString {
     if (formatter == null) {
       throw new RuntimeException(); //frogmethod, need a specific exception for this. the format string isn't found
     }
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8));
+    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.

@@ -33,7 +33,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   private HiveSqlDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
 
   @Test
-  public void testSetPattern() throws ParseException{
+  public void testSetPattern() throws IllegalArgumentException{
     verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", 27, new ArrayList<>(List.of(
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
         HiveSqlDateTimeFormatter.TokenType.YEAR,
@@ -70,7 +70,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private void verifyBadPattern(String string) {
     try {
-      formatter.setPattern(string);
+      formatter.setPattern(string, true);
       fail();
     } catch (Exception e) {
       assertEquals(e.getClass().getName(), ParseException.class.getName());
@@ -78,8 +78,8 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   private void verifyPatternParsing(String pattern, int expectedLength, ArrayList<HiveSqlDateTimeFormatter.TokenType> expected)
-      throws ParseException {
-    formatter.setPattern(pattern);
+      throws IllegalArgumentException {
+    formatter.setPattern(pattern, true);
     assertEquals(expected.size(), formatter.tokens.size());
     StringBuilder sb = new StringBuilder();
     int actualLength = 0;

@@ -48,7 +48,7 @@ public class CastTimestampToStringWithFormat extends CastTimestampToString {
     if (formatter == null) {
       throw new RuntimeException(); //frogmethod, need a specific exception for this. the format string isn't found
     }
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8));
+    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
   @Override

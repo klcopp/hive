@@ -126,7 +126,7 @@ public class UDFFromUnixTime extends UDF {
     initFormatter();
 
     if (!format.equals(lastFormat)) {
-      formatter.setPattern(format.toString());
+      formatter.setPattern(format.toString(), false);
       lastFormat.set(format);
     }
 
