@@ -57,19 +57,19 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       .put("y", TokenType.YEAR)
       .put("mm", TokenType.MONTH)
       .put("dd", TokenType.DAY_OF_MONTH)
-      .put("hh", TokenType.HOUR_OF_DAY)
+      .put("hh", TokenType.HOUR_IN_HALF_DAY)
       .put("mi", TokenType.MINUTE)
       .put("ss", TokenType.SECOND)
       .build();
 
   private final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
-      .put("HH12", 2)
-      .put("HH24", 2)
-      .put("TZM", 2)
-      .put("FF", 9)
-      .put("FF1", 1).put("FF2", 2).put("FF3", 2)
-      .put("FF4", 2).put("FF5", 2).put("FF6", 2)
-      .put("FF7", 2).put("FF8", 2).put("FF9", 2)
+      .put("hh12", 2)
+      .put("hh24", 2)
+      .put("tzm", 2)
+      .put("ff", 9)
+      .put("ff1", 1).put("ff2", 2).put("ff3", 3)
+      .put("ff4", 4).put("ff5", 5).put("ff6", 6)
+      .put("ff7", 7).put("ff8", 8).put("ff9", 9)
       .build();
 
   public enum TokenType {
@@ -77,18 +77,20 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     YEAR,
     MONTH,
     DAY_OF_MONTH,
-    HOUR_OF_DAY,
+    HOUR_IN_HALF_DAY,
     MINUTE,
     SECOND
   }
   
   public class Token {
     TokenType type;
-    String string;
+    String string; // pattern string
+    int length; // length of output (e.g. YYY: 3, FF8: 8)
 
-    public Token(TokenType type, String string) {
+    public Token(TokenType type, String string, int length) {
       this.type = type;
       this.string = string;
+      this.length = length;
     }
 
     @Override public String toString() {
@@ -99,11 +101,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   public HiveSqlDateTimeFormatter() {}
 
   /**
-   * Parses the pattern. This is 
+   * Parses the pattern.
    */
   @Override public void setPattern(String pattern) throws ParseException {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
-    pattern = pattern.toLowerCase().trim();
+    pattern = pattern.toLowerCase();
 
     parsePatternToTokens(pattern);
 
@@ -152,8 +154,10 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
               lastAddedToken != null &&
               lastAddedToken.type == TokenType.SEPARATOR) {
             lastAddedToken.string += candidate;
+            lastAddedToken.length += candidate.length();
           } else {
-            lastAddedToken = new Token(VALID_TOKENS.get(candidate), candidate);
+            lastAddedToken =
+                new Token(VALID_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
             tokens.add(lastAddedToken);
           }
           begin = end;
@@ -164,11 +168,19 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
+  private int getCandidateLength(String candidate) {
+    if (SPECIAL_LENGTHS.containsKey(candidate)) {
+      return SPECIAL_LENGTHS.get(candidate);
+    }
+    return candidate.length();
+  }
+
   /**
    * frogmethod: errors:
-   * //https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
+   * https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
    * 
    * not done yet:
+   * "Missing hour token"(when meridian indicator is present but any type of hour is absent)
    * "Both year and round year are provided"
    * "Day of year provided with day or month tokenType"
    * "Multiple median indicator tokenTypes provided"
@@ -177,18 +189,25 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    */
   
   private void verifyTokenList() throws ParseException { // frogmethod
+
+    // create a list of token types
+    ArrayList<TokenType> tokenTypes = new ArrayList<>();
+    for (Token token : tokens) {
+      tokenTypes.add(token.type);
+    }
+
+    // check for bad combinations of token types
     StringBuilder exceptionList = new StringBuilder();
     for (TokenType tokenType: TokenType.values()) {
-      if (Collections.frequency(tokens, tokenType) > 1) {
+      if (Collections.frequency(tokenTypes, tokenType) > 1 &&
+          tokenType != TokenType.SEPARATOR) {
         exceptionList.append("Invalid duplication of format element: multiple ");
         exceptionList.append(tokenType.name());
-        exceptionList.append(" tokenTypes provided\n");
+        exceptionList.append(" tokens provided\n");
       }
     }
-    if (tokens.contains(TokenType.HOUR_OF_DAY) && //todo iterate over these
-        !(tokens.contains(TokenType.MINUTE) || tokens.contains(TokenType.SECOND))) { // todo or doesn't contain other hour or contains other smaller thing
-      exceptionList.append("Missing hour tokenType\n");
-    }
+    //todo...
+
     String exceptions = exceptionList.toString();
     if (!exceptions.isEmpty()) {
       throw new ParseException(exceptions);

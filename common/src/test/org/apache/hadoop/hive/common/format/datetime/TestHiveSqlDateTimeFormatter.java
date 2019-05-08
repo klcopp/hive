@@ -34,7 +34,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   @Test
   public void testSetPattern() throws ParseException{
-    checkTokenList("---yyyy-----MM-dd--", new ArrayList<>(List.of(
+    verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", 27, new ArrayList<>(List.of(
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
         HiveSqlDateTimeFormatter.TokenType.YEAR,
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
@@ -42,23 +42,22 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
         HiveSqlDateTimeFormatter.TokenType.DAY_OF_MONTH,
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR
-
         )));
 
-    checkTokenList("yyyymmdd", new ArrayList<>(List.of(
+    verifyPatternParsing("yyyymmdd", 8, new ArrayList<>(List.of(
         HiveSqlDateTimeFormatter.TokenType.YEAR,
         HiveSqlDateTimeFormatter.TokenType.MONTH,
         HiveSqlDateTimeFormatter.TokenType.DAY_OF_MONTH
     )));
 
-    checkTokenList("hh:mi:ss", new ArrayList<>(List.of(
-        HiveSqlDateTimeFormatter.TokenType.HOUR_OF_DAY,
+    verifyPatternParsing("hh:mi:ss", 8, new ArrayList<>(List.of(
+        HiveSqlDateTimeFormatter.TokenType.HOUR_IN_HALF_DAY,
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
         HiveSqlDateTimeFormatter.TokenType.MINUTE,
         HiveSqlDateTimeFormatter.TokenType.SEPARATOR,
         HiveSqlDateTimeFormatter.TokenType.SECOND
     )));
-    checkTokenList("y", new ArrayList<>(List.of(
+    verifyPatternParsing("y", 1, new ArrayList<>(List.of(
         HiveSqlDateTimeFormatter.TokenType.YEAR
     )));
   }
@@ -66,7 +65,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   public void testSetPatternWithBadPatterns() {
     verifyBadPattern("e");
     verifyBadPattern("yyyy-1");
-    verifyBadPattern("yyyyy");
+    verifyBadPattern("yyyyy"); // too many years
   }
 
   private void verifyBadPattern(String string) {
@@ -78,16 +77,19 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     }
   }
 
-  private void checkTokenList(String pattern, ArrayList<HiveSqlDateTimeFormatter.TokenType> expected)
+  private void verifyPatternParsing(String pattern, int expectedLength, ArrayList<HiveSqlDateTimeFormatter.TokenType> expected)
       throws ParseException {
     formatter.setPattern(pattern);
     assertEquals(expected.size(), formatter.tokens.size());
     StringBuilder sb = new StringBuilder();
+    int actualLength = 0;
     for (int i = 0; i < expected.size(); i++) {
       assertEquals("Generated list of tokens not correct", expected.get(i), formatter.tokens.get(i).type);
       sb.append(formatter.tokens.get(i).string);
+      actualLength += formatter.tokens.get(i).length;
     }
     assertEquals("Token strings concatenated don't match original pattern string", pattern.toLowerCase(), sb.toString());
+    assertEquals(expectedLength, actualLength);
   }
 
   @Test
