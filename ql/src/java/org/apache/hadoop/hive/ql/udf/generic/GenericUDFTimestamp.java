@@ -19,9 +19,6 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.exec.MapredContext;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestampWithFormat;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -32,6 +29,7 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDoubleToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastLongToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestamp;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestampWithFormat;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -52,7 +50,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 @Description(name = "timestamp",
     value = "cast(<primitive> as timestamp [format <string>]) - Returns timestamp",
     extended = "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
-    + "used. hive.use.sql.datetime.formats must be turned on to use formats.")
+    + "used.")
 @VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class,
     CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class,
     CastStringToTimestampWithFormat.class})
@@ -60,8 +58,6 @@ public class GenericUDFTimestamp extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient TimestampConverter tc;
-  private HiveDateTimeFormatter formatter = null;
-  private boolean useSql;
   /*
    * Integer value was interpreted to timestamp inconsistently in milliseconds comparing
    * to float/double in seconds. Since the issue exists for a long time and some users may
@@ -96,8 +92,8 @@ public class GenericUDFTimestamp extends GenericUDF {
     tc.setIntToTimestampInSeconds(intToTimestampInSeconds);
 
     // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
-      formatter = new HiveSqlDateTimeFormatter();
+    if (arguments.length > 1 && arguments[1] != null) {
+      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
       formatter.setPattern(getConstantStringValue(arguments, 1), true);
       tc.setDateTimeFormatter(formatter);
     }
@@ -131,16 +127,5 @@ public class GenericUDFTimestamp extends GenericUDF {
 
   public boolean isIntToTimestampInSeconds() {
     return intToTimestampInSeconds;
-  }
-
-  /**
-   * Get whether or not to use Sql formats.
-   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
-   * MapredContext conf. This is only called in runtime of MapRedTask.
-   */
-  @Override public void configure(MapredContext context) {
-    super.configure(context);
-    useSql =
-        HiveConf.getBoolVar(context.getJobConf(), ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }

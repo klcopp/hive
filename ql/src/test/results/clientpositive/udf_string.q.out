@@ -8,7 +8,7 @@ PREHOOK: type: DESCFUNCTION
 POSTHOOK: query: DESCRIBE FUNCTION EXTENDED string
 POSTHOOK: type: DESCFUNCTION
 CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.
-If format is specified with FORMAT argument then SQL:2016 datetime formats will be used. hive.use.sql.datetime.formats must be turned on to use formats.
+If format is specified with FORMAT argument then SQL:2016 datetime formats will be used.
 Example:
    > SELECT CAST(1234 AS string) FROM src LIMIT 1;
   '1234'

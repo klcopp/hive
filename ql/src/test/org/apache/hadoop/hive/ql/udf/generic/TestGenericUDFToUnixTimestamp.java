@@ -74,14 +74,6 @@ public class TestGenericUDFToUnixTimestamp extends TestCase {
 
     // test null values
     runAndVerify(udf, null, null);
-
-    ts = Timestamp.valueOf("1111-02-03 01:02:03");
-    runAndVerify(udf,
-        new TimestampWritableV2(ts),
-        new LongWritable(ts.toEpochSecond()));
-
-    // test null values
-    runAndVerify(udf, null, null);
   }
 
   public void testDate() throws HiveException {
@@ -124,31 +116,6 @@ public class TestGenericUDFToUnixTimestamp extends TestCase {
         new Text(val),
         new Text(format),
         new LongWritable(Date.valueOf(val).toEpochSecond()));
-
-    // test null values
-    runAndVerify(udf2, null, null, null);
-    runAndVerify(udf2, null, new Text(format), null);
-    runAndVerify(udf2, new Text(val), null, null);
-  }
-
-  // format argument (2nd arg) is only used when 1st argument is string
-  public void testStringWithSqlFormat() throws HiveException {
-    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
-
-    ObjectInspector valueOI = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
-    String val;
-
-    // Try 2-arg version
-    GenericUDFToUnixTimeStamp udf2 = new GenericUDFToUnixTimeStamp();
-    ObjectInspector[] args2 = {valueOI, valueOI};
-    udf2.initialize(args2);
-
-    val = "2001-02-02";
-    String format = "yyyy";
-    runAndVerify(udf2,
-        new Text(val),
-        new Text(format),
-        new LongWritable(Date.valueOf("2001-01-01").toEpochSecond()));
 
     // test null values
     runAndVerify(udf2, null, null, null);

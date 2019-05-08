@@ -19,9 +19,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -34,7 +32,7 @@ import org.slf4j.LoggerFactory;
 @Description(name = "string",
     value = "CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.",
     extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
-        + "be used. hive.use.sql.datetime.formats must be turned on to use formats.\n"
+        + "be used.\n"
         + "Example:\n "
         + "  > SELECT CAST(1234 AS string) FROM src LIMIT 1;\n"
         + "  '1234'")
@@ -43,8 +41,6 @@ public class GenericUDFToString extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
   private transient TextConverter converter;
-  private HiveDateTimeFormatter formatter = null;
-  private boolean useSql;
 
   public GenericUDFToString() {
   }
@@ -64,8 +60,8 @@ public class GenericUDFToString extends GenericUDF {
     converter = new TextConverter(argumentOI);
 
     // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null && (useSql || useSqlFormat())) {
-      formatter = new HiveSqlDateTimeFormatter();
+    if (arguments.length > 1 && arguments[1] != null) {
+      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
       formatter.setPattern(getConstantStringValue(arguments, 1), false);
       converter.setDateTimeFormatter(formatter);
     }
@@ -96,16 +92,5 @@ public class GenericUDFToString extends GenericUDF {
     }
     sb.append(")");
     return sb.toString();
-  }
-
-  /**
-   * Get whether or not to use Sql formats.
-   * Necessary because MapReduce tasks don't have access to SessionState conf, so need to use
-   * MapredContext conf. This is only called in runtime of MapRedTask.
-   */
-  @Override public void configure(MapredContext context) {
-    super.configure(context);
-    useSql =
-        HiveConf.getBoolVar(context.getJobConf(), HiveConf.ConfVars.HIVE_USE_SQL_DATETIME_FORMAT);
   }
 }
