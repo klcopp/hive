@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Description(name = "string", 
+@Description(name = "string",
     value = "CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.",
     extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
         + "be used. hive.use.sql.datetime.formats must be turned on to use formats.\n"

@@ -136,7 +136,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         throw new IllegalArgumentException("Bad date/time conversion format: " + pattern);
       }
 
-      //process next token: start with substring 
+      //process next token: start with substring
       for (int i = LONGEST_TOKEN_LENGTH; i > 0; i--) {
         end = begin + i;
         if (end > pattern.length()) { // don't go past the end of the pattern string
@@ -172,10 +172,10 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   /**
    * Make sure the generated list of Tokens is valid.
-   * 
+   *
    * frogmethod: errors:
    * https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
-   *
+   * todo
    * not done yet:
    * "Missing hour token"(when meridian indicator is present but any type of hour is absent)
    * "Both year and round year are provided"
@@ -203,7 +203,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         exceptionList.append(" tokens provided\n");
       }
     }
-    //todo (don't forget the newline)
+    //todo (don't forget the newline at the end of the errors)
 
     String exceptions = exceptionList.toString();
     if (!exceptions.isEmpty()) {
@@ -231,7 +231,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   @Override public Timestamp parse(String string) throws ParseException {
     //TODO replace with actual implementation:
     // todo should be able to remove the time zone (city) from tstzs; if it doesn't then deal with
-    // it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId, 
+    // it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId,
     // org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
 
     HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();

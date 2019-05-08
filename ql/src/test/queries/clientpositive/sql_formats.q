@@ -72,9 +72,9 @@ set hive.vectorized.execution.enabled=true;
 
 --from timestamps select cast (t as string      format "yyyy"); todo frogmethod uncomment after fixing
 --from dates      select cast (d as string      format "yyyy");
---from timestamps select cast (t as varchar(11) format "yyyy"); 
+--from timestamps select cast (t as varchar(11) format "yyyy");
 --from dates      select cast (d as varchar(11) format "yyyy");
---from timestamps select cast (t as char(11)    format "yyyy"); 
+--from timestamps select cast (t as char(11)    format "yyyy");
 --from dates      select cast (d as char(11)    format "yyyy");
 from strings      select cast (s as timestamp   format "yyyy");
 from strings      select cast (s as date        format "yyyy");
