@@ -3141,15 +3141,15 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      if (childExpr.size() < 2) { //second argument will be format string
+      if (childExpr.size() < 2) {
         return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
-      } else {
+      } else { //second argument will be format string
         return createVectorExpression(CastDateToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
       }
     } else if (isTimestampFamily(inputType)) {
-      if (childExpr.size() < 2) { //second argument will be format string
+      if (childExpr.size() < 2) {
         return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
-      } else {
+      } else { //second argument will be format string
         return createVectorExpression(CastTimestampToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
       }
     } else if (isStringFamily(inputType)) {

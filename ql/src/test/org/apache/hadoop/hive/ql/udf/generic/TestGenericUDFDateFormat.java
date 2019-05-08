@@ -186,7 +186,7 @@ public class TestGenericUDFDateFormat extends TestCase {
     runAndVerifyStr("2015-04-05", "2015", udf);
 
     // format 2
-    fmtText = new Text("MM"); //TODO mm
+    fmtText = new Text("MM");
     valueOI1 = PrimitiveObjectInspectorFactory
         .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo, fmtText);
     arguments[1] = valueOI1;
