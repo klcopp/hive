@@ -1,0 +1,260 @@
+PREHOOK: query: drop table if exists timestamps
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists timestamps
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists timestampLocalTzs
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists timestampLocalTzs
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists dates
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists dates
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists strings
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists strings
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: --frogmethod do you want mapreduce or not
+
+create table timestamps (t timestamp) stored as parquet
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@timestamps
+POSTHOOK: query: --frogmethod do you want mapreduce or not
+
+create table timestamps (t timestamp) stored as parquet
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@timestamps
+PREHOOK: query: insert into timestamps values
+("2019-01-01"),
+("1969-12-31 23:59:59.999999999")
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@timestamps
+POSTHOOK: query: insert into timestamps values
+("2019-01-01"),
+("1969-12-31 23:59:59.999999999")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@timestamps
+POSTHOOK: Lineage: timestamps.t SCRIPT []
+PREHOOK: query: from timestamps select cast (t as string format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+POSTHOOK: query: from timestamps select cast (t as string format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+2019
+1969
+PREHOOK: query: create table dates (d date) stored as parquet
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@dates
+POSTHOOK: query: create table dates (d date) stored as parquet
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@dates
+PREHOOK: query: insert into dates values
+("2019-01-01"),
+("1969-12-31")
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@dates
+POSTHOOK: query: insert into dates values
+("2019-01-01"),
+("1969-12-31")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@dates
+POSTHOOK: Lineage: dates.d SCRIPT []
+PREHOOK: query: from timestamps select cast (t as string format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+POSTHOOK: query: from timestamps select cast (t as string format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+2019
+1969
+PREHOOK: query: create table strings (s string) stored as parquet
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@strings
+POSTHOOK: query: create table strings (s string) stored as parquet
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@strings
+PREHOOK: query: insert into strings values
+("2019"),
+("1969")
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@strings
+POSTHOOK: query: insert into strings values
+("2019"),
+("1969")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@strings
+POSTHOOK: Lineage: strings.s SCRIPT []
+PREHOOK: query: from strings    select cast (s as timestamp                      format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: from strings    select cast (s as timestamp                      format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+2019-01-01 00:00:00
+1969-01-01 00:00:00
+PREHOOK: query: from strings    select cast (s as date                           format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: from strings    select cast (s as date                           format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+2019-01-01
+1969-01-01
+PREHOOK: query: explain
+from strings    select cast (s as timestamp                      format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: explain
+from strings    select cast (s as timestamp                      format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Map Reduce
+      Map Operator Tree:
+          TableScan
+            alias: strings
+            Statistics: Num rows: 2 Data size: 176 Basic stats: COMPLETE Column stats: COMPLETE
+            Select Operator
+              expressions: CAST( s AS TIMESTAMP FORMAT 'yyyy') (type: timestamp)
+              outputColumnNames: _col0
+              Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
+              File Output Operator
+                compressed: false
+                Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
+                table:
+                    input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                    output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                    serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: -1
+      Processor Tree:
+        ListSink
+
+PREHOOK: query: explain
+from strings    select cast (s as date                           format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: explain
+from strings    select cast (s as date                           format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Map Reduce
+      Map Operator Tree:
+          TableScan
+            alias: strings
+            Statistics: Num rows: 2 Data size: 176 Basic stats: COMPLETE Column stats: COMPLETE
+            Select Operator
+              expressions: CAST( s AS DATE FORMAT 'yyyy') (type: date)
+              outputColumnNames: _col0
+              Statistics: Num rows: 2 Data size: 112 Basic stats: COMPLETE Column stats: COMPLETE
+              File Output Operator
+                compressed: false
+                Statistics: Num rows: 2 Data size: 112 Basic stats: COMPLETE Column stats: COMPLETE
+                table:
+                    input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                    output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                    serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: -1
+      Processor Tree:
+        ListSink
+
+PREHOOK: query: explain
+from timestamps select cast (t as string                         format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+POSTHOOK: query: explain
+from timestamps select cast (t as string                         format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@timestamps
+#### A masked pattern was here ####
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Map Reduce
+      Map Operator Tree:
+          TableScan
+            alias: timestamps
+            Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
+            Select Operator
+              expressions: CAST( t AS STRING FORMAT 'yyyy') (type: string)
+              outputColumnNames: _col0
+              Statistics: Num rows: 2 Data size: 368 Basic stats: COMPLETE Column stats: COMPLETE
+              File Output Operator
+                compressed: false
+                Statistics: Num rows: 2 Data size: 368 Basic stats: COMPLETE Column stats: COMPLETE
+                table:
+                    input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                    output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                    serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: -1
+      Processor Tree:
+        ListSink
+
+PREHOOK: query: from strings    select cast (s as timestamp format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: from strings    select cast (s as timestamp format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+2019-01-01 00:00:00
+1969-01-01 00:00:00
+PREHOOK: query: from strings    select cast (s as date      format "yyyy")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@strings
+#### A masked pattern was here ####
+POSTHOOK: query: from strings    select cast (s as date      format "yyyy")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@strings
+#### A masked pattern was here ####
+2019-01-01
+1969-01-01

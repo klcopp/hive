@@ -18,6 +18,8 @@
 package org.apache.hadoop.hive.serde2.io;
 
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
@@ -29,6 +31,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.TimeZone;
 
 /**
  * Writable for TimestampTZ. Copied from TimestampWritableV2.
@@ -245,6 +248,19 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
   public String toString() {
     populateTimestampTZ();
     return timestampTZ.toString();
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+
+    populateTimestampTZ();
+    Timestamp ts = Timestamp.ofEpochSecond(
+        timestampTZ.getZonedDateTime().toEpochSecond(),
+        timestampTZ.getNanos());
+    formatter.setTimeZone(TimeZone.getTimeZone(timestampTZ.getZonedDateTime().getZone()));
+    return formatter.format(ts);
   }
 
   @Override

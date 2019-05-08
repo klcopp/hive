@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 package org.apache.hadoop.hive.common.type;
+
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -101,6 +104,13 @@ public class Timestamp implements Comparable<Timestamp> {
     return localDateTime.format(PRINT_FORMATTER);
   }
 
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+    return formatter.format(this);
+  }
+
   public int hashCode() {
     return localDateTime.hashCode();
   }
@@ -164,6 +174,16 @@ public class Timestamp implements Comparable<Timestamp> {
       }
     }
     return new Timestamp(localDateTime);
+  }
+
+  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter)
+      throws ParseException {
+    if (formatter == null) {
+      return valueOf(s);
+    }
+
+    s = s.trim();
+    return formatter.parse(s);
   }
 
   public static Timestamp ofEpochSecond(long epochSecond) {

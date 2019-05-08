@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 package org.apache.hadoop.hive.common.type;
+
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -70,6 +73,13 @@ public class Date implements Comparable<Date> {
   @Override
   public String toString() {
     return localDate.format(PRINT_FORMATTER);
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+    return formatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
   }
 
   public int hashCode() {
@@ -135,6 +145,14 @@ public class Date implements Comparable<Date> {
       throw new IllegalArgumentException("Cannot create date, parsing error");
     }
     return new Date(localDate);
+  }
+
+  public static Date valueOf(String s, HiveDateTimeFormatter formatter) throws ParseException {
+    if (formatter == null) {
+      return valueOf(s);
+    }
+    s = s.trim();
+    return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
   }
 
   public static Date ofEpochDay(int epochDay) {

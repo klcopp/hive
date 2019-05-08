@@ -35,9 +35,9 @@ import org.apache.hadoop.io.Text;
 
 public class TestGenericUDFAddMonths extends TestCase {
 
-  private final Text fmtTextWithTime = new Text("YYYY-MM-dd HH:mm:ss");
-  private final Text fmtTextWithTimeAndms = new Text("YYYY-MM-dd HH:mm:ss.SSS");
-  private final Text fmtTextWithoutTime = new Text("YYYY-MM-dd");
+  private final Text fmtTextWithTime = new Text("yyyy-MM-dd HH:mm:ss");
+  private final Text fmtTextWithTimeAndms = new Text("yyyy-MM-dd HH:mm:ss.SSS");
+  private final Text fmtTextWithoutTime = new Text("yyyy-MM-dd");
   private final Text fmtTextInvalid = new Text("YYYY-abcdz");
 
   public void testAddMonthsInt() throws HiveException {
@@ -214,7 +214,33 @@ public class TestGenericUDFAddMonths extends TestCase {
     }
   }
 
+  public void testSqlDateFormats() throws HiveException {
+    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
 
+    GenericUDFAddMonths udf = new GenericUDFAddMonths();
+    ObjectInspector valueOI0 = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+    ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.writableIntObjectInspector;
+
+    // format 1
+    Text formatPatternYear = new Text("yyyy");
+    ObjectInspector valueOI2 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo,
+            formatPatternYear);
+    ObjectInspector[] arguments = {valueOI0, valueOI1, valueOI2};
+    udf.initialize(arguments);
+
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear, "2013", udf);
+
+    // format 2
+    Text formatPatternHour = new Text("HH"); // frogmethod todo hh24
+    valueOI2 = PrimitiveObjectInspectorFactory
+        .getPrimitiveWritableConstantObjectInspector(TypeInfoFactory.stringTypeInfo,
+            formatPatternHour);
+    arguments[2] = valueOI2;
+    udf.initialize(arguments);
+
+    runAndVerify("2014-12-31 23:59:59", -12, formatPatternYear, "23", udf);
+  }
 
   private void runAndVerify(String str, int months, String expResult, GenericUDF udf)
       throws HiveException {
