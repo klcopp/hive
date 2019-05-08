@@ -81,7 +81,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     MINUTE,
     SECOND
   }
-  
+
   public class Token {
     TokenType type;
     String string; // pattern string
@@ -103,7 +103,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   /**
    * Parses the pattern.
    */
-  @Override public void setPattern(String pattern) throws ParseException {
+  @Override public void setPattern(String pattern) throws IllegalArgumentException {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
     pattern = pattern.toLowerCase();
 
@@ -114,9 +114,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   /**
-   * Updates list of tokens 
+   * Updates list of tokens
    */
-  private void parsePatternToTokens(String pattern) throws ParseException {
+  private void parsePatternToTokens(String pattern) throws IllegalArgumentException {
     tokens.clear();
 
     // the substrings we will check (includes begin, does not include end)
@@ -125,7 +125,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     Token lastAddedToken = null;
 
     while (begin < pattern.length()) {
-      
+
       // if begin hasn't progressed, then something is unparseable
       if (begin != end) {
         tokens.clear();
@@ -137,7 +137,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 //        } catch (IllegalArgumentException e) {
 //          //do nothing
 //        }
-        throw new ParseException("Bad date/time conversion format: " + pattern);
+        throw new IllegalArgumentException("Bad date/time conversion format: " + pattern);
       }
 
       //process next token
@@ -163,7 +163,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           begin = end;
           break;
         }
-        
+
       }
     }
   }
@@ -176,9 +176,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   /**
+   * Make sure the generated list of Tokens is valid.
+   * 
    * frogmethod: errors:
    * https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
-   * 
+   *
    * not done yet:
    * "Missing hour token"(when meridian indicator is present but any type of hour is absent)
    * "Both year and round year are provided"
@@ -187,8 +189,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    * "Conflict between median indicator and hour tokenType"
    * "Second of day tokenType conflicts with other tokenType(s)"
    */
-  
-  private void verifyTokenList() throws ParseException { // frogmethod
+
+  private void verifyTokenList() throws IllegalArgumentException {
 
     // create a list of token types
     ArrayList<TokenType> tokenTypes = new ArrayList<>();
@@ -206,11 +208,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         exceptionList.append(" tokens provided\n");
       }
     }
-    //todo...
+    //todo (don't forget the newline)
 
     String exceptions = exceptionList.toString();
     if (!exceptions.isEmpty()) {
-      throw new ParseException(exceptions);
+      throw new IllegalArgumentException(exceptions);
     }
   }
 
