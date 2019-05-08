@@ -25,10 +25,8 @@ import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFUtils;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -39,12 +37,6 @@ import java.util.Arrays;
  * CastStringToDateWithFormat, CastStringToTimestampWithFormat.
  */
 public class TestVectorTypeCastsWithFormat {
-
-  @BeforeClass
-  public static void setup() {
-    //set hive.use.sql.datetime.formats to true
-    TestGenericUDFUtils.setHiveUseSqlDateTimeFormats(true);
-  }
 
   @Test
   public void testCastDateToStringWithFormat() throws HiveException {

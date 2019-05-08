@@ -19,10 +19,10 @@
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 
 import java.nio.charset.StandardCharsets;
 
@@ -43,11 +43,7 @@ public class CastTimestampToStringWithFormat extends CastTimestampToString {
     if (patternBytes == null) {
       throw new RuntimeException(); //frogmethod, need a specific exception for this. the format string isn't found
     }
-
-    formatter = GenericUDF.getSqlDateTimeFormatterOrNull();
-    if (formatter == null) {
-      throw new RuntimeException(); //frogmethod, need a specific exception for this. the format string isn't found
-    }
+    formatter = new HiveSqlDateTimeFormatter();
     formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
