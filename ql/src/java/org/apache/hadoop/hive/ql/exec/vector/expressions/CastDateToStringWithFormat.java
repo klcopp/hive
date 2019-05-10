@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 public class CastDateToStringWithFormat extends CastDateToString {
   private static final long serialVersionUID = 1L;
   protected transient Date dt;
-  private transient HiveDateTimeFormatter formatter;
+  private HiveDateTimeFormatter formatter;
 
   public CastDateToStringWithFormat() {
     super();
