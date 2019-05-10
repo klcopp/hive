@@ -18,17 +18,25 @@
 
 package org.apache.hadoop.hive.common.format.datetime;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
 
 /**
  * Formatter using SQL:2016 datetime patterns.
@@ -41,26 +49,22 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private String pattern;
   private TimeZone timeZone;
   protected List<Token> tokens = new ArrayList<>();
-  private final Map<String, TokenType> VALID_TOKENS = ImmutableMap.<String, TokenType>builder()
-      .put("-", TokenType.SEPARATOR)
-      .put(":", TokenType.SEPARATOR)
-      .put(" ", TokenType.SEPARATOR)
-      .put(".", TokenType.SEPARATOR)
-      .put("/", TokenType.SEPARATOR)
-      .put(";", TokenType.SEPARATOR)
-      .put("\'", TokenType.SEPARATOR)
-      .put(",", TokenType.SEPARATOR)
 
-      .put("yyyy", TokenType.YEAR)
-      .put("yyy", TokenType.YEAR)
-      .put("yy", TokenType.YEAR)
-      .put("y", TokenType.YEAR)
-      .put("mm", TokenType.MONTH)
-      .put("dd", TokenType.DAY_OF_MONTH)
-      .put("hh", TokenType.HOUR_IN_HALF_DAY)
-      .put("mi", TokenType.MINUTE)
-      .put("ss", TokenType.SECOND)
-      .build();
+  private final Map<String, TemporalField> VALID_TOKENS =
+          ImmutableMap.<String, TemporalField>builder()
+                  .put("yyyy", ChronoField.YEAR)
+                  .put("yyy", ChronoField.YEAR)
+                  .put("yy", ChronoField.YEAR)
+                  .put("y", ChronoField.YEAR)
+                  .put("mm", ChronoField.MONTH_OF_YEAR)
+                  .put("dd", ChronoField.DAY_OF_MONTH)
+                  .put("hh24", ChronoField.HOUR_OF_DAY)
+                  .put("mi", ChronoField.MINUTE_OF_HOUR)
+                  .put("ss", ChronoField.SECOND_OF_MINUTE)
+                  .build();
+
+  private final List<String> VALID_SEPARATORS =
+          ImmutableList.of("-", ":", " ", ".", "/", ";", "\'", ",");
 
   private final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
       .put("hh12", 2)
@@ -71,26 +75,34 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       .put("ff4", 4).put("ff5", 5).put("ff6", 6)
       .put("ff7", 7).put("ff8", 8).put("ff9", 9)
       .build();
+  private DateTimeFormatter dateTimeFormatter;
 
   public enum TokenType {
     SEPARATOR,
-    YEAR,
-    MONTH,
-    DAY_OF_MONTH,
-    HOUR_IN_HALF_DAY,
-    MINUTE,
-    SECOND
+    TEMPORAL
+    //TEXT etc.
   }
 
   public class Token {
     TokenType type;
-    String string; // pattern string
-    int length; // length of output (e.g. YYY: 3, FF8: 8)
+    TemporalField temporalField; // e.g. ChronoField.YEAR, ISOFields.WEEK_BASED_YEAR
+    String string; // pattern string, e.g. "yyy"
+    int length; // length (e.g. YYY: 3, FF8: 8)
 
-    public Token(TokenType type, String string, int length) {
-      this.type = type;
+    //for temporal objects (years, months...)
+    public Token(TemporalField temporalField, String string, int length) {
+      this.type = TokenType.TEMPORAL;
+      this.temporalField = temporalField;
       this.string = string;
       this.length = length;
+    }
+
+    //for other objects (text, separators...)
+    public Token(TokenType tokenType, String string) {
+      this.type = tokenType;
+      this.temporalField = null;
+      this.string = string;
+      this.length = string.length();
     }
 
     @Override public String toString() {
@@ -106,7 +118,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   @Override public void setPattern(String pattern, boolean forParsing)
       throws IllegalArgumentException {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
-    pattern = pattern.toLowerCase();
+    pattern = pattern.toLowerCase(); //todo save original pattern for AM/PM
 
     parsePatternToTokens(pattern);
 
@@ -114,6 +126,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (forParsing) {
       verifyTokenList();
     }
+    createDateTimeFormat();
     this.pattern = pattern;
   }
 
@@ -123,7 +136,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private void parsePatternToTokens(String pattern) throws IllegalArgumentException {
     tokens.clear();
 
-    // the substrings we will check (includes begin, does not include end)
+    // indexes of the substring we will check (includes begin, does not include end)
     int begin=0, end=0;
     String candidate;
     Token lastAddedToken = null;
@@ -143,19 +156,22 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           continue;
         }
         candidate = pattern.substring(begin, end);
-        if (VALID_TOKENS.keySet().contains(candidate)) {
-          // if it's a separator, then clump it with immediately preceding separators (e.g. "---"
-          // counts as one separator). Otherwise add token to the list.
-          if (VALID_TOKENS.get(candidate) == TokenType.SEPARATOR &&
-              lastAddedToken != null &&
-              lastAddedToken.type == TokenType.SEPARATOR) {
+        // if it's a separator, then clump it with immediately preceding separators (e.g. "---"
+        // counts as one separator).
+        if (candidate.length() == 1 && VALID_SEPARATORS.contains(candidate)) {
+          if (lastAddedToken != null && lastAddedToken.type == TokenType.SEPARATOR) {
             lastAddedToken.string += candidate;
-            lastAddedToken.length += candidate.length();
+            lastAddedToken.length += 1;
           } else {
-            lastAddedToken =
-                new Token(VALID_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
+            lastAddedToken = new Token(TokenType.SEPARATOR, candidate);
             tokens.add(lastAddedToken);
           }
+          begin = end;
+          break;
+        // Otherwise add token to the list.
+        } else if (VALID_TOKENS.keySet().contains(candidate)) {
+          lastAddedToken = new Token(VALID_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
+          tokens.add(lastAddedToken);
           begin = end;
           break;
         }
@@ -187,23 +203,26 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   private void verifyTokenList() throws IllegalArgumentException {
 
-    // create a list of token types
-    ArrayList<TokenType> tokenTypes = new ArrayList<>();
+    // create a list of tokens' temporal fields
+    ArrayList<TemporalField> tokenTypes = new ArrayList<>();
     for (Token token : tokens) {
-      tokenTypes.add(token.type);
+      if (token.temporalField != null) {
+        tokenTypes.add(token.temporalField);
+      }
     }
 
-    // check for bad combinations of token types
+    // check for bad combinations of temporal fields
     StringBuilder exceptionList = new StringBuilder();
-    for (TokenType tokenType: TokenType.values()) {
-      if (Collections.frequency(tokenTypes, tokenType) > 1 &&
-          tokenType != TokenType.SEPARATOR) {
+
+    //example: No duplicate anything todo I think only no duplicate years
+    for (TemporalField tokenType: tokenTypes) {
+      if (Collections.frequency(tokenTypes, tokenType) > 1) {
         exceptionList.append("Invalid duplication of format element: multiple ");
-        exceptionList.append(tokenType.name());
+        exceptionList.append(tokenType.toString());
         exceptionList.append(" tokens provided\n");
       }
     }
-    //todo (don't forget the newline at the end of the errors)
+    //etc. (don't forget the newline at the end of the errors)
 
     String exceptions = exceptionList.toString();
     if (!exceptions.isEmpty()) {
@@ -215,34 +234,49 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return pattern;
   }
 
-  @Override public String format(Timestamp ts) {
-    //TODO replace with actual implementation:
-    HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
-    try {
-      formatter.setPattern(pattern, false);
-    } catch (IllegalArgumentException e) {
-      e.printStackTrace();
+  private void createDateTimeFormat() {
+    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
+
+    for (Token token: tokens) {
+      if (token.type == TokenType.SEPARATOR) {
+        builder.appendLiteral(token.string);
+      } else {
+        builder.appendValueReduced(token.temporalField, 1, token.length, LocalDate.now()); // frogmethod: signstyle : NOT_NEGATIVE? (only important for parsing)
+        builder.parseDefaulting(token.temporalField, token.temporalField.range().getMinimum());
+      }
+      builder.optionalStart().appendLiteral(' ').optionalEnd();
     }
-    if (timeZone != null) formatter.setTimeZone(timeZone);
-    else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
-    return formatter.format(ts);
+
+//    builder.parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+//            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+//            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0);
+    dateTimeFormatter = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
+  }
+
+  @Override public String format(Timestamp ts) {
+    LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
+    try {
+      return localDateTime.format(dateTimeFormatter);
+    } catch (DateTimeException e) {
+      return null; //todo frogmethod FormatException? Or DateTimeException?
+    }
   }
 
   @Override public Timestamp parse(String string) throws ParseException {
-    //TODO replace with actual implementation:
-    // todo should be able to remove the time zone (city) from tstzs; if it doesn't then deal with
-    // it in TimestampTZUtil#parseOrNull(java.lang.String, java.time.ZoneId,
-    // org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter)
-
-    HiveDateTimeFormatter formatter = new HiveSimpleDateFormatter();
-    formatter.setPattern(pattern, false);
-    if (timeZone != null) formatter.setTimeZone(timeZone);
-    else formatter.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     try {
-      return formatter.parse(string);
-    } catch (Exception e) {
-      throw new ParseException(e);
-    }
+      LocalDateTime ldt = LocalDateTime.parse(string, dateTimeFormatter);
+      return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
+    } catch (DateTimeException e) {
+//      try {
+//        LocalDate ld = LocalDate.parse(string, dateTimeFormatter);
+//        LocalDateTime ldt = ld.atStartOfDay();
+//        return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
+//      } catch (DateTimeException e2) {
+        throw new ParseException("Could not parse string " + string + " with SQL:2016 format " +
+                "pattern " + pattern, e); //frogmethod e or e2 could be the cause
+      }
+//    }
+
   }
 
   @Override public void setTimeZone(TimeZone timeZone) {
