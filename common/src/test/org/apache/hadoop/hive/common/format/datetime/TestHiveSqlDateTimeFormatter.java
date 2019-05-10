@@ -112,6 +112,9 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   @Test
   public void testParse() throws ParseException {
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("2018-02-03 04:05:06"));
+    
     formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
     assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("18-02-03 04:05:06"));
 

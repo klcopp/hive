@@ -24,12 +24,10 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.*;
-import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,8 +47,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private String pattern;
   private TimeZone timeZone;
   protected List<Token> tokens = new ArrayList<>();
+  private DateTimeFormatter dateTimeFormatter;
 
-  private final Map<String, TemporalField> VALID_TOKENS =
+  private static final Map<String, TemporalField> VALID_TOKENS =
           ImmutableMap.<String, TemporalField>builder()
                   .put("yyyy", ChronoField.YEAR)
                   .put("yyy", ChronoField.YEAR)
@@ -63,10 +62,10 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
                   .put("ss", ChronoField.SECOND_OF_MINUTE)
                   .build();
 
-  private final List<String> VALID_SEPARATORS =
+  private static final List<String> VALID_SEPARATORS =
           ImmutableList.of("-", ":", " ", ".", "/", ";", "\'", ",");
 
-  private final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
+  private static final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
       .put("hh12", 2)
       .put("hh24", 2)
       .put("tzm", 2)
@@ -75,7 +74,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       .put("ff4", 4).put("ff5", 5).put("ff6", 6)
       .put("ff7", 7).put("ff8", 8).put("ff9", 9)
       .build();
-  private DateTimeFormatter dateTimeFormatter;
 
   public enum TokenType {
     SEPARATOR,
@@ -230,10 +228,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  @Override public String getPattern() {
-    return pattern;
-  }
-
   private void createDateTimeFormat() {
     DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
 
@@ -244,12 +238,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         builder.appendValueReduced(token.temporalField, 1, token.length, LocalDate.now()); // frogmethod: signstyle : NOT_NEGATIVE? (only important for parsing)
         builder.parseDefaulting(token.temporalField, token.temporalField.range().getMinimum());
       }
-      builder.optionalStart().appendLiteral(' ').optionalEnd();
+//      builder.optionalStart().appendLiteral(' ').optionalEnd(); // add padding (fm/fx)
     }
-
-//    builder.parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-//            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-//            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0);
     dateTimeFormatter = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
   }
 
@@ -258,7 +248,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     try {
       return localDateTime.format(dateTimeFormatter);
     } catch (DateTimeException e) {
-      return null; //todo frogmethod FormatException? Or DateTimeException?
+      return null; //todo frogmethod
     }
   }
 
@@ -267,16 +257,13 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       LocalDateTime ldt = LocalDateTime.parse(string, dateTimeFormatter);
       return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
     } catch (DateTimeException e) {
-//      try {
-//        LocalDate ld = LocalDate.parse(string, dateTimeFormatter);
-//        LocalDateTime ldt = ld.atStartOfDay();
-//        return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
-//      } catch (DateTimeException e2) {
         throw new ParseException("Could not parse string " + string + " with SQL:2016 format " +
-                "pattern " + pattern, e); //frogmethod e or e2 could be the cause
+                "pattern " + pattern, e);
       }
-//    }
-
+  }
+  
+  @Override public String getPattern() {
+    return pattern;
   }
 
   @Override public void setTimeZone(TimeZone timeZone) {
