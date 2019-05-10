@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class CastTimestampToStringWithFormat extends CastTimestampToString {
   private static final long serialVersionUID = 1L;
-  private transient HiveDateTimeFormatter formatter;
+  private HiveDateTimeFormatter formatter;
 
   public CastTimestampToStringWithFormat() {
     super();
