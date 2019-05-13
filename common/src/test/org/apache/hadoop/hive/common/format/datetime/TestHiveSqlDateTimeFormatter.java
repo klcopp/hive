@@ -76,7 +76,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
       formatter.setPattern(string, true);
       fail();
     } catch (Exception e) {
-      assertEquals(e.getClass().getName(), ParseException.class.getName());
+      assertEquals(e.getClass().getName(), IllegalArgumentException.class.getName());
     }
   }
 
@@ -112,13 +112,34 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   @Test
   public void testParse() throws ParseException {
-    formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("18-02-03 04:05:06"));
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("2018-02-03 04:05:06"));
+    
+//    formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
+//    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("18-02-03 04:05:06"));
 
     formatter.setPattern("yyyy-mm-dd", true);
     assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("2018-01-01"));
 
     formatter.setPattern("yyyy", true);
     assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("2018"));
+
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06"), formatter.parse("2018-02-03 04:05:06 America/New_York"));
   }
+
+  public void testBadParse() {
+    verifyBadParseString("yyyy", "2019-02-03");
+  }
+
+  private void verifyBadParseString(String pattern, String string) {
+    try {
+      formatter.setPattern(pattern, true);
+      formatter.parse(string);
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getClass().getName(), ParseException.class.getName());
+    }
+  }
+
 }
