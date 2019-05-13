@@ -24,15 +24,14 @@ insert into dates values
 ;
 from timestamps select cast (t as string format "yyyy");
 
+create table timestampLocalTzs (t timestamp with local time zone);
+insert into timestampLocalTzs values
+("2019-01-01 America/New_York"),
+("1969-12-31 23:59:59.999999999 Europe/Rome")
+;
 
---todo frogmethod uncomment after parse implementation
---create table timestampLocalTzs (t timestamp with local time zone);
---insert into timestamps values
---("2019-01-01 America/New_York"),
---("1969-12-31 23:59:59.999999999 Europe/Rome")
---;
---from timestampLocalTzs select cast (t as string format "yyyy");
---from timestampLocalTzs select cast (t as string format "hh"); -- todo change to hh24 maybe
+from timestampLocalTzs select cast (t as string format "yyyy");
+from timestampLocalTzs select cast (t as string format "hh24");
 
 
 create table strings (s string) stored as parquet;

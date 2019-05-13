@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
+import org.apache.hadoop.hive.common.type.TimestampTZUtil;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.apache.hadoop.hive.serde2.io.TimestampLocalTZWritable;
@@ -57,7 +58,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToDate();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(udf, inputOI, "2009-07-30", "yyyy-MM-dd", "2009-07-30");
-    testCast(udf, inputOI, "2009-07-30", "yyyy", "2009-01-01");
+    testCast(udf, inputOI, "2009", "yyyy", "2009-01-01");
     testCast(udf, inputOI, "30", "dd", "1970-01-30");
   }
 
@@ -65,9 +66,9 @@ public class TestGenericUDFCastWithFormat {
   public void testStringToTimestampWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFTimestamp();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 01:02:03", "yyyy-MM-dd HH:mm:ss", "2009-07-30 01:02:03");
+    testCast(udf, inputOI, "2009-07-30 01:02:03", "yyyy-MM-dd HH24:mi:ss", "2009-07-30 01:02:03");
     testCast(udf, inputOI, "2009", "yyyy", "2009-01-01 00:00:00");
-    testCast(udf, inputOI, "07/30/2009 11:0200", "MM/dd/yyyy hh:mmss", "2009-07-30 11:02:00");
+    testCast(udf, inputOI, "07/30/2009 11:0200", "MM/dd/yyyy hh24:miss", "2009-07-30 11:02:00");
     testCast(udf, inputOI, "69.07.30.", "yy.MM.dd.", "1969-07-30 00:00:00");
   }
 
@@ -76,7 +77,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF udf = new GenericUDFToTimestampLocalTZ();
     ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles")); //frogmethod probably needs to be local tz.
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:00.0 America/Los_Angeles"); //frogmethod change to HH=04 eventually
+    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH24:mi:ss", "2009-07-30 04:00:00.0 America/Los_Angeles");
     //TODO
   }
 
@@ -84,8 +85,8 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:08")), "yyyy-MM-dd HH:mm:ss", "2009-07-30 00:00:08");
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 11:02:00")), "MM/dd/yyyy hhmmss", "07/30/2009 110200");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:08")), "yyyy-MM-dd HH24:mi:ss", "2009-07-30 00:00:08");
+    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 11:02:00")), "MM/dd/yyyy hh24miss", "07/30/2009 110200");
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 01:02:03")), "MM", "07");
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("1969-07-30 00:00:00")), "yy", "69");
   }
@@ -94,9 +95,7 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampTZToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampTZObjectInspector;
-    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy-MM-dd HH:mm:ss", "1969-12-31 16:00:00");
-    testCast(udf, inputOI,  new TimestampLocalTZWritable(new TimestampTZ()), "yyyy", "1969");
-    //TODO
+    testCast(udf, inputOI, new TimestampLocalTZWritable(TimestampTZUtil.parse("2018-01-01 00:00:00 America/New_York")), "yyyy-MM-dd HH24:mi:ss", "2017-12-31 21:00:00");
   }
 
   private void testCast(

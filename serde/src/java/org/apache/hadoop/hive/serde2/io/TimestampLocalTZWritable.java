@@ -29,7 +29,9 @@ import org.apache.hadoop.io.WritableUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.TimeZone;
 
@@ -256,10 +258,14 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     }
 
     populateTimestampTZ();
+
+    // Format the timestamp that represents local time. Make sure formatter has time zone in case
+    // offset hour/minute is part of format.
+    LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
+    ZoneId zoneId = timestampTZ.getZonedDateTime().getZone();
     Timestamp ts = Timestamp.ofEpochSecond(
-        timestampTZ.getZonedDateTime().toEpochSecond(),
-        timestampTZ.getNanos());
-    formatter.setTimeZone(TimeZone.getTimeZone(timestampTZ.getZonedDateTime().getZone()));
+        ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
+    formatter.setTimeZone(TimeZone.getTimeZone(zoneId));
     return formatter.format(ts);
   }
 

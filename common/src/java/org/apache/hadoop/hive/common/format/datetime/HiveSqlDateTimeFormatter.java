@@ -20,13 +20,16 @@ package org.apache.hadoop.hive.common.format.datetime;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
@@ -45,11 +48,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private static final int LONGEST_TOKEN_LENGTH = 5;
   private static final int LONGEST_ACCEPTED_PATTERN = 100; // for sanity's sake
   private String pattern;
+  // for offset hour/minute
   private TimeZone timeZone;
   protected List<Token> tokens = new ArrayList<>();
-  private DateTimeFormatter dateTimeFormatter;
 
-  private static final Map<String, TemporalField> VALID_TOKENS =
+  private static final Map<String, TemporalField> VALID_TEMPORAL_TOKENS =
           ImmutableMap.<String, TemporalField>builder()
                   .put("yyyy", ChronoField.YEAR)
                   .put("yyy", ChronoField.YEAR)
@@ -104,7 +107,15 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
 
     @Override public String toString() {
-      return string + " type: " + type;
+      StringBuilder sb = new StringBuilder();
+      sb.append(string);
+      sb.append(" type: ");
+      sb.append(type);
+      if (temporalField != null) {
+        sb.append(" temporalField: ");
+        sb.append(temporalField);
+      }
+      return sb.toString();
     }
   }
 
@@ -124,7 +135,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (forParsing) {
       verifyTokenList();
     }
-    createDateTimeFormat();
     this.pattern = pattern;
   }
 
@@ -167,8 +177,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           begin = end;
           break;
         // Otherwise add token to the list.
-        } else if (VALID_TOKENS.keySet().contains(candidate)) {
-          lastAddedToken = new Token(VALID_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
+        } else if (VALID_TEMPORAL_TOKENS.keySet().contains(candidate)) {
+          lastAddedToken = new Token(VALID_TEMPORAL_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
           tokens.add(lastAddedToken);
           begin = end;
           break;
@@ -228,40 +238,98 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  private void createDateTimeFormat() {
-    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
-
-    for (Token token: tokens) {
-      if (token.type == TokenType.SEPARATOR) {
-        builder.appendLiteral(token.string);
-      } else {
-        builder.appendValueReduced(token.temporalField, 1, token.length, LocalDate.now()); // frogmethod: signstyle : NOT_NEGATIVE? (only important for parsing)
-        builder.parseDefaulting(token.temporalField, token.temporalField.range().getMinimum());
-      }
-//      builder.optionalStart().appendLiteral(' ').optionalEnd(); // add padding (fm/fx)
-    }
-    dateTimeFormatter = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
-  }
-
   @Override public String format(Timestamp ts) {
-    LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
-    try {
-      return localDateTime.format(dateTimeFormatter);
-    } catch (DateTimeException e) {
-      return null; //todo frogmethod
+
+    StringBuilder sb = new StringBuilder();
+    String output = null; //todo rename
+    LocalDateTime ldt =
+        LocalDateTime.ofEpochSecond(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
+
+    for (Token token : tokens) {
+      switch (token.type) {
+      case TEMPORAL:
+        if (token.temporalField == ChronoField.MONTH_OF_YEAR) {
+          if (token.string.equals("mm")) {
+            output = String.valueOf(ldt.get(ChronoField.MONTH_OF_YEAR));
+          }
+        } else {
+          // ss, mi, hh24, dd, y..., r...
+          output = String.valueOf(ldt.get(token.temporalField)); //todo catch exceptions for get()
+        }
+
+        if (output.length() < token.length) { // todo AND it's numeric
+          output = StringUtils.leftPad(output, token.length, '0');
+        } else if (output.length() > token.length) {
+          output = output.substring(output.length()-token.length);
+        }
+        break;
+      case SEPARATOR:
+        output = token.string;
+        break;
+      }
+      sb.append(output);
     }
+    return sb.toString();
   }
 
   @Override public Timestamp parse(String string) throws ParseException {
-    try {
-      LocalDateTime ldt = LocalDateTime.parse(string, dateTimeFormatter);
-      return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
-    } catch (DateTimeException e) {
-        throw new ParseException("Could not parse string " + string + " with SQL:2016 format " +
-                "pattern " + pattern, e);
+
+    LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
+    String substring;
+    int val;
+
+    int begin=0, end;
+    for (Token token : tokens) {
+      switch (token.type) {
+      case TEMPORAL:
+        end = begin + token.length;
+        substring = getNextSubstring(string, begin, end); // e.g. yy-m -> yy
+        val = getFinalForm(substring, token); // e.g. 18->2018, July->07
+        ldt = ldt.with(token.temporalField, val);
+        begin = end;
+        break;
+      case SEPARATOR:
+        begin += token.length;
+        break;
       }
+    }
+
+    // deal with potential TimestampLocalTZ time zone ID at end of string
+    ZoneId zoneId = ZoneOffset.UTC;
+    if (begin != string.length()) {
+      substring = string.substring(begin).trim();
+      try {
+        zoneId = ZoneId.of(substring);
+      } catch (DateTimeException e) {
+        throw new ParseException("Can't parse substring " + substring + " from string " + string + " with pattern " + pattern, e);
+      }
+    }
+    return Timestamp.ofEpochSecond(ldt.toEpochSecond(zoneId.getRules().getOffset(ldt)), ldt.getNano());
   }
-  
+
+  /**
+   * @return the substring between begin and the next separator or end, whichever comes first.
+   */
+  private String getNextSubstring(String s, int begin, int end) {
+    s = s.substring(begin, end);
+    for (String sep : VALID_SEPARATORS) {
+      if (s.contains(sep)) {
+        s = s.substring(0, s.indexOf(sep));
+      }
+    }
+    return s;
+  }
+
+  /**
+   * todo NumberFormatException
+   * @param substring
+   * @param token
+   * @return
+   */
+  private int getFinalForm(String substring, Token token) throws ParseException {
+    return Integer.valueOf(substring);
+  }
+
   @Override public String getPattern() {
     return pattern;
   }
