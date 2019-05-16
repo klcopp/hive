@@ -25,19 +25,21 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-
 
 /**
  * Formatter using SQL:2016 datetime patterns.
@@ -47,63 +49,84 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   private static final int LONGEST_TOKEN_LENGTH = 5;
   private static final int LONGEST_ACCEPTED_PATTERN = 100; // for sanity's sake
+  private static final long MINUTES_PER_HOUR = 60;
+  private static final int _50 = 50;
+  private static final int NANOS_MAX_LENGTH = 9;
+  public static final int AM = 0;
+  public static final int PM = 1;
   private String pattern;
   // for offset hour/minute
   private TimeZone timeZone;
   protected List<Token> tokens = new ArrayList<>();
 
   private static final Map<String, TemporalField> VALID_TEMPORAL_TOKENS =
-          ImmutableMap.<String, TemporalField>builder()
-                  .put("yyyy", ChronoField.YEAR)
-                  .put("yyy", ChronoField.YEAR)
-                  .put("yy", ChronoField.YEAR)
-                  .put("y", ChronoField.YEAR)
-                  .put("mm", ChronoField.MONTH_OF_YEAR)
-                  .put("dd", ChronoField.DAY_OF_MONTH)
-                  .put("hh24", ChronoField.HOUR_OF_DAY)
-                  .put("mi", ChronoField.MINUTE_OF_HOUR)
-                  .put("ss", ChronoField.SECOND_OF_MINUTE)
-                  .build();
+      ImmutableMap.<String, TemporalField>builder()
+          .put("yyyy", ChronoField.YEAR).put("yyy", ChronoField.YEAR)
+          .put("yy", ChronoField.YEAR).put("y", ChronoField.YEAR)
+          .put("rrrr", ChronoField.YEAR).put("rr", ChronoField.YEAR)
+          .put("mm", ChronoField.MONTH_OF_YEAR)
+          .put("dd", ChronoField.DAY_OF_MONTH)
+          .put("ddd", ChronoField.DAY_OF_YEAR)
+          .put("hh", ChronoField.HOUR_OF_AMPM)
+          .put("hh12", ChronoField.HOUR_OF_AMPM)
+          .put("hh24", ChronoField.HOUR_OF_DAY)
+          .put("mi", ChronoField.MINUTE_OF_HOUR)
+          .put("ss", ChronoField.SECOND_OF_MINUTE)
+          .put("sssss", ChronoField.SECOND_OF_DAY)
+          .put("ff1", ChronoField.NANO_OF_SECOND).put("ff2", ChronoField.NANO_OF_SECOND)
+          .put("ff3", ChronoField.NANO_OF_SECOND).put("ff4", ChronoField.NANO_OF_SECOND)
+          .put("ff5", ChronoField.NANO_OF_SECOND).put("ff6", ChronoField.NANO_OF_SECOND)
+          .put("ff7", ChronoField.NANO_OF_SECOND).put("ff8", ChronoField.NANO_OF_SECOND)
+          .put("ff9", ChronoField.NANO_OF_SECOND).put("ff", ChronoField.NANO_OF_SECOND)
+          .put("a.m.", ChronoField.AMPM_OF_DAY).put("am", ChronoField.AMPM_OF_DAY)
+          .put("p.m.", ChronoField.AMPM_OF_DAY).put("pm", ChronoField.AMPM_OF_DAY)
+          .build();
+
+  private static final Map<String, TemporalUnit> VALID_TIME_ZONE_TOKENS =
+      ImmutableMap.<String, TemporalUnit>builder()
+          .put("tzh", ChronoUnit.HOURS).put("tzm", ChronoUnit.MINUTES).build();
 
   private static final List<String> VALID_SEPARATORS =
           ImmutableList.of("-", ":", " ", ".", "/", ";", "\'", ",");
 
   private static final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
-      .put("hh12", 2)
-      .put("hh24", 2)
-      .put("tzm", 2)
-      .put("ff", 9)
-      .put("ff1", 1).put("ff2", 2).put("ff3", 3)
-      .put("ff4", 4).put("ff5", 5).put("ff6", 6)
-      .put("ff7", 7).put("ff8", 8).put("ff9", 9)
+      .put("hh12", 2).put("hh24", 2).put("tzm", 2)
+      .put("ff1", 1).put("ff2", 2).put("ff3", 3).put("ff4", 4).put("ff5", 5)
+      .put("ff6", 6).put("ff7", 7).put("ff8", 8).put("ff9", 9).put("ff", 9)
       .build();
 
   public enum TokenType {
+    TEMPORAL,
     SEPARATOR,
-    TEMPORAL
-    //TEXT etc.
+    TIMEZONE
   }
 
   public class Token {
     TokenType type;
-    TemporalField temporalField; // e.g. ChronoField.YEAR, ISOFields.WEEK_BASED_YEAR
+    TemporalField temporalField; // for type TEMPORAL e.g. ChronoField.YEAR
+    TemporalUnit temporalUnit; // for type TIMEZONE e.g. ChronoUnit.HOURS
     String string; // pattern string, e.g. "yyy"
     int length; // length (e.g. YYY: 3, FF8: 8)
 
-    //for temporal objects (years, months...)
     public Token(TemporalField temporalField, String string, int length) {
-      this.type = TokenType.TEMPORAL;
-      this.temporalField = temporalField;
-      this.string = string;
-      this.length = length;
+      this(TokenType.TEMPORAL, temporalField, null, string, length);
     }
 
-    //for other objects (text, separators...)
+    public Token(TemporalUnit temporalUnit, String string, int length) {
+      this(TokenType.TIMEZONE, null, temporalUnit, string, length);
+    }
+
     public Token(TokenType tokenType, String string) {
+      this(tokenType, null, null, string, string.length());
+    }
+
+    public Token(TokenType tokenType, TemporalField temporalField, TemporalUnit temporalUnit,
+        String string, int length) {
       this.type = tokenType;
-      this.temporalField = null;
+      this.temporalField = temporalField;
+      this.temporalUnit = temporalUnit;
       this.string = string;
-      this.length = string.length();
+      this.length = length;
     }
 
     @Override public String toString() {
@@ -114,35 +137,36 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       if (temporalField != null) {
         sb.append(" temporalField: ");
         sb.append(temporalField);
+      } else if (temporalUnit != null) {
+        sb.append(" temporalUnit: ");
+        sb.append(temporalUnit);
       }
       return sb.toString();
     }
   }
 
-  public HiveSqlDateTimeFormatter() {}
-
   /**
-   * Parses the pattern.
+   * Parse and perhaps verify the pattern.
    */
   @Override public void setPattern(String pattern, boolean forParsing)
       throws IllegalArgumentException {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
-    pattern = pattern.toLowerCase(); //todo save original pattern for AM/PM
 
-    parsePatternToTokens(pattern);
+    this.pattern = parsePatternToTokens(pattern);
 
     // throw Exception if list of tokens doesn't make sense for parsing. Formatting is less picky.
     if (forParsing) {
       verifyTokenList();
     }
-    this.pattern = pattern;
   }
 
   /**
-   * Updates list of tokens
+   * Parse pattern to list of tokens.
    */
-  private void parsePatternToTokens(String pattern) throws IllegalArgumentException {
+  private String parsePatternToTokens(String pattern) throws IllegalArgumentException {
     tokens.clear();
+    String originalPattern = pattern;
+    pattern = pattern.toLowerCase();
 
     // indexes of the substring we will check (includes begin, does not include end)
     int begin=0, end=0;
@@ -178,16 +202,30 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           break;
         // Otherwise add token to the list.
         } else if (VALID_TEMPORAL_TOKENS.keySet().contains(candidate)) {
-          lastAddedToken = new Token(VALID_TEMPORAL_TOKENS.get(candidate), candidate, getCandidateLength(candidate));
+          // for AM/PM, keep original case
+          if (VALID_TEMPORAL_TOKENS.get(candidate) == ChronoField.AMPM_OF_DAY) {
+            int subStringEnd = begin + getTokenStringLength(candidate);
+            candidate = originalPattern.substring(begin, subStringEnd);
+            pattern = pattern.substring(0, begin) + candidate + pattern.substring(subStringEnd);
+          }
+          lastAddedToken = new Token(VALID_TEMPORAL_TOKENS.get(candidate.toLowerCase()), candidate,
+              getTokenStringLength(candidate));
+          tokens.add(lastAddedToken);
+          begin = end;
+          break;
+        } else if (VALID_TIME_ZONE_TOKENS.keySet().contains(candidate)) {
+          lastAddedToken = new Token(VALID_TIME_ZONE_TOKENS.get(candidate), candidate,
+              getTokenStringLength(candidate));
           tokens.add(lastAddedToken);
           begin = end;
           break;
         }
       }
     }
+    return pattern;
   }
 
-  private int getCandidateLength(String candidate) {
+  private int getTokenStringLength(String candidate) {
     if (SPECIAL_LENGTHS.containsKey(candidate)) {
       return SPECIAL_LENGTHS.get(candidate);
     }
@@ -195,125 +233,195 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   /**
-   * Make sure the generated list of Tokens is valid.
+   * Make sure the generated list of Tokens is parseable.
    *
-   * frogmethod: errors:
-   * https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
    * todo
-   * not done yet:
-   * "Missing hour token"(when meridian indicator is present but any type of hour is absent)
-   * "Both year and round year are provided"
-   * "Day of year provided with day or month tokenType"
-   * "Multiple median indicator tokenTypes provided"
-   * "Conflict between median indicator and hour tokenType"
-   * "Second of day tokenType conflicts with other tokenType(s)"
+   * https://github.infra.cloudera.com/gaborkaszab/Impala/commit/b4f0c595758c1fa23cca005c2aa378667ad0bc2b#diff-508125373d89c68468d26d960cbd0ffaR511
+   * not done: "Both year and round year are provided"
    */
 
   private void verifyTokenList() throws IllegalArgumentException {
 
     // create a list of tokens' temporal fields
-    ArrayList<TemporalField> tokenTypes = new ArrayList<>();
+    ArrayList<TemporalField> temporalFields = new ArrayList<>();
+    ArrayList<TemporalUnit> timeZoneTemporalUnits = new ArrayList<>();
     for (Token token : tokens) {
       if (token.temporalField != null) {
-        tokenTypes.add(token.temporalField);
+        temporalFields.add(token.temporalField);
+      } else if (token.temporalUnit != null) {
+        timeZoneTemporalUnits.add(token.temporalUnit);
       }
     }
 
-    // check for bad combinations of temporal fields
-    StringBuilder exceptionList = new StringBuilder();
-
-    //example: No duplicate anything todo I think only no duplicate years
-    for (TemporalField tokenType: tokenTypes) {
-      if (Collections.frequency(tokenTypes, tokenType) > 1) {
-        exceptionList.append("Invalid duplication of format element: multiple ");
-        exceptionList.append(tokenType.toString());
-        exceptionList.append(" tokens provided\n");
+    for (TemporalField tokenType : temporalFields) {
+      if (Collections.frequency(temporalFields, tokenType) > 1) {
+        throw new IllegalArgumentException(
+            "Invalid duplication of format element: multiple " + tokenType.toString()
+                + " tokens provided.");
       }
     }
-    //etc. (don't forget the newline at the end of the errors)
-
-    String exceptions = exceptionList.toString();
-    if (!exceptions.isEmpty()) {
-      throw new IllegalArgumentException(exceptions);
+    if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
+        !(temporalFields.contains(ChronoField.HOUR_OF_DAY) ||
+            temporalFields.contains(ChronoField.HOUR_OF_AMPM))) {
+      throw new IllegalArgumentException("Missing hour token.");
+    }
+    if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
+        temporalFields.contains(ChronoField.HOUR_OF_DAY)) {
+      throw new IllegalArgumentException("Conflict between median indicator and hour tokenType.");
+    }
+    if (temporalFields.contains(ChronoField.DAY_OF_YEAR) &&
+        (temporalFields.contains(ChronoField.DAY_OF_MONTH) ||
+            temporalFields.contains(ChronoField.MONTH_OF_YEAR))) {
+      throw new IllegalArgumentException("Day of year provided with day or month tokenType.");
+    }
+    if (temporalFields.contains(ChronoField.SECOND_OF_DAY) &&
+        (temporalFields.contains(ChronoField.HOUR_OF_DAY) ||
+            temporalFields.contains(ChronoField.HOUR_OF_AMPM) ||
+            temporalFields.contains(ChronoField.MINUTE_OF_HOUR) ||
+            temporalFields.contains(ChronoField.SECOND_OF_MINUTE))) {
+      throw new IllegalArgumentException(
+          "Second of day tokenType conflicts with other tokenType(s).");
+    }
+    if (timeZoneTemporalUnits.contains(ChronoUnit.MINUTES) &&
+        !timeZoneTemporalUnits.contains(ChronoUnit.HOURS)) {
+      throw new IllegalArgumentException("TZM without TZH."); //todo [wf] KG's phrasing
     }
   }
 
   @Override public String format(Timestamp ts) {
-
-    StringBuilder sb = new StringBuilder();
-    String output = null; //todo rename
-    LocalDateTime ldt =
+    StringBuilder fullOutputSb = new StringBuilder();
+    String outputString = null;
+    int value;
+    LocalDateTime localDateTime =
         LocalDateTime.ofEpochSecond(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
-
     for (Token token : tokens) {
       switch (token.type) {
       case TEMPORAL:
-        if (token.temporalField == ChronoField.MONTH_OF_YEAR) {
-          if (token.string.equals("mm")) {
-            output = String.valueOf(ldt.get(ChronoField.MONTH_OF_YEAR));
-          }
-        } else {
-          // ss, mi, hh24, dd, y..., r...
-          output = String.valueOf(ldt.get(token.temporalField)); //todo catch exceptions for get()
-        }
-
-        if (output.length() < token.length) { // todo AND it's numeric
-          output = StringUtils.leftPad(output, token.length, '0');
-        } else if (output.length() > token.length) {
-          output = output.substring(output.length()-token.length);
-        }
+        value = localDateTime.get(token.temporalField); //todo catch exception?
+        outputString = formatTemporal(value, token);
         break;
       case SEPARATOR:
-        output = token.string;
+        outputString = token.string;
+        break;
+      case TIMEZONE:
+        outputString = formatTimeZone(timeZone, localDateTime, token);
         break;
       }
-      sb.append(output);
+      fullOutputSb.append(outputString);
     }
-    return sb.toString();
+    return fullOutputSb.toString();
   }
 
-  @Override public Timestamp parse(String string) throws ParseException {
-
-    LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
-    String substring;
-    int val;
-
-    int begin=0, end;
-    for (Token token : tokens) {
-      switch (token.type) {
-      case TEMPORAL:
-        end = begin + token.length;
-        substring = getNextSubstring(string, begin, end); // e.g. yy-m -> yy
-        val = getFinalForm(substring, token); // e.g. 18->2018, July->07
-        ldt = ldt.with(token.temporalField, val);
-        begin = end;
-        break;
-      case SEPARATOR:
-        begin += token.length;
-        break;
+  private String formatTemporal(int value, Token token) {
+    String output;
+    if (token.temporalField == ChronoField.AMPM_OF_DAY) {
+      output = value == 0 ? "a" : "p";
+      output += token.length == 2 ? "m" : ".m.";
+      if (token.string.startsWith("A") || token.string.startsWith("P")) {
+        output = output.toUpperCase();
       }
+    } else {
+      // it's a numeric value
+      output = String.valueOf(value); //todo catch exception?
+      output = padOrTruncateNumericTemporal(token, output);
     }
-
-    // deal with potential TimestampLocalTZ time zone ID at end of string
-    ZoneId zoneId = ZoneOffset.UTC;
-    if (begin != string.length()) {
-      substring = string.substring(begin).trim();
-      try {
-        zoneId = ZoneId.of(substring);
-      } catch (DateTimeException e) {
-        throw new ParseException("Can't parse substring " + substring + " from string " + string + " with pattern " + pattern, e);
-      }
-    }
-    return Timestamp.ofEpochSecond(ldt.toEpochSecond(zoneId.getRules().getOffset(ldt)), ldt.getNano());
+    return output;
   }
 
   /**
-   * @return the substring between begin and the next separator or end, whichever comes first.
+   * To match token.length, pad left with zeroes or truncate.
    */
-  private String getNextSubstring(String s, int begin, int end) {
+  private String padOrTruncateNumericTemporal(Token token, String output) {
+    if (output.length() < token.length) {
+      output = StringUtils.leftPad(output, token.length, '0'); // pad left
+    } else if (output.length() > token.length) {
+      if (token.temporalField == ChronoField.NANO_OF_SECOND) {
+        output = output.substring(0, token.length); // truncate right
+      } else {
+        output = output.substring(output.length() - token.length); // truncate left
+      }
+    }
+    return output;
+  }
+
+  private String formatTimeZone(TimeZone timeZone, LocalDateTime localDateTime, Token token) {
+    ZoneOffset offset = timeZone.toZoneId().getRules().getOffset(localDateTime);
+    Duration seconds = Duration.of(offset.get(ChronoField.OFFSET_SECONDS), ChronoUnit.SECONDS);
+    if (token.string.equals("tzh")) {
+      long hours = seconds.toHours();
+      String s = (hours >= 0) ? "+" : "-";
+      s += (Math.abs(hours) < 10) ? "0" : "";
+      s += String.valueOf(Math.abs(hours));
+      return s;
+    } else {
+      long minutes = Math.abs(seconds.toMinutes() % MINUTES_PER_HOUR);
+      String s = String.valueOf(minutes);
+      if (s.length() == 1) {
+        s = "0" + s;
+      }
+      return s;
+    }
+  }
+
+  @Override public Timestamp parse(String fullInput) throws ParseException {
+    LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
+    String substring;
+    int index = 0;
+    int value;
+    int timeZoneSign = 0, timeZoneMinutes = 0;
+
+    for (Token token : tokens) {
+      switch (token.type) {
+      case TEMPORAL:
+        substring = getNextSubstring(fullInput, index, token); // e.g. yy-m -> yy
+        value = parseTemporal(substring, token); // e.g. 18->2018, July->07
+        ldt = ldt.with(token.temporalField, value);
+        index += substring.length();
+        break;
+      case SEPARATOR:
+        index = parseSeparator(fullInput, index, token);
+        break;
+      case TIMEZONE:
+        substring = getNextSubstring(fullInput, index, token); // e.g. yy-m -> yy
+        value = Integer.valueOf(substring);
+        if (token.temporalUnit == ChronoUnit.HOURS) {
+          ldt = ldt.minus(value, token.temporalUnit);
+          //save sign for time zone minutes
+          timeZoneSign = "-".equals(fullInput.substring(index, index + 1)) ? -1 : 1;
+        } else {
+          timeZoneMinutes = value;
+        }
+        index += substring.length();
+        break;
+      }
+    }
+    // time zone minutes -- process here because sign depends on tzh sign
+    ldt = ldt.minus(timeZoneSign * timeZoneMinutes, ChronoUnit.MINUTES);
+
+    // deal with potential TimestampLocalTZ time zone ID at end of string
+    ZoneId zoneId = getZoneId(fullInput, index);
+
+    return Timestamp
+        .ofEpochSecond(ldt.toEpochSecond(zoneId.getRules().getOffset(ldt)), ldt.getNano());
+  }
+
+  /**
+   * Return the next substring to parse. Length is expected token.length, but a separator can cut
+   * the substring short. (e.g. if the token pattern is "YYYY" we expect the next 4 characters to
+   * be 4 numbers. However, if it is "976/" then we return "976" because a separator cuts it short)
+   */
+  private String getNextSubstring(String s, int begin, Token token) {
+    int end = begin + token.length;
+    if (end > s.length()) {
+      end = s.length();
+    }
     s = s.substring(begin, end);
     for (String sep : VALID_SEPARATORS) {
-      if (s.contains(sep)) {
+      if (s.contains(sep) &&
+          // "." is a separator but e.g. "A.M." is a token, so ignore "."s if necessary
+          !(sep.equals(".") && token.type == TokenType.TEMPORAL &&
+              token.temporalField == ChronoField.AMPM_OF_DAY & token.length == 4) &&
+          !(sep.equals("-") && token.type == TokenType.TIMEZONE)) {
         s = s.substring(0, s.indexOf(sep));
       }
     }
@@ -321,13 +429,124 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   /**
-   * todo NumberFormatException
-   * @param substring
-   * @param token
-   * @return
+   * Get the integer value of a temporal substring.
    */
-  private int getFinalForm(String substring, Token token) throws ParseException {
-    return Integer.valueOf(substring);
+  private int parseTemporal(String substring, Token token) throws ParseException {
+    // exceptions to the rule
+    if (token.temporalField == ChronoField.AMPM_OF_DAY) {
+      return substring.toLowerCase().startsWith("a") || substring.isEmpty() ? AM : PM;
+
+    } else if (token.temporalField == ChronoField.YEAR) {
+      String currentYearString = String.valueOf(LocalDateTime.now().getYear());
+      //deal with round years
+      if (token.string.startsWith("r") && substring.length() == 2) {
+        int currFirst2Digits = Integer.valueOf(currentYearString.substring(0, 2));
+        int currLast2Digits = Integer.valueOf(currentYearString.substring(2));
+        int valLast2Digits = Integer.valueOf(substring);
+        if (valLast2Digits < _50 && currLast2Digits >= _50) {
+          currFirst2Digits += 1;
+        } else if (valLast2Digits >= _50 && currLast2Digits < _50) {
+          currFirst2Digits -= 1;
+        }
+        substring = String.valueOf(currFirst2Digits) + substring;
+      } else { // fill in prefix digits with current date
+        substring = currentYearString.substring(0, 4 - substring.length()) + substring;
+      }
+
+    } else if (token.temporalField == ChronoField.NANO_OF_SECOND) {
+      int i = Integer.min(token.length, substring.length());
+      substring += StringUtils.repeat("0", NANOS_MAX_LENGTH - i);
+    }
+
+    // the rule
+    try {
+      return Integer.valueOf(substring);
+    } catch (NumberFormatException e) {
+      throw new ParseException(
+          "Couldn't parse substring " + substring + " with token " + token + " to int. Pattern is "
+              + pattern, e);
+    }
+  }
+
+  /**
+   * Parse the next separator(s). At least one separator character is expected. Separator
+   * characters are interchangeable.
+   *
+   * Caveats:
+   * (1) If the next token is AM/PM, 0 separators are allowed.
+   * (2) If the last separator character in the separator substring is "-" and is immediately
+   *     followed by a time zone hour (tzh) token, it's a negative sign and not counted as a
+   *     separator, UNLESS this is the only separator character in the separator substring (in
+   *     which case it is not counted as the negative sign).
+   *
+   * @throws ParseException if separator is missing
+   */
+  private int parseSeparator(String fullInput, int index, Token token) throws ParseException {
+    int separatorsFound = 0;
+    int begin = index;
+
+    // if the next token is AM/PM, allow 0 separators at end of input
+    if (index == fullInput.length() && (nextTokenIs("AM", token))) {
+      return index;
+    }
+
+    while (index < fullInput.length() &&
+        VALID_SEPARATORS.contains(fullInput.substring(index, index + 1))) {
+      // if this is a "-" immediately preceding tzh, it's a negative sign UNLESS this is the only
+      // possible separator
+      if (!isLastCharacterOfSeparator(index, fullInput) || !(nextTokenIs("tzh", token))
+          || separatorsFound == 0) {
+        separatorsFound++;
+      }
+      index++;
+    }
+    // if the next token is AM/PM, allow 0 separators in middle of input, too
+    if (separatorsFound == 0 && !(nextTokenIs("AM", token))) {
+      throw new ParseException("Missing separator at index " + index);
+    }
+    return begin + separatorsFound;
+  }
+
+  /**
+   * Is the next character a separator?
+   */
+  private boolean isLastCharacterOfSeparator(int index, String string) {
+    return !VALID_SEPARATORS.contains(string.substring(index + 1, index + 2));
+  }
+
+  /**
+   * Does the temporalUnit/temporalField of the next token match the pattern's?
+   */
+  private boolean nextTokenIs(String pattern, Token currentToken) {
+    // make sure currentToken isn't the last one
+    if (tokens.indexOf(currentToken) == tokens.size() - 1) {
+      return false;
+    }
+    Token nextToken = tokens.get(tokens.indexOf(currentToken) + 1);
+    pattern = pattern.toLowerCase();
+    return (VALID_TEMPORAL_TOKENS.containsKey(pattern)
+        && VALID_TEMPORAL_TOKENS.get(pattern) == nextToken.temporalField
+        || VALID_TIME_ZONE_TOKENS.containsKey(pattern)
+        && VALID_TIME_ZONE_TOKENS.get(pattern) == nextToken.temporalUnit);
+  }
+
+  /**
+   * Deal with potential TimestampLocalTZ time zone ID at end of string.
+   */
+  private ZoneId getZoneId(String fullInput, int index) throws ParseException {
+    String substring;
+    ZoneId zoneId = ZoneOffset.UTC;
+    if (index != fullInput.length()) {
+      substring = fullInput.substring(index).trim();
+      try {
+        zoneId = ZoneId.of(substring);
+      } catch (DateTimeException e) {
+        throw new ParseException(
+            "Can't parse substring at end of input: " + substring + " from string: " + fullInput
+                + " with pattern " + pattern, e);
+      }
+    }
+    return zoneId;
   }
 
   @Override public String getPattern() {
@@ -344,6 +563,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "
         + "java.time.format.DateTimeFormatter, use HiveJavaDateTimeFormatter instead.");
   }
+
   @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
       throws WrongFormatterException {
     throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "

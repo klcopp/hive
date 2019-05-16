@@ -21,11 +21,11 @@ package org.apache.hadoop.hive.common.format.datetime;
 import com.sun.tools.javac.util.List;
 import junit.framework.TestCase;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.junit.Test;
 
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
+import java.util.TimeZone;
 
 /**
  * Test class for HiveSqlDateTimeFormatter.
@@ -35,7 +35,6 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private HiveSqlDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
 
-  @Test
   public void testSetPattern() throws IllegalArgumentException{
     verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", new ArrayList<>(List.of(
         null,
@@ -53,15 +52,22 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
         ChronoField.DAY_OF_MONTH
     )));
 
-    verifyPatternParsing("hh24::mi:ss", new ArrayList<>(List.of(
+    verifyPatternParsing("hh24::mi:ss", "hh24::mi:ss".length()-2, new ArrayList<>(List.of(
         ChronoField.HOUR_OF_DAY,
         null,
         ChronoField.MINUTE_OF_HOUR,
         null,
         ChronoField.SECOND_OF_MINUTE
     )));
-    verifyPatternParsing("y", new ArrayList<>(List.of(
+
+    verifyPatternParsing("y", 1, new ArrayList<>(List.of(
         ChronoField.YEAR
+    )));
+
+    verifyPatternParsing("Y A.M. pm", "y A.M. pm".length(), "y A.M. pm", new ArrayList<>(List.of(
+        ChronoField.YEAR,
+        null, ChronoField.AMPM_OF_DAY,
+        null, ChronoField.AMPM_OF_DAY
     )));
   }
 
@@ -69,6 +75,91 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     verifyBadPattern("e");
     verifyBadPattern("yyyy-1");
     verifyBadPattern("yyyyy"); // too many years
+  }
+
+  public void testFormat() {
+    formatter.setPattern("rr", false);
+    Timestamp ts = Timestamp.valueOf("2018-02-03 00:00:00");
+    assertEquals("18", formatter.format(ts));
+
+    formatter.setPattern("yyyy-mm-dd sssss.ff4", false);
+    ts = Timestamp.valueOf("2018-02-03 00:00:10.777777777");
+    assertEquals("2018-02-03 00010.7777", formatter.format(ts));
+
+    formatter.setPattern("hh24:mi:ss.ff1", false);
+    ts = Timestamp.valueOf("2018-02-03 01:02:03.999999999");
+    assertEquals("01:02:03.9", formatter.format(ts));
+
+    formatter.setPattern("y hh:mi:ss am a.m. pm p.m. AM A.M. PM P.M.", false);
+    ts = Timestamp.valueOf("2018-02-03 01:02:03");
+    assertEquals("8 01:02:03 am a.m. am a.m. AM A.M. AM A.M.", formatter.format(ts));
+
+    formatter.setPattern("rrrr-mm-dd hh24 tzh:tzm", false);
+    formatter.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
+    ts = Timestamp.valueOf("2018-02-03 17:00:00");
+    assertEquals("2018-02-03 17 +05:30", formatter.format(ts));
+
+    formatter.setTimeZone(TimeZone.getTimeZone("Pacific/Marquesas"));
+    assertEquals("2018-02-03 17 -09:30", formatter.format(ts));
+
+    formatter.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
+    assertEquals("2018-02-03 17 +01:00", formatter.format(ts));
+  }
+
+  public void testParse() throws ParseException {
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff8", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.5665"), formatter.parse("2018-02-03 04:05:06.5665"));
+
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.555555555"), formatter.parse("2018-02-03 04:05:06.555555555"));
+
+    formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2099-02-03 04:05:06"), formatter.parse("99-02-03 04:05:06"));
+
+    formatter.setPattern("rr-mm-dd", true); // test will fail in 2050
+    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parse("00-02-03"));
+    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parse("49-02-03"));
+    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parse("50-02-03"));
+
+    formatter.setPattern("rrrr-mm-dd", true); // test will fail in 2050
+    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parse("00-02-03"));
+    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parse("49-02-03"));
+    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parse("50-02-03"));
+
+    formatter.setPattern("yyy-mm-dd", true);
+    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("018-01-01"));
+
+    formatter.setPattern("yyyyddd", true);
+    assertEquals(Timestamp.valueOf("2018-10-11 00:00:00"), formatter.parse("2018284"));
+
+    formatter.setPattern("yyyyddd", true);
+    assertEquals(Timestamp.valueOf("2018-01-04 00:00:00"), formatter.parse("20184"));
+
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06"), formatter.parse("2018------02-03 04:05:06   America/New_York"));
+
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06"), formatter.parse("2018-02-03 04:05:06 America/New_York"));
+
+    formatter.setPattern("hh:mi:ss A.M.", true);
+    assertEquals(Timestamp.valueOf("1970-01-01 16:05:06"), formatter.parse("04:05:06 P.M."));
+
+    formatter.setPattern("YYYY-MM-DD HH12:MI PM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 11:00:00"), formatter.parse("2019-01-01 11:00"));
+
+    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 15:30:00"), formatter.parse("2019-1-1 14:00 -1:30"));
+
+    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 12:30:00"), formatter.parse("2019-1-1 14:00-1:30"));
+
+    formatter.setPattern("TZM:TZH", true);
+    assertEquals(Timestamp.valueOf("1970-01-01 03:01:00"), formatter.parse("1 -3"));
+  }
+
+  public void testBadParse() {
+    verifyBadParseString("yyyy", "2019-02-03");
+    verifyBadParseString("yyyy-mm-dd  ", "2019-02-03");
   }
 
   private void verifyBadPattern(String string) {
@@ -82,54 +173,29 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private void verifyPatternParsing(String pattern, ArrayList<TemporalField> expected)
       throws IllegalArgumentException {
-    formatter.setPattern(pattern, true);
+    verifyPatternParsing(pattern, pattern.length(), expected);
+  }
+
+  private void verifyPatternParsing(String pattern, int expectedPatternLength,
+      ArrayList<TemporalField> expected) throws IllegalArgumentException {
+    verifyPatternParsing(pattern, expectedPatternLength, pattern.toLowerCase(), expected);
+  }
+
+  private void verifyPatternParsing(String pattern, int expectedPatternLength,
+      String expectedPattern, ArrayList<TemporalField> expected) throws IllegalArgumentException {
+    formatter.setPattern(pattern, false);
     assertEquals(expected.size(), formatter.tokens.size());
     StringBuilder sb = new StringBuilder();
     int actualPatternLength = 0;
     for (int i = 0; i < expected.size(); i++) {
-      assertEquals("Generated list of tokens not correct", expected.get(i), formatter.tokens.get(i).temporalField);
+      assertEquals("Generated list of tokens not correct", expected.get(i),
+          formatter.tokens.get(i).temporalField);
       sb.append(formatter.tokens.get(i).string);
       actualPatternLength += formatter.tokens.get(i).length;
     }
-    assertEquals("Token strings concatenated don't match original pattern string", pattern.toLowerCase(), sb.toString());
-    assertEquals(pattern.length(), actualPatternLength);
-  }
-
-  @Test
-  public void testFormat() {
-    formatter.setPattern("yyyy", false);
-    Timestamp ts = Timestamp.valueOf("2018-01-01 00:00:00");
-    assertEquals("2018", formatter.format(ts));
-
-    formatter.setPattern("yyyy-mm-dd", false);
-    ts = Timestamp.valueOf("2018-02-03 00:00:00");
-    assertEquals("2018-02-03", formatter.format(ts));
-
-    formatter.setPattern("hh24:mi:ss", false);
-    ts = Timestamp.valueOf("2018-02-03 01:02:03");
-    assertEquals("01:02:03", formatter.format(ts));
-  }
-
-  @Test
-  public void testParse() throws ParseException {
-    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("2018-02-03 04:05:06"));
-    
-//    formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
-//    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06"), formatter.parse("18-02-03 04:05:06"));
-
-    formatter.setPattern("yyyy-mm-dd", true);
-    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("2018-01-01"));
-
-    formatter.setPattern("yyyy", true);
-    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("2018"));
-
-    formatter.setPattern("yyyy-mm-dd hh24:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06"), formatter.parse("2018-02-03 04:05:06 America/New_York"));
-  }
-
-  public void testBadParse() {
-    verifyBadParseString("yyyy", "2019-02-03");
+    assertEquals("Token strings concatenated don't match original pattern string",
+        expectedPattern, sb.toString());
+    assertEquals(expectedPatternLength, actualPatternLength);
   }
 
   private void verifyBadParseString(String pattern, String string) {
@@ -141,5 +207,4 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
       assertEquals(e.getClass().getName(), ParseException.class.getName());
     }
   }
-
 }
