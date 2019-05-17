@@ -41,7 +41,7 @@ public class CastStringToTimestampWithFormat extends CastStringToTimestamp {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {
-      throw new IllegalStateException("Tried to cast (<string> to timestamp with format" 
+      throw new IllegalStateException("Tried to cast (<string> to timestamp with format"
           + "<pattern>), but <pattern> not found");
     }
     formatter = new HiveSqlDateTimeFormatter();

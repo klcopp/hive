@@ -404,7 +404,7 @@ public class TestVectorMathFunctions {
     timestampColumnV.set(3, getSqlTimestamp("1580-08-08 00:00:00"));
     timestampColumnV.set(4, getSqlTimestamp("0005-01-01 00:00:00"));
     timestampColumnV.set(5, getSqlTimestamp("9999-12-31 23:59:59.999999999"));
-    
+
     batch.cols[0] = timestampColumnV;
     batch.cols[1] = stringColumnV;
     batch.size = 6;

@@ -42,7 +42,7 @@ public class CastDateToStringWithFormat extends CastDateToString {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {
-      throw new IllegalStateException("Tried to cast (<date> to string with format <pattern>)," 
+      throw new IllegalStateException("Tried to cast (<date> to string with format <pattern>),"
           + " but <pattern> not found");
     }
     formatter = new HiveSqlDateTimeFormatter();

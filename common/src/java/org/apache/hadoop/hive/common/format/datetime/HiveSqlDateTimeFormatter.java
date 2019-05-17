@@ -272,7 +272,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
 
     if (roundYearCount > 0 && yearCount > 0) {
-      throw new IllegalArgumentException("Invalid duplication of format element: Both year and" 
+      throw new IllegalArgumentException("Invalid duplication of format element: Both year and"
           + "round year are provided");
     }
     for (TemporalField tokenType : temporalFields) {
@@ -323,7 +323,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           value = localDateTime.get(token.temporalField);
           outputString = formatTemporal(value, token);
         } catch (DateTimeException e) {
-          throw new FormatException(token.temporalField + " couldn't be obtained from" 
+          throw new FormatException(token.temporalField + " couldn't be obtained from"
               + "LocalDateTime " + localDateTime, e);
         }
         break;
