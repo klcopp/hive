@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
-import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 
@@ -43,7 +42,8 @@ public class CastDateToStringWithFormat extends CastDateToString {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {
-      throw new RuntimeException(); //frogmethod, need a specific exception for this. the format string isn't found
+      throw new IllegalStateException("Tried to cast (<date> to string with format <pattern>)," 
+          + " but <pattern> not found");
     }
     formatter = new HiveSqlDateTimeFormatter();
     formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
@@ -56,10 +56,7 @@ public class CastDateToStringWithFormat extends CastDateToString {
 
   @Override
   protected void func(BytesColumnVector outV, long[] vector, int i) {
-    byte[] temp = formatter.format(
-        Timestamp.ofEpochMilli(Date.ofEpochDay((int) vector[i]).toEpochMilli()))
-        .getBytes();
-    assign(outV, i, temp, temp.length);
+    super.func(outV, vector, i, formatter);
   }
 
   @Override

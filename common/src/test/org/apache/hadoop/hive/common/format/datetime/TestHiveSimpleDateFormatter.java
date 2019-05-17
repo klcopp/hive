@@ -42,13 +42,13 @@ public class TestHiveSimpleDateFormatter {
   }
 
   @Test
-  public void testFormat() {
+  public void testFormat() throws FormatException {
     verifyFormat("2019-01-01 01:01:01");
     verifyFormat("2019-01-01 00:00:00");
     verifyFormat("1960-01-01 23:00:00");
   }
 
-  private void verifyFormat(String s) {
+  private void verifyFormat(String s) throws FormatException {
     Timestamp ts = Timestamp.valueOf(s);
     Assert.assertEquals(s, formatter.format(ts));
   }

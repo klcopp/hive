@@ -310,7 +310,7 @@ public class TestVectorMathFunctions {
     return batch;
   }
 
-  public static VectorizedRowBatch getVectorizedRowBatchStringInDateTimeOutFormatted() {
+  public static VectorizedRowBatch getVectorizedRowBatchStringInTimestampOutFormatted() {
     VectorizedRowBatch batch = new VectorizedRowBatch(2);
     BytesColumnVector inV;
     inV = new BytesColumnVector();
@@ -318,9 +318,27 @@ public class TestVectorMathFunctions {
     inV.setVal(0, StandardCharsets.UTF_8.encode("2019-12-31 00:00:00.999999999").array());
     inV.setVal(1, StandardCharsets.UTF_8.encode("1776-07-04 17:07:06.177617761").array());
     inV.setVal(2, StandardCharsets.UTF_8.encode("2012-02-29 23:59:59.999999999").array());
-    inV.setVal(3, StandardCharsets.UTF_8.encode("1580-08-08 00:00:00").array());
-    inV.setVal(4, StandardCharsets.UTF_8.encode("0005-01-01 00:00:00").array());
+    inV.setVal(3, StandardCharsets.UTF_8.encode("1580-08-08 00:00:00.0").array());
+    inV.setVal(4, StandardCharsets.UTF_8.encode("0005-01-01 00:00:00.0").array());
     inV.setVal(5, StandardCharsets.UTF_8.encode("9999-12-31 23:59:59.999999999").array());
+
+    batch.cols[0] = inV;
+
+    batch.size = 6;
+    return batch;
+  }
+
+  public static VectorizedRowBatch getVectorizedRowBatchStringInDateOutFormatted() {
+    VectorizedRowBatch batch = new VectorizedRowBatch(2);
+    BytesColumnVector inV;
+    inV = new BytesColumnVector();
+    inV.initBuffer();
+    inV.setVal(0, StandardCharsets.UTF_8.encode("19/12/31").array());
+    inV.setVal(1, StandardCharsets.UTF_8.encode("1776--07--04").array());
+    inV.setVal(2, StandardCharsets.UTF_8.encode("2012/02/29").array());
+    inV.setVal(3, StandardCharsets.UTF_8.encode("1580/08/08").array());
+    inV.setVal(4, StandardCharsets.UTF_8.encode("0005/01/01").array());
+    inV.setVal(5, StandardCharsets.UTF_8.encode("9999/12/31").array());
 
     batch.cols[0] = inV;
 
@@ -386,7 +404,7 @@ public class TestVectorMathFunctions {
     timestampColumnV.set(3, getSqlTimestamp("1580-08-08 00:00:00"));
     timestampColumnV.set(4, getSqlTimestamp("0005-01-01 00:00:00"));
     timestampColumnV.set(5, getSqlTimestamp("9999-12-31 23:59:59.999999999"));
-
+    
     batch.cols[0] = timestampColumnV;
     batch.cols[1] = stringColumnV;
     batch.size = 6;

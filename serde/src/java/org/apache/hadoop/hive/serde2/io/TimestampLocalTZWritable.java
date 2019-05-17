@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.serde2.io;
 
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hive.common.format.datetime.FormatException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
@@ -266,7 +267,11 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     Timestamp ts = Timestamp.ofEpochSecond(
         ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
     formatter.setTimeZone(TimeZone.getTimeZone(zoneId));
-    return formatter.format(ts);
+    try {
+      return formatter.format(ts);
+    } catch (FormatException e) {
+      return null;
+    }
   }
 
   @Override

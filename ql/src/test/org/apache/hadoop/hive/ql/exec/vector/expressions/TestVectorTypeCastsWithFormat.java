@@ -48,7 +48,7 @@ public class TestVectorTypeCastsWithFormat {
     verifyString(1, "1776", resultV);
     verifyString(2, "2012", resultV);
     verifyString(3, "1580", resultV);
-    verifyString(4, "0005", resultV);
+    verifyString(4, "0005", resultV); //
     verifyString(5, "9999", resultV);
 
     expr = new CastDateToStringWithFormat(0, "MM".getBytes(), 1);
@@ -58,7 +58,7 @@ public class TestVectorTypeCastsWithFormat {
     verifyString(0, "12", resultV);
     verifyString(1, "07", resultV);
     verifyString(2, "02", resultV);
-    verifyString(3, "07", resultV); //frogmethod change to 08 when simpledatetime is removed
+    verifyString(3, "08", resultV);
     verifyString(4, "01", resultV);
     verifyString(5, "12", resultV);
   }
@@ -75,12 +75,12 @@ public class TestVectorTypeCastsWithFormat {
     Assert.assertEquals("1776", getStringFromBytesColumnVector(resultV, 1));
     Assert.assertEquals("2012", getStringFromBytesColumnVector(resultV, 2));
     Assert.assertEquals("1580", getStringFromBytesColumnVector(resultV, 3));
-    Assert.assertEquals("0005", getStringFromBytesColumnVector(resultV, 4));
+    Assert.assertEquals("0004", getStringFromBytesColumnVector(resultV, 4)); //frogmethod should be 0005 because sql timestamp is used
     Assert.assertEquals("9999", getStringFromBytesColumnVector(resultV, 5));
 
     resultV = new BytesColumnVector();
     b.cols[1] = resultV;
-    expr = new CastTimestampToStringWithFormat(0, "HH".getBytes(), 1);
+    expr = new CastTimestampToStringWithFormat(0, "HH24".getBytes(), 1);
     expr.evaluate(b);
 
     Assert.assertEquals("19", getStringFromBytesColumnVector(resultV, 0));
@@ -94,31 +94,19 @@ public class TestVectorTypeCastsWithFormat {
   @Test
   public void testCastStringToTimestampWithFormat() throws HiveException {
     VectorizedRowBatch b =
-        TestVectorMathFunctions.getVectorizedRowBatchStringInDateTimeOutFormatted();
+        TestVectorMathFunctions.getVectorizedRowBatchStringInTimestampOutFormatted();
     TimestampColumnVector resultV;
     resultV = new TimestampColumnVector();
     b.cols[1] = resultV;
-    VectorExpression expr = new CastStringToTimestampWithFormat(0, "yyyy".getBytes(), 1);
+    VectorExpression expr = new CastStringToTimestampWithFormat(0, "yyyy.mm.dd HH24.mi.ss.ff".getBytes(), 1);
     expr.evaluate(b);
 
-    verifyTimestamp("2019-01-01 00:00:00", resultV, 0);
-    verifyTimestamp("1776-01-01 00:00:00", resultV, 1);
-    verifyTimestamp("2012-01-01 00:00:00", resultV, 2);
-    verifyTimestamp("1580-01-11 00:00:00", resultV, 3); //frogmethod fails - expected -14579395200000 / actual -12306384000000
-    verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmeth0d also fails
-    verifyTimestamp("9999-01-01 00:00:00", resultV, 5);
-
-    resultV = new TimestampColumnVector();
-    b.cols[1] = resultV;
-    expr = new CastStringToTimestampWithFormat(0, "yyyy-MM".getBytes(), 1);
-    expr.evaluate(b);
-
-    verifyTimestamp("2019-12-01 00:00:00", resultV, 0);
-    verifyTimestamp("1776-07-01 00:00:00", resultV, 1);
-    verifyTimestamp("2012-02-01 00:00:00", resultV, 2);
-    verifyTimestamp("1580-08-11 00:00:00", resultV, 3); //frogmethod this is wrong
-    verifyTimestamp("0004-12-30 00:00:00", resultV, 4); //frogmethod this is wrong
-    verifyTimestamp("9999-12-01 00:00:00", resultV, 5);
+    verifyTimestamp("2019-12-31 00:00:00.999999999", resultV, 0);
+    verifyTimestamp("1776-07-04 17:07:06.177617761", resultV, 1);
+    verifyTimestamp("2012-02-29 23:59:59.999999999", resultV, 2);
+    verifyTimestamp("1580-08-08 00:00:00", resultV, 3);
+    verifyTimestamp("0005-01-01 00:00:00", resultV, 4);
+    verifyTimestamp("9999-12-31 23:59:59.999999999", resultV, 5);
   }
 
   private void verifyTimestamp(String tsString, TimestampColumnVector resultV, int index) {
@@ -129,19 +117,19 @@ public class TestVectorTypeCastsWithFormat {
   @Test
   public void testCastStringToDateWithFormat() throws HiveException {
     VectorizedRowBatch b =
-        TestVectorMathFunctions.getVectorizedRowBatchStringInDateTimeOutFormatted();
+        TestVectorMathFunctions.getVectorizedRowBatchStringInDateOutFormatted();
     LongColumnVector resultV;
     resultV = new LongColumnVector();
     b.cols[1] = resultV;
-    VectorExpression expr = new CastStringToDateWithFormat(0, "yyyy".getBytes(), 1);
+    VectorExpression expr = new CastStringToDateWithFormat(0, "yyyy.mm.dd".getBytes(), 1);
     expr.evaluate(b);
 
-    Assert.assertEquals(Date.valueOf("2019-01-01").toEpochDay(), resultV.vector[0]);
-    Assert.assertEquals(Date.valueOf("1776-01-01").toEpochDay(), resultV.vector[1]);
-    Assert.assertEquals(Date.valueOf("2012-01-01").toEpochDay(), resultV.vector[2]);
-    Assert.assertEquals(DateWritableV2.dateToDays(java.sql.Date.valueOf("1580-01-01")), resultV.vector[3]); // pre-1582 dates use Julian calendar
-    Assert.assertEquals(DateWritableV2.dateToDays(java.sql.Date.valueOf("0005-01-01")), resultV.vector[4]);
-    Assert.assertEquals(Date.valueOf("9999-01-01").toEpochDay(), resultV.vector[5]);
+    Assert.assertEquals(Date.valueOf("2019-12-31").toEpochDay(), resultV.vector[0]);
+    Assert.assertEquals(Date.valueOf("1776-07-04").toEpochDay(), resultV.vector[1]);
+    Assert.assertEquals(Date.valueOf("2012-02-29").toEpochDay(), resultV.vector[2]);
+    Assert.assertEquals(Date.valueOf("1580-08-08").toEpochDay(), resultV.vector[3]);
+    Assert.assertEquals(Date.valueOf("0005-01-01").toEpochDay(), resultV.vector[4]);
+    Assert.assertEquals(Date.valueOf("9999-12-31").toEpochDay(), resultV.vector[5]);
   }
 
   private void verifyString(int resultIndex, String expected, BytesColumnVector resultV) {
