@@ -893,12 +893,18 @@ public final class PrimitiveObjectInspectorUtils {
     return (float) getDouble(o, oi);
   }
 
+  public static String getString(Object o, PrimitiveObjectInspector oi) {
+    return getString(o, oi, null);
+  }
+
   /**
    * Get the String value out of a primitive object. Note that
    * NullPointerException will be thrown if o is null. Note that
    * RuntimeException will be thrown if o is not a valid string.
+   * HiveDateTimeFormatter is optional.
    */
-  public static String getString(Object o, PrimitiveObjectInspector oi) {
+  public static String getString(Object o, PrimitiveObjectInspector oi,
+      HiveDateTimeFormatter formatter) {
 
     if (o == null) {
       return null;
@@ -953,13 +959,16 @@ public final class PrimitiveObjectInspectorUtils {
       result = hcoi.getPrimitiveJavaObject(o).toString();
       break;
     case DATE:
-      result = ((DateObjectInspector) oi).getPrimitiveWritableObject(o).toString();
+      result = ((DateObjectInspector) oi).getPrimitiveWritableObject(o)
+          .toStringFormatted(formatter);
       break;
     case TIMESTAMP:
-      result = ((TimestampObjectInspector) oi).getPrimitiveWritableObject(o).toString();
+      result = ((TimestampObjectInspector) oi).getPrimitiveWritableObject(o)
+          .toStringFormatted(formatter);
       break;
     case TIMESTAMPLOCALTZ:
-      result = ((TimestampLocalTZObjectInspector) oi).getPrimitiveWritableObject(o).toString();
+      result = ((TimestampLocalTZObjectInspector) oi).getPrimitiveWritableObject(o)
+          .toStringFormatted(formatter);
       break;
     case INTERVAL_YEAR_MONTH:
       result = ((HiveIntervalYearMonthObjectInspector) oi).getPrimitiveWritableObject(o).toString();
@@ -980,6 +989,11 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static HiveChar getHiveChar(Object o, PrimitiveObjectInspector oi) {
+    return getHiveChar(o, oi, null);
+  }
+
+  public static HiveChar getHiveChar(Object o, PrimitiveObjectInspector oi,
+      HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }
@@ -992,13 +1006,18 @@ public final class PrimitiveObjectInspectorUtils {
       default:
         // No char length available, copy whole string value here.
         result = new HiveChar();
-        result.setValue(getString(o, oi));
+        result.setValue(getString(o, oi, formatter));
         break;
     }
     return result;
   }
 
   public static HiveVarchar getHiveVarchar(Object o, PrimitiveObjectInspector oi) {
+    return getHiveVarchar(o, oi, null);
+  }
+
+  public static HiveVarchar getHiveVarchar(Object o, PrimitiveObjectInspector oi,
+      HiveDateTimeFormatter formatter) {
 
     if (o == null) {
       return null;
@@ -1014,7 +1033,7 @@ public final class PrimitiveObjectInspectorUtils {
         // It might actually be ok as long as there is an object inspector (with char length)
         // receiving this value.
         result = new HiveVarchar();
-        result.setValue(getString(o, oi));
+        result.setValue(getString(o, oi, formatter));
         break;
     }
     return result;

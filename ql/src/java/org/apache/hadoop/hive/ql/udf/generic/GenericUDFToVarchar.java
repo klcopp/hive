@@ -19,6 +19,8 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Serializable;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -36,7 +38,8 @@ import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 @Description(name = "varchar",
 value = "CAST(<value> as VARCHAR(length)) - Converts the argument to a varchar value.",
 extended = "Values will be truncated if the input value is too long to fit"
-+ " within the varchar length."
++ " within the varchar length. If format is specified with FORMAT argument then SQL:2016 datetime"
++ " formats will be used.\n"
 + "Example:\n "
 + "  > SELECT CAST(1234 AS varchar(10)) FROM src LIMIT 1;\n"
 + "  '1234'")
@@ -71,6 +74,14 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
 
     converter = new HiveVarcharConverter(argumentOI, outputOI);
+
+    // for CAST WITH FORMAT
+    if (arguments.length > 1 && arguments[1] != null) {
+      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
+      formatter.setPattern(getConstantStringValue(arguments, 1), false);
+      converter.setDateTimeFormatter(formatter);
+    }
+
     return outputOI;
   }
 
@@ -86,12 +97,16 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1);
+    assert (children.length == 1 || children.length == 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
     sb.append(" AS ");
     sb.append(typeInfo.getQualifiedName());
+    if (children.length == 2) {
+      sb.append(" FORMAT ");
+      sb.append(children[1]);
+    }
     sb.append(")");
     return sb.toString();
   }
