@@ -46,7 +46,7 @@ public interface HiveDateTimeFormatter {
   /**
    * Format the given timestamp into a string.
    */
-  String format(Timestamp ts);
+  String format(Timestamp ts) throws FormatException;
 
   /**
    * Parse the given string into a timestamp.

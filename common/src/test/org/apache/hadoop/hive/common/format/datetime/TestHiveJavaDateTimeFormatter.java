@@ -47,7 +47,7 @@ public class TestHiveJavaDateTimeFormatter {
   }
 
   @Test
-  public void testFormat() {
+  public void testFormat() throws FormatException {
     Timestamp ts = Timestamp.valueOf("2019-01-01 00:00:00.99999");
     Assert.assertEquals("2019-01-01 00:00:00.99999", formatter.format(ts));
   }

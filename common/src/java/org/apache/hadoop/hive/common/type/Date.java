@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.FormatException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
@@ -79,7 +80,11 @@ public class Date implements Comparable<Date> {
     if (formatter == null) {
       return toString();
     }
-    return formatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
+    try {
+      return formatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
+    } catch (FormatException e) {
+      return null;
+    }
   }
 
   public int hashCode() {

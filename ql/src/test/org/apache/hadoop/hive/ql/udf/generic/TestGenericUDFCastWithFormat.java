@@ -74,8 +74,8 @@ public class TestGenericUDFCastWithFormat {
 
   @Test
   public void testStringToTimestampTZWithFormat() throws HiveException {
-    GenericUDF udf = new GenericUDFToTimestampLocalTZ();
-    ((GenericUDFToTimestampLocalTZ) udf).setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles")); //frogmethod probably needs to be local tz.
+    GenericUDFToTimestampLocalTZ udf = new GenericUDFToTimestampLocalTZ();
+    udf.setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles"));
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH24:mi:ss", "2009-07-30 04:00:00.0 America/Los_Angeles");
     //TODO

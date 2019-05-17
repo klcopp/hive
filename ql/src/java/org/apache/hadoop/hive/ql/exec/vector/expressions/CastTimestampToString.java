@@ -63,7 +63,6 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
       format.setFormatter(PRINT_FORMATTER);
     } catch (WrongFormatterException e) {
       // this will never happen
-      throw new RuntimeException(e); //todo frogmethod
     }
   }
 
@@ -72,17 +71,26 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     outV.setVal(i, bytes, 0, length);
   }
 
+  private void assignNull(BytesColumnVector outV, int i) {
+    outV.isNull[i] = true;
+    outV.noNulls = false;
+  }
+
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
     func(outV, inV, i, format);
   }
 
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i, HiveDateTimeFormatter formatter) {
-    String formattedLocalDateTime = formatter.format(
-        org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
+    try {
+      String formattedLocalDateTime = formatter.format(
+          org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
 
-    byte[] temp = formattedLocalDateTime.getBytes();
-    assign(outV, i, temp, temp.length);
+      byte[] temp = formattedLocalDateTime.getBytes();
+      assign(outV, i, temp, temp.length);
+    } catch (Exception e) {
+      assignNull(outV, i);
+    }
   }
   public static String getTimestampString(Timestamp ts) {
     return
