@@ -22,50 +22,36 @@ import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 
 import java.nio.charset.StandardCharsets;
 
-/**
- * Vectorized UDF for CAST (<STRING> TO TIMESTAMP WITH FORMAT <STRING>).
- */
-public class CastStringToTimestampWithFormat extends CastStringToTimestamp {
+public class CastTimestampToCharWithFormat extends CastTimestampToChar {
 
   private static final long serialVersionUID = 1L;
   private HiveDateTimeFormatter formatter;
 
-  public CastStringToTimestampWithFormat() {
+  public CastTimestampToCharWithFormat() {
     super();
   }
 
-  public CastStringToTimestampWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
+  public CastTimestampToCharWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {
-      throw new IllegalStateException("Tried to cast (<string> to timestamp with format"
-          + "<pattern>), but <pattern> not found");
+      throw new IllegalStateException("Tried to cast (<timestamp> to char with format <pattern>),"
+          + " but <pattern> not found");
     }
     formatter = new HiveSqlDateTimeFormatter();
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), true);
+    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
   @Override
-  protected void evaluate(TimestampColumnVector outputColVector,
-      BytesColumnVector inputColVector, int i) {
-    super.evaluate(outputColVector, inputColVector, i, formatter);
+  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
+    super.func(outV, inV, i, formatter);
   }
 
   @Override
-  public VectorExpressionDescriptor.Descriptor getDescriptor() {
-    VectorExpressionDescriptor.Builder b = new VectorExpressionDescriptor.Builder();
-    b.setMode(VectorExpressionDescriptor.Mode.PROJECTION)
-        .setNumArguments(2)
-        .setArgumentTypes(
-            VectorExpressionDescriptor.ArgumentType.STRING_FAMILY,
-            VectorExpressionDescriptor.ArgumentType.STRING)
-        .setInputExpressionTypes(
-            VectorExpressionDescriptor.InputExpressionType.COLUMN,
-            VectorExpressionDescriptor.InputExpressionType.SCALAR);
-    return b.build();
+  public String vectorExpressionParameters() {
+    return super.vectorExpressionParameters() + ", format pattern: " + formatter.getPattern();
   }
 }
