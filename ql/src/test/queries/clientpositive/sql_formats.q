@@ -5,27 +5,27 @@ drop table if exists strings;
 drop table if exists chars;
 drop table if exists varchars;
 
-set hive.use.sql.datetime.formats=true;
-
 --non-vectorized
 set hive.vectorized.execution.enabled=false;
-set hive.fetch.task.conversion=none; --frogmethod also check with fetch task conversion?
+set hive.fetch.task.conversion=none;
 
 create table timestamps (t timestamp) stored as parquet;
 insert into timestamps values
 ("2020-02-03"),
 ("1969-12-31 23:59:59.999999999")
 ;
-from timestamps select cast (t as string format "yyyy hh24...PM");
-from timestamps select cast (t as string format "");
-
+from timestamps select cast (t as string      format "yyyy hh24...PM");
+from timestamps select cast (t as char(11)    format "yyyy hh24...PM"); -- will be truncated
+from timestamps select cast (t as varchar(11) format "yyyy hh24...PM"); -- will be truncated
 
 create table dates (d date) stored as parquet;
 insert into dates values
 ("2020-02-03"),
 ("1969-12-31")
 ;
-from timestamps select cast (t as string format "yyyy");
+from timestamps select cast (t as string      format "yyyy");
+from timestamps select cast (t as char(10)    format "yyyy");
+from timestamps select cast (t as varchar(10) format "yyyy");
 
 create table timestampLocalTzs (t timestamp with local time zone);
 insert into timestampLocalTzs values
@@ -33,9 +33,9 @@ insert into timestampLocalTzs values
 ("1969-12-31 23:59:59.999999999 Europe/Rome")
 ;
 
-from timestampLocalTzs select cast (t as string format "yyyy");
-from timestampLocalTzs select cast (t as string format "hh24");
-
+from timestampLocalTzs select cast (t as string      format "yyyy hh24 tzh:tzm");
+from timestampLocalTzs select cast (t as char(10)    format "yyyy hh24 tzh:tzm");
+from timestampLocalTzs select cast (t as varchar(10) format "yyyy hh24 tzh:tzm");
 
 create table strings  (s string)      stored as parquet;
 create table varchars (s varchar(11)) stored as parquet;
@@ -57,21 +57,16 @@ from strings    select cast (s as timestamp with local time zone format "yyyy.mm
 
 
 --correct descriptions
-explain
-from strings    select cast (s as timestamp                      format "yyy.mm.dd");
-explain
-from strings    select cast (s as date                           format "yyy.mm.dd");
-explain
-from strings    select cast (s as timestamp with local time zone format "yyyy.mm.dd");
-explain
-from timestamps select cast (t as string                         format "yyyy");
-explain
-from timestamps select cast (t as varchar(12)                    format "yyyy");
+explain from strings    select cast (s as timestamp                      format "yyy.mm.dd");
+explain from strings    select cast (s as date                           format "yyy.mm.dd");
+explain from strings    select cast (s as timestamp with local time zone format "yyyy.mm.dd");
+explain from timestamps select cast (t as string                         format "yyyy");
+explain from timestamps select cast (t as varchar(12)                    format "yyyy");
 
 
 --vectorized (no timestamp with local time zone here)
-set hive.fetch.task.conversion=none;
 set hive.vectorized.execution.enabled=true;
+set hive.fetch.task.conversion=none;
 
 from timestamps select cast (t as string      format "yyyy");
 from dates      select cast (d as string      format "yyyy");
