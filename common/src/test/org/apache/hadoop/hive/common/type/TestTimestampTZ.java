@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -90,14 +91,14 @@ public class TestTimestampTZ {
     try {
       TimestampTZUtil.parse("2017-01-01 13:33:00 foo");
       Assert.fail("Invalid timezone ID should cause exception");
-    } catch (DateTimeParseException e) {
+    } catch (ParseException e) {
       // expected
     }
     // invalid time part
     try {
       TimestampTZUtil.parse("2017-01-01 13:33:61");
       Assert.fail("Invalid time should cause exception");
-    } catch (DateTimeParseException e) {
+    } catch (ParseException e) {
       // expected
     }
   }

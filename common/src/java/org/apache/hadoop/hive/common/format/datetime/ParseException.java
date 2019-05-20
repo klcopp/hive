@@ -21,7 +21,7 @@ package org.apache.hadoop.hive.common.format.datetime;
 /**
  * Exception indicating that the given string could not be parsed into a datetime object.
  */
-public class ParseException extends Exception {
+public class ParseException extends RuntimeException {
 
   public ParseException(String message) {
     super(message);

@@ -34,6 +34,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.slf4j.Logger;
@@ -68,39 +69,7 @@ public class TimestampTZUtil {
   }
 
   public static TimestampTZ parse(String s, ZoneId defaultTimeZone) {
-    // need to handle offset with single digital hour, see JDK-8066806
-    s = handleSingleDigitHourOffset(s);
-    ZonedDateTime zonedDateTime;
-    try {
-      zonedDateTime = ZonedDateTime.parse(s, FORMATTER);
-    } catch (DateTimeParseException e) {
-      // try to be more tolerant
-      // if the input is invalid instead of incomplete, we'll hit exception here again
-      TemporalAccessor accessor = FORMATTER.parse(s);
-      // LocalDate must be present
-      LocalDate localDate = LocalDate.from(accessor);
-      LocalTime localTime;
-      ZoneId zoneId;
-      try {
-        localTime = LocalTime.from(accessor);
-      } catch (DateTimeException e1) {
-        localTime = DEFAULT_LOCAL_TIME;
-      }
-      try {
-        zoneId = ZoneId.from(accessor);
-      } catch (DateTimeException e2) {
-        if (defaultTimeZone == null) {
-          throw new DateTimeException("Time Zone not available");
-        }
-        zoneId = defaultTimeZone;
-      }
-      zonedDateTime = ZonedDateTime.of(localDate, localTime, zoneId);
-    }
-
-    if (defaultTimeZone == null) {
-      return new TimestampTZ(zonedDateTime);
-    }
-    return new TimestampTZ(zonedDateTime.withZoneSameInstant(defaultTimeZone));
+    return DefaultHiveSqlDateTimeFormatter.parseTimestampLocalTZ(s, defaultTimeZone);
   }
 
   private static String handleSingleDigitHourOffset(String s) {

@@ -7,6 +7,8 @@ import org.apache.hadoop.hive.common.type.TimestampTZ;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
@@ -35,11 +37,19 @@ public class DefaultHiveSqlDateTimeFormatter {
           .put(9, formatterIsoWithNanos).build();
 
   public static String format(Timestamp ts) {
-    return (ts.getNanos() == 0) ? formatterNoNanos.format(ts) : formatterWithNanos.format(ts);
+    try {
+      return (ts.getNanos() == 0) ? formatterNoNanos.format(ts) : formatterWithNanos.format(ts);
+    } catch (FormatException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static String format(Date date) {
-    return formatterDate.format(Timestamp.ofEpochSecond(date.toEpochSecond()));
+    try {
+      return formatterDate.format(Timestamp.ofEpochSecond(date.toEpochSecond()));
+    } catch (FormatException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static String format(TimestampTZ timestampTZ) {
@@ -58,23 +68,69 @@ public class DefaultHiveSqlDateTimeFormatter {
   }
 
   public static Timestamp parseTimestamp(String string) throws ParseException {
-
-//    HiveSqlDateTimeFormatter.VALID_SEPARATORS
-
-    //todo count number of non-separator tokens
-    int count = 0; //todo rename
-    
-    // go through string, and count last string was separator
-
-    if (!TOKEN_COUNT_FORMATTER_MAP.containsKey(count)) {
-      throw new IllegalArgumentException("");//frogmethod todo
+    // count number of non-separator tokens
+    int numberOfTokenGroups = getNumberOfTokenGroups(string);
+    if (!TOKEN_COUNT_FORMATTER_MAP.containsKey(numberOfTokenGroups)) {
+      throw new IllegalArgumentException("No available default timestamp parser for input: " + string);
     }
-    HiveSqlDateTimeFormatter formatter = TOKEN_COUNT_FORMATTER_MAP.get(count);
+    HiveSqlDateTimeFormatter formatter = TOKEN_COUNT_FORMATTER_MAP.get(numberOfTokenGroups);
     return formatter.parse(string);
   }
 
-  //todo
   public static TimestampTZ parseTimestampLocalTZ(String string) throws ParseException {
-    return null;
+    return parseTimestampLocalTZ(string, null);
+  }
+
+  public static TimestampTZ parseTimestampLocalTZ(String string, ZoneId withTimeZone)
+      throws ParseException {
+    // 1. get time zone from end of string
+    boolean zoneIdFound = false;
+    ZoneId zoneId;
+    String[] stringArray = string.split(" "); //todo rename
+    if (stringArray.length < 1 && withTimeZone == null) {
+      throw new ParseException("Time zone not provided and not found in string " + string);
+    }
+    String zoneString = stringArray[stringArray.length - 1];
+    try {
+       zoneId = ZoneId.of(zoneString);
+       zoneIdFound = true;
+    } catch (Exception e) {
+      if (withTimeZone != null) {
+        zoneId = withTimeZone;
+      } else {
+        throw new ParseException("Time zone not provided and not found in string " + string);
+      }
+    }
+    // 2. parse timestamp part
+    String tsString =
+        zoneIdFound ? string.substring(0, string.length() - zoneString.length() - 1) : string;
+    Timestamp ts = parseTimestamp(tsString);
+
+    ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.ofEpochSecond(ts.toEpochSecond(),
+        ts.getNanos(), ZoneOffset.UTC), zoneId);
+    if (withTimeZone == null) {
+      return new TimestampTZ(zonedDateTime);
+    }
+    return new TimestampTZ(zonedDateTime.withZoneSameInstant(withTimeZone));
+  }
+
+  static int getNumberOfTokenGroups(String string) {
+    int index = 0, count = 0;
+    boolean lastCharWasSep = true, isIsoToken;
+
+    for (String s : string.split("")) {
+      isIsoToken = HiveSqlDateTimeFormatter.VALID_ISO_8601_DELIMITERS.contains(s.toLowerCase());
+      if (!HiveSqlDateTimeFormatter.VALID_SEPARATORS.contains(s)) {
+        if (lastCharWasSep || isIsoToken) {
+          count++;
+        }
+        // ISO tokens are also delimiters
+        lastCharWasSep = isIsoToken;
+      } else {
+        lastCharWasSep = true;
+      }
+      index++;
+    }
+    return count;
   }
 }
