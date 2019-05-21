@@ -18,48 +18,59 @@
 
 package org.apache.hadoop.hive.common.format.datetime;
 
+import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
+import org.apache.hadoop.hive.common.type.TimestampTZ;
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 /**
  * Interface used for formatting and parsing timestamps. Initially created so that user is able to
  * optionally format datetime objects into strings and parse strings into datetime objects with
- * SQL:2016 semantics, as well as with the legacy (java.text.SimpleDateFormat) format.
+ * SQL:2016 semantics.
  */
 public interface HiveDateTimeFormatter {
-
-  /**
-   * Only used for HiveSimpleDateFormatter, which is a wrapper for the given SimpleDateFormat
-   * object.
-   */
-  void setFormatter(SimpleDateFormat simpleDateFormat) throws WrongFormatterException;
-
-  /**
-   * Only used for HiveJavaDateTimeFormatter, which is a wrapper for the given DateTimeFormatter
-   * object.
-   */
-  void setFormatter(DateTimeFormatter dateTimeFormatter) throws WrongFormatterException;
-
   /**
    * Format the given timestamp into a string.
    */
   String format(Timestamp ts) throws FormatException;
 
   /**
+   * Format the given date into a string.
+   */
+  String format(Date date) throws FormatException;
+
+  /**
+   * Format the given timestamp with local time zone into a string.
+   */
+  String format(TimestampTZ timestampTZ) throws FormatException;
+
+  /**
    * Parse the given string into a timestamp.
    *
    * @throws ParseException if string cannot be parsed.
    */
-  Timestamp parse(String string) throws ParseException;
+  Timestamp parseTimestamp(String string) throws ParseException;
+
+  /**
+   * Parse the given string into a timestamp.
+   *
+   * @throws ParseException if string cannot be parsed.
+   */
+  Date parseDate(String string) throws ParseException;
+
+  /**
+   * Parse the given string into a timestamp.
+   *
+   * @throws ParseException if string cannot be parsed.
+   */
+  TimestampTZ parseTimestampTZ(String string) throws ParseException;
 
   /**
    * Set the format pattern to be used for formatting timestamps or parsing strings.
-   * Different HiveDateTimeFormatter implementations interpret some patterns differently. For
-   * example, HiveSimpleDateFormatter interprets the string "mm" as minute, while
-   * HiveSqlDateTimeFormatter interprets it as month.
    * This method parses the pattern into tokens, so it comes with some performance overhead.
    */
   void setPattern(String pattern, boolean forParsing) throws IllegalArgumentException;
@@ -70,7 +81,7 @@ public interface HiveDateTimeFormatter {
   String getPattern();
 
   /**
-   * Set the time zone of the formatter. Only HiveSimpleDateFormatter uses this.
+   * Set the time zone of the formatter.
    */
   void setTimeZone(TimeZone timeZone);
 

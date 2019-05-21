@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
@@ -171,38 +172,15 @@ public class TimestampUtils {
     }
   }
 
-  private static final int DATE_LENGTH = "YYYY-MM-DD".length();
-
   public static Timestamp stringToTimestamp(String s, HiveDateTimeFormatter formatter) {
     if (formatter == null) {
-      return stringToTimestamp(s);
+      return DefaultHiveSqlDateTimeFormatter.parseTimestamp(s.trim());
     }
 
     try {
       return Timestamp.valueOf(s, formatter);
     } catch (ParseException e) {
       return null;
-    }
-  }
-
-  public static Timestamp stringToTimestamp(String s) {
-    s = s.trim();
-    // Handle simpler cases directly avoiding exceptions
-    if (s.length() == DATE_LENGTH) {
-      // Its a date!
-      return Timestamp.ofEpochMilli(Date.valueOf(s).toEpochMilli());
-    }
-    try {
-      return Timestamp.valueOf(s);
-    } catch (IllegalArgumentException eT) {
-      // Try zoned timestamp
-      try {
-        return Timestamp.valueOf(
-            TimestampTZUtil.parse(s).getZonedDateTime().toLocalDateTime().toString());
-      } catch (IllegalArgumentException | DateTimeParseException eTZ) {
-        // Last attempt
-        return Timestamp.ofEpochMilli(Date.valueOf(s).toEpochMilli());
-      }
     }
   }
 }

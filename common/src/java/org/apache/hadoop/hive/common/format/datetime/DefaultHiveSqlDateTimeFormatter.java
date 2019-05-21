@@ -7,12 +7,10 @@ import org.apache.hadoop.hive.common.type.TimestampTZ;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
- * frogmethod
+ * Parse/format datetime objects according to some select default formats.
  */
 public class DefaultHiveSqlDateTimeFormatter {
 
@@ -46,13 +44,13 @@ public class DefaultHiveSqlDateTimeFormatter {
 
   public static String format(Date date) {
     try {
-      return formatterDate.format(Timestamp.ofEpochSecond(date.toEpochSecond()));
+      return formatterDate.format(date);
     } catch (FormatException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  public static String format(TimestampTZ timestampTZ) {
+  public static String format(TimestampTZ timestampTZ) { //todo
     String output;
 
     //add local time part
@@ -67,69 +65,56 @@ public class DefaultHiveSqlDateTimeFormatter {
     return output;
   }
 
-  public static Timestamp parseTimestamp(String string) throws ParseException {
+  public static Timestamp parseTimestamp(String input) throws ParseException {
     // count number of non-separator tokens
-    int numberOfTokenGroups = getNumberOfTokenGroups(string);
+    int numberOfTokenGroups = getNumberOfTokenGroups(input);
     if (!TOKEN_COUNT_FORMATTER_MAP.containsKey(numberOfTokenGroups)) {
-      throw new IllegalArgumentException("No available default timestamp parser for input: " + string);
+      throw new IllegalArgumentException("No available default timestamp parser for input: " + input);
     }
     HiveSqlDateTimeFormatter formatter = TOKEN_COUNT_FORMATTER_MAP.get(numberOfTokenGroups);
-    return formatter.parse(string);
+    return formatter.parseTimestamp(input);
+  }
+  
+  public static Date parseDate(String input) throws ParseException {
+    return formatterDate.parseDate(input);
   }
 
-  public static TimestampTZ parseTimestampLocalTZ(String string) throws ParseException {
-    return parseTimestampLocalTZ(string, null);
-  }
-
-  public static TimestampTZ parseTimestampLocalTZ(String string, ZoneId withTimeZone)
+  public static TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone)
       throws ParseException {
-    // 1. get time zone from end of string
-    boolean zoneIdFound = false;
-    ZoneId zoneId;
-    String[] stringArray = string.split(" "); //todo rename
-    if (stringArray.length < 1 && withTimeZone == null) {
-      throw new ParseException("Time zone not provided and not found in string " + string);
-    }
-    String zoneString = stringArray[stringArray.length - 1];
-    try {
-       zoneId = ZoneId.of(zoneString);
-       zoneIdFound = true;
-    } catch (Exception e) {
-      if (withTimeZone != null) {
-        zoneId = withTimeZone;
-      } else {
-        throw new ParseException("Time zone not provided and not found in string " + string);
+    // count number of non-separator tokens
+    int numberOfTokenGroups = getNumberOfTokenGroups(input);
+    // try numberOfTokenGroups = numberOfTokenGroups-1 (in case time zone was Turkey or Zulu)
+    for (int i = numberOfTokenGroups; i >= numberOfTokenGroups - 1; i--) {
+      try {
+        if (TOKEN_COUNT_FORMATTER_MAP.containsKey(i)) {
+          return TOKEN_COUNT_FORMATTER_MAP.get(i).parseTimestampTZ(input, withTimeZone);
+        }
+      } catch (ParseException e) {
+        // keep looping
       }
     }
-    // 2. parse timestamp part
-    String tsString =
-        zoneIdFound ? string.substring(0, string.length() - zoneString.length() - 1) : string;
-    Timestamp ts = parseTimestamp(tsString);
-
-    ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.ofEpochSecond(ts.toEpochSecond(),
-        ts.getNanos(), ZoneOffset.UTC), zoneId);
-    if (withTimeZone == null) {
-      return new TimestampTZ(zonedDateTime);
-    }
-    return new TimestampTZ(zonedDateTime.withZoneSameInstant(withTimeZone));
+    throw new ParseException(input + " couldn't be parsed to timestamp with local time zone.");
   }
 
-  static int getNumberOfTokenGroups(String string) {
-    int index = 0, count = 0;
-    boolean lastCharWasSep = true, isIsoToken;
+  static int getNumberOfTokenGroups(String input) {
+    int count = 0;
+    boolean lastCharWasSep = true, isIsoDelimiter;
 
-    for (String s : string.split("")) {
-      isIsoToken = HiveSqlDateTimeFormatter.VALID_ISO_8601_DELIMITERS.contains(s.toLowerCase());
+    for (char c : input.toCharArray()) {
+      String s = String.valueOf(c);
+      isIsoDelimiter = HiveSqlDateTimeFormatter.VALID_ISO_8601_DELIMITERS.contains(s.toLowerCase());
       if (!HiveSqlDateTimeFormatter.VALID_SEPARATORS.contains(s)) {
-        if (lastCharWasSep || isIsoToken) {
+        if (!isIsoDelimiter && !Character.isDigit(c)) { // it's probably part of a time zone. Halt.
+          break;
+        }
+        if (lastCharWasSep || isIsoDelimiter ) {
           count++;
         }
-        // ISO tokens are also delimiters
-        lastCharWasSep = isIsoToken;
+        // ISO delimiters are... delimiters
+        lastCharWasSep = isIsoDelimiter;
       } else {
         lastCharWasSep = true;
       }
-      index++;
     }
     return count;
   }

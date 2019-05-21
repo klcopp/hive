@@ -25,14 +25,13 @@ import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
 
-import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
@@ -344,6 +343,21 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return fullOutputSb.toString();
   }
 
+  @Override public String format(Date date) throws FormatException {
+    return format(Timestamp.ofEpochSecond(date.toEpochSecond()));
+  }
+
+  @Override public String format(TimestampTZ timestampTZ) throws FormatException {
+    // Format the timestamp that represents local time. Make sure formatter has time zone in case
+    // offset hour/minute is part of format.
+    LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
+    ZoneId zoneId = timestampTZ.getZonedDateTime().getZone();
+    Timestamp ts = Timestamp.ofEpochSecond(
+        ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
+    setTimeZone(TimeZone.getTimeZone(zoneId)); // todo well this might be an issue with race conditions. i'd prefer to pass the tz as an argument to format(ts, tz)
+    return format(ts) + " " + zoneId; //todo frogmethod not sure if tz should be added at the end?
+  }
+
   private String formatTemporal(int value, Token token) throws FormatException {
     String output;
     if (token.temporalField == ChronoField.AMPM_OF_DAY) {
@@ -409,7 +423,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  @Override public Timestamp parse(String input) throws ParseException { //todo change to parseTimestamp
+  @Override public Timestamp parseTimestamp(String input) throws ParseException {
     ParseResult result = parseInternal(input);
     if (result.leftoverString.isEmpty()) {
       return result.timestamp;
@@ -418,26 +432,37 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   }
 
   public Date parseDate(String input) throws ParseException {
-    return Date.ofEpochMilli(parse(input).toEpochMilli()); //todo not sure if this is legal?
+    return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
   }
 
-  public TimestampTZ parseTimestampLocalTZ(String input) throws ParseException {
-    return parseTimestampLocalTZ(input, null);
+  @Override public TimestampTZ parseTimestampTZ(String string) throws ParseException {
+    return parseTimestampTZ(string, null);
   }
 
-  public TimestampTZ parseTimestampLocalTZ(String input, ZoneId withTimeZone) throws ParseException {
+  public TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone) throws ParseException {
+    ZoneId zoneId;
     ParseResult result = parseInternal(input);
-    if (result.leftoverString.isEmpty()) {
-      if (withTimeZone == null) {
-        throw new ParseException(""); //todo
+    try {
+      zoneId = ZoneId.of(result.leftoverString.trim()); //todo could be null?
+    } catch (DateTimeException e) {
+      if (withTimeZone != null) {
+        zoneId = withTimeZone;
       } else {
-        return null;//todo 
+        throw new ParseException("Time zone not provided and substring " + result.leftoverString
+            + " not parseable to time zone. Full input:  " + input);
       }
     }
-    return null; //todo
+
+    Timestamp ts = result.timestamp;
+    ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.ofEpochSecond(
+        ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC), zoneId);
+    if (withTimeZone == null) {
+      return new TimestampTZ(zonedDateTime);
+    }
+    return new TimestampTZ(zonedDateTime.withZoneSameInstant(withTimeZone));
   }
   
-  public ParseResult parseInternal(String fullInput) throws ParseException {
+  private ParseResult parseInternal(String fullInput) throws ParseException {
     LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
     String substring;
     int index = 0;
@@ -485,13 +510,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     
     return new ParseResult(Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano()),
         fullInput.substring(index));
-    
-//
-//    // deal with potential TimestampLocalTZ time zone ID at end of string
-//    ZoneId zoneId = getZoneId(fullInput, index);
-//
-//    return Timestamp
-//        .ofEpochSecond(ldt.toEpochSecond(zoneId.getRules().getOffset(ldt)), ldt.getNano());
   }
 
   /**
@@ -616,43 +634,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         && VALID_TEMPORAL_TOKENS.get(pattern) == nextToken.temporalField);
   }
 
-  /**
-   * Deal with potential TimestampLocalTZ time zone ID at end of string.
-   */
-  private ZoneId getZoneId(String fullInput, int index) throws ParseException {
-    String substring;
-    ZoneId zoneId = ZoneOffset.UTC;
-    if (index != fullInput.length()) { // frogmethod todo [waiting for] ignore excess input or throw error?
-      substring = fullInput.substring(index).trim();
-      try {
-        zoneId = ZoneId.of(substring);
-      } catch (DateTimeException e) {
-        throw new ParseException(
-            "Can't parse substring at end of input: " + substring + " from string: " + fullInput
-                + " with pattern " + pattern, e);
-      }
-    }
-    return zoneId;
-  }
-
   @Override public String getPattern() {
     return pattern;
   }
 
   @Override public void setTimeZone(TimeZone timeZone) {
     this.timeZone = timeZone;
-  }
-
-  // unused methods
-  @Override public void setFormatter(DateTimeFormatter dateTimeFormatter)
-      throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "
-        + "java.time.format.DateTimeFormatter, use HiveJavaDateTimeFormatter instead.");
-  }
-
-  @Override public void setFormatter(SimpleDateFormat simpleDateFormat)
-      throws WrongFormatterException {
-    throw new WrongFormatterException("HiveSqlDateTimeFormatter is not a wrapper for "
-        + "java.text.SimpleDateFormat, use HiveSimpleDateFormatter instead.");
   }
 }

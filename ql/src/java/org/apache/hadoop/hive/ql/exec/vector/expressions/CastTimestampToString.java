@@ -18,52 +18,21 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
-
 public class CastTimestampToString extends TimestampToStringUnaryUDF {
   private static final long serialVersionUID = 1L;
-  private static final DateTimeFormatter PRINT_FORMATTER;
-
-  static {
-    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
-    // Date and time parts
-    builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    // Fractional part
-    builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
-    PRINT_FORMATTER = builder.toFormatter();
-  }
-
-  private transient HiveDateTimeFormatter format;
 
   public CastTimestampToString() {
     super();
-    initFormatter();
   }
 
   public CastTimestampToString(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
-    initFormatter();
-  }
-
-  private void initFormatter() {
-    try {
-      format = new HiveJavaDateTimeFormatter();
-      format.setFormatter(PRINT_FORMATTER);
-    } catch (WrongFormatterException e) {
-      // this will never happen
-    }
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
@@ -78,24 +47,22 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
-    func(outV, inV, i, format);
+    func(outV, inV, i, null);
   }
 
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i, HiveDateTimeFormatter formatter) {
     try {
-      String formattedLocalDateTime = formatter.format(
-          org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
-
-      byte[] temp = formattedLocalDateTime.getBytes();
+      Timestamp timestamp = Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]);
+      String output = (formatter != null) ? formatter.format(timestamp) :
+          DefaultHiveSqlDateTimeFormatter.format(timestamp);
+      byte[] temp = output.getBytes();
       assign(outV, i, temp, temp.length);
     } catch (Exception e) {
       assignNull(outV, i);
     }
   }
-  public static String getTimestampString(Timestamp ts) {
-    return
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.getTime()), ZoneOffset.UTC)
-        .withNano(ts.getNanos())
-        .format(PRINT_FORMATTER);
+  public static String getTimestampString(java.sql.Timestamp ts) {
+    return DefaultHiveSqlDateTimeFormatter.format(
+        Timestamp.ofEpochMilli(ts.getTime(), ts.getNanos()));
   }
 }

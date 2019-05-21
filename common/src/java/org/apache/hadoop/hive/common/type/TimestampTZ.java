@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -67,7 +69,7 @@ public class TimestampTZ implements Comparable<TimestampTZ> {
 
   @Override
   public String toString() {
-    return zonedDateTime.format(TimestampTZUtil.FORMATTER);
+    return DefaultHiveSqlDateTimeFormatter.format(this);
   }
 
   @Override

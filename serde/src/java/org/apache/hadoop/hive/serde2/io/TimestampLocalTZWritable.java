@@ -259,16 +259,8 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     }
 
     populateTimestampTZ();
-
-    // Format the timestamp that represents local time. Make sure formatter has time zone in case
-    // offset hour/minute is part of format.
-    LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
-    ZoneId zoneId = timestampTZ.getZonedDateTime().getZone();
-    Timestamp ts = Timestamp.ofEpochSecond(
-        ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
-    formatter.setTimeZone(TimeZone.getTimeZone(zoneId));
     try {
-      return formatter.format(ts);
+      return formatter.format(timestampTZ);
     } catch (FormatException e) {
       return null;
     }

@@ -44,41 +44,12 @@ public class TimestampTZUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampTZ.class);
 
-  private static final LocalTime DEFAULT_LOCAL_TIME = LocalTime.of(0, 0);
-  private static final Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("[\\+-]\\d:\\d\\d");
-
-  static final DateTimeFormatter FORMATTER;
-  static {
-    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
-    // Date part
-    builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-    // Time part
-    builder.optionalStart().appendLiteral(" ").append(DateTimeFormatter.ofPattern("HH:mm:ss")).
-        optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).
-        optionalEnd().optionalEnd();
-
-    // Zone part
-    builder.optionalStart().appendLiteral(" ").optionalEnd();
-    builder.optionalStart().appendZoneText(TextStyle.NARROW).optionalEnd();
-
-    FORMATTER = builder.toFormatter();
-  }
-
   public static TimestampTZ parse(String s) {
     return parse(s, null);
   }
 
   public static TimestampTZ parse(String s, ZoneId defaultTimeZone) {
-    return DefaultHiveSqlDateTimeFormatter.parseTimestampLocalTZ(s, defaultTimeZone);
-  }
-
-  private static String handleSingleDigitHourOffset(String s) {
-    Matcher matcher = SINGLE_DIGIT_PATTERN.matcher(s);
-    if (matcher.find()) {
-      int index = matcher.start() + 1;
-      s = s.substring(0, index) + "0" + s.substring(index, s.length());
-    }
-    return s;
+    return DefaultHiveSqlDateTimeFormatter.parseTimestampTZ(s, defaultTimeZone);
   }
 
   public static TimestampTZ parseOrNull(
@@ -87,25 +58,17 @@ public class TimestampTZUtil {
       return parseOrNull(s, convertToTimeZone);
     }
 
-    Timestamp ts;
     try {
-      ts = formatter.parse(s);
+      return formatter.parseTimestampTZ(s);
     } catch (ParseException e) {
       return null;
     }
-    if (ts == null) {
-      return null;
-    }
-    TimestampTZ tsLTZ = new TimestampTZ(ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC);
-    // change time zone to default timeZone, retaining same instant
-    tsLTZ.setZonedDateTime(tsLTZ.getZonedDateTime().withZoneSameInstant(convertToTimeZone));
-    return tsLTZ;
   }
 
   public static TimestampTZ parseOrNull(String s, ZoneId defaultTimeZone) {
     try {
       return parse(s, defaultTimeZone);
-    } catch (DateTimeParseException e) {
+    } catch (ParseException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Invalid string " + s + " for TIMESTAMP WITH TIME ZONE", e);
       }

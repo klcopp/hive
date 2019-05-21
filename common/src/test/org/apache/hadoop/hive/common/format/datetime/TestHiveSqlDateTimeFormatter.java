@@ -78,7 +78,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     verifyBadPattern("yyyyTr");
   }
 
-  public void testFormat() throws FormatException {
+  public void testFormatTimestamp() throws FormatException {
     formatter.setPattern("rr", false);
     Timestamp ts = Timestamp.valueOf("2018-02-03 00:00:00");
     assertEquals("18", formatter.format(ts));
@@ -106,58 +106,76 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     formatter.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
     assertEquals("2018-02-03 17 +01:00", formatter.format(ts));
   }
-
-  public void testParse() throws ParseException {
-    formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff8", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.5665"), formatter.parse("2018-02-03 04:05:06.5665"));
-
-    formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.555555555"), formatter.parse("2018-02-03 04:05:06.555555555"));
-
-    formatter.setPattern("yy-mm-dd hh24:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2099-02-03 04:05:06"), formatter.parse("99-02-03 04:05:06"));
-
-    formatter.setPattern("rr-mm-dd", true); // test will fail in 2050
-    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parse("00-02-03"));
-    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parse("49-02-03"));
-    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parse("50-02-03"));
-
-    formatter.setPattern("rrrr-mm-dd", true); // test will fail in 2050
-    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parse("00-02-03"));
-    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parse("49-02-03"));
-    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parse("50-02-03"));
-
-    formatter.setPattern("yyy-mm-dd", true);
-    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parse("018-01-01"));
-
-    formatter.setPattern("yyyyddd", true);
-    assertEquals(Timestamp.valueOf("2018-10-11 00:00:00"), formatter.parse("2018284"));
-
-    formatter.setPattern("yyyyddd", true);
-    assertEquals(Timestamp.valueOf("2018-01-04 00:00:00"), formatter.parse("20184"));
-
-    formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ffz", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06.444"), formatter.parse("2018------02-03t04:05:06.444Z   America/New_York"));
-
-    formatter.setPattern("yyyy-mm-dd hh12:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 09:05:06"), formatter.parse("2018-02-03 04:05:06 America/New_York"));
-
-    formatter.setPattern("hh:mi:ss A.M.", true);
-    assertEquals(Timestamp.valueOf("1970-01-01 16:05:06"), formatter.parse("04:05:06 P.M."));
-
-    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 15:30:00"), formatter.parse("2019-1-1 14:00 -1:30"));
-
-    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 12:30:00"), formatter.parse("2019-1-1 14:00-1:30"));
-
-    formatter.setPattern("TZM:TZH", true);
-    assertEquals(Timestamp.valueOf("1970-01-01 03:01:00"), formatter.parse("1 -3"));
+  
+  public void testFormatDate() {
+    //todo frogmethod
   }
 
-  public void testBadParse() {
+  public void testFormatTimestampTZ() {
+    //todo frogmethod
+  }
+
+
+  public void testparseTimestamp() throws ParseException {
+    formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ff8z", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.5665"), formatter.parseTimestamp("2018-02-03T04:05:06.5665Z"));
+
+    formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.555555555"), formatter.parseTimestamp("2018-02-03 04:05:06.555555555"));
+
+    formatter.setPattern("yy-mm-dd hh12:mi:ss", true);
+    assertEquals(Timestamp.valueOf("2099-02-03 04:05:06"), formatter.parseTimestamp("99-02-03 04:05:06"));
+
+    formatter.setPattern("rr-mm-dd", true); // test will fail in 2050
+    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
+    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
+    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
+
+    formatter.setPattern("rrrr-mm-dd", true); // test will fail in 2050
+    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
+    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
+    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
+
+    formatter.setPattern("yyy-mm-dd", true);
+    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parseTimestamp("018-01-01"));
+
+    formatter.setPattern("yyyyddd", true);
+    assertEquals(Timestamp.valueOf("2018-10-11 00:00:00"), formatter.parseTimestamp("2018284"));
+
+    formatter.setPattern("yyyyddd", true);
+    assertEquals(Timestamp.valueOf("2018-01-04 00:00:00"), formatter.parseTimestamp("20184"));
+
+    formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ffz", true);
+    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.444"), formatter.parseTimestamp("2018------02-03t04:05:06.444Z"));
+
+    formatter.setPattern("hh:mi:ss A.M.", true);
+    assertEquals(Timestamp.valueOf("1970-01-01 16:05:06"), formatter.parseTimestamp("04:05:06 P.M."));
+
+    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 15:30:00"), formatter.parseTimestamp("2019-1-1 14:00 -1:30"));
+
+    formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 12:30:00"), formatter.parseTimestamp("2019-1-1 14:00-1:30"));
+
+    formatter.setPattern("TZM:TZH", true);
+    assertEquals(Timestamp.valueOf("1970-01-01 03:01:00"), formatter.parseTimestamp("1 -3"));
+  }
+
+  public void testparseDate() {
+    //todo frogmethod
+  }
+
+  public void testparseTimestampTZ() {
+    
+    //todo frogmethod
+//    "yyyymmddhh12miss", "2018020304:05:06 America/New_York"
+  }
+
+  public void testParseTimestampError() {
     verifyBadParseString("yyyy", "2019-02-03");
     verifyBadParseString("yyyy-mm-dd  ", "2019-02-03");
+    verifyBadParseString("yyyy-mm-dd", "2019-02-03...");
+    verifyBadParseString("yyyymmddhh12miss", "2018020304:05:06 America/New_York");
   }
 
   private void verifyBadPattern(String string) {
@@ -199,7 +217,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   private void verifyBadParseString(String pattern, String string) {
     try {
       formatter.setPattern(pattern, true);
-      formatter.parse(string);
+      formatter.parseTimestamp(string);
       fail();
     } catch (Exception e) {
       assertEquals(e.getClass().getName(), ParseException.class.getName());

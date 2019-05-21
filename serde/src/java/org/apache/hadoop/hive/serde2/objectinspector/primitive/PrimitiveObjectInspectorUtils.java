@@ -1313,12 +1313,11 @@ public final class PrimitiveObjectInspectorUtils {
 
   public static Timestamp getTimestampFromString(String s, HiveDateTimeFormatter formatter) {
 
-    s = s.trim();
     s = trimNanoTimestamp(s);
 
     try {
       return TimestampUtils.stringToTimestamp(s, formatter);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) { //frogmethod ParseException?
       return null;
     }
   }

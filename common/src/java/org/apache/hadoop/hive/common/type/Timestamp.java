@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.FormatException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
@@ -25,18 +26,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.format.ResolverStyle;
-import java.time.format.SignStyle;
-import java.time.temporal.ChronoField;
-
-import static java.time.temporal.ChronoField.DAY_OF_MONTH;
-import static java.time.temporal.ChronoField.HOUR_OF_DAY;
-import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
-import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
-import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static java.time.temporal.ChronoField.YEAR;
 
 /**
  * This is the internal type for Timestamp.
@@ -47,35 +36,6 @@ import static java.time.temporal.ChronoField.YEAR;
 public class Timestamp implements Comparable<Timestamp> {
   
   private static final LocalDateTime EPOCH = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
-  private static final DateTimeFormatter PARSE_FORMATTER;
-  private static final DateTimeFormatter PRINT_FORMATTER;
-
-  static {
-    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
-    // Date part
-    builder.appendValue(YEAR, 1, 10, SignStyle.NORMAL)
-        .appendLiteral('-')
-        .appendValue(MONTH_OF_YEAR, 1, 2, SignStyle.NORMAL)
-        .appendLiteral('-')
-        .appendValue(DAY_OF_MONTH, 1, 2, SignStyle.NORMAL);
-    // Time part
-    builder
-        .optionalStart().appendLiteral(" ")
-        .appendValue(HOUR_OF_DAY, 1, 2, SignStyle.NORMAL)
-        .appendLiteral(':')
-        .appendValue(MINUTE_OF_HOUR, 1, 2, SignStyle.NORMAL)
-        .appendLiteral(':')
-        .appendValue(SECOND_OF_MINUTE, 1, 2, SignStyle.NORMAL)
-        .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).optionalEnd()
-        .optionalEnd();
-    PARSE_FORMATTER = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
-    builder = new DateTimeFormatterBuilder();
-    // Date and time parts
-    builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    // Fractional part
-    builder.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd();
-    PRINT_FORMATTER = builder.toFormatter();
-  }
 
   private LocalDateTime localDateTime;
 
@@ -102,7 +62,7 @@ public class Timestamp implements Comparable<Timestamp> {
 
   @Override
   public String toString() {
-    return localDateTime.format(PRINT_FORMATTER);
+    return DefaultHiveSqlDateTimeFormatter.format(this);
   }
 
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
@@ -165,20 +125,9 @@ public class Timestamp implements Comparable<Timestamp> {
     return localDateTime.getNano();
   }
 
+  //todo throws illegalargumetnexception "Cannot create timestamp, parsing error"
   public static Timestamp valueOf(String s) {
-    s = s.trim();
-    LocalDateTime localDateTime;
-    try {
-      localDateTime = LocalDateTime.parse(s, PARSE_FORMATTER);
-    } catch (DateTimeParseException e) {
-      // Try ISO-8601 format
-      try {
-        localDateTime = LocalDateTime.parse(s);
-      } catch (DateTimeParseException e2) {
-        throw new IllegalArgumentException("Cannot create timestamp, parsing error");
-      }
-    }
-    return new Timestamp(localDateTime);
+    return DefaultHiveSqlDateTimeFormatter.parseTimestamp(s.trim());
   }
 
   public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter)
@@ -188,7 +137,7 @@ public class Timestamp implements Comparable<Timestamp> {
     }
 
     s = s.trim();
-    return formatter.parse(s);
+    return formatter.parseTimestamp(s);
   }
 
   public static Timestamp ofEpochSecond(long epochSecond) {

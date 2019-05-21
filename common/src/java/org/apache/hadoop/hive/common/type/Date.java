@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.FormatException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.ParseException;
@@ -25,15 +26,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.format.ResolverStyle;
-import java.time.format.SignStyle;
-
-import static java.time.temporal.ChronoField.DAY_OF_MONTH;
-import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
-import static java.time.temporal.ChronoField.YEAR;
 
 /**
  * This is the internal type for Date.
@@ -42,20 +34,6 @@ import static java.time.temporal.ChronoField.YEAR;
 public class Date implements Comparable<Date> {
 
   private static final LocalDate EPOCH = LocalDate.of(1970, 1, 1);
-  private static final DateTimeFormatter PARSE_FORMATTER;
-  private static final DateTimeFormatter PRINT_FORMATTER;
-  static {
-    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
-    builder.appendValue(YEAR, 1, 10, SignStyle.NORMAL)
-        .appendLiteral('-')
-        .appendValue(MONTH_OF_YEAR, 1, 2, SignStyle.NORMAL)
-        .appendLiteral('-')
-        .appendValue(DAY_OF_MONTH, 1, 2, SignStyle.NORMAL);
-    PARSE_FORMATTER = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
-    builder = new DateTimeFormatterBuilder();
-    builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-    PRINT_FORMATTER = builder.toFormatter();
-  }
 
   private LocalDate localDate;
 
@@ -73,7 +51,7 @@ public class Date implements Comparable<Date> {
 
   @Override
   public String toString() {
-    return localDate.format(PRINT_FORMATTER);
+    return DefaultHiveSqlDateTimeFormatter.format(this);
   }
 
   public String toStringFormatted(HiveDateTimeFormatter formatter) {
@@ -81,7 +59,7 @@ public class Date implements Comparable<Date> {
       return toString();
     }
     try {
-      return formatter.format(Timestamp.ofEpochMilli(toEpochMilli()));
+      return formatter.format(this);
     } catch (FormatException e) {
       return null;
     }
@@ -138,18 +116,7 @@ public class Date implements Comparable<Date> {
   }
 
   public static Date valueOf(String s) {
-    s = s.trim();
-    int idx = s.indexOf(" ");
-    if (idx != -1) {
-      s = s.substring(0, idx);
-    }
-    LocalDate localDate;
-    try {
-      localDate = LocalDate.parse(s, PARSE_FORMATTER);
-    } catch (DateTimeParseException e) {
-      throw new IllegalArgumentException("Cannot create date, parsing error");
-    }
-    return new Date(localDate);
+    return DefaultHiveSqlDateTimeFormatter.parseDate(s.trim());
   }
 
   public static Date valueOf(String s, HiveDateTimeFormatter formatter) throws ParseException {
@@ -157,7 +124,7 @@ public class Date implements Comparable<Date> {
       return valueOf(s);
     }
     s = s.trim();
-    return Date.ofEpochMilli(formatter.parse(s).toEpochMilli());
+    return formatter.parseDate(s);
   }
 
   public static Date ofEpochDay(int epochDay) {
