@@ -3,9 +3,7 @@ package org.apache.hadoop.hive.common.format.datetime;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.common.type.TimestampTZ;
 
-import java.time.ZoneId;
 import java.util.Map;
 
 /**
@@ -41,12 +39,6 @@ public class DefaultHiveSqlDateTimeFormatter {
     return formatterDate.format(date);
   }
 
-  public static String format(TimestampTZ timestampTZ) {
-    return (timestampTZ.getNanos() == 0) ? formatterNoNanos.format(timestampTZ) :
-        formatterWithNanos.format(timestampTZ);
-
-  }
-
   public static Timestamp parseTimestamp(String input) {
     input = input.trim();
     // count number of non-separator tokens
@@ -60,22 +52,6 @@ public class DefaultHiveSqlDateTimeFormatter {
   
   public static Date parseDate(String input) { //todo frogmethod : "Cannot create date, parsing error"
     return formatterDate.parseDate(input.trim());
-  }
-
-  public static TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone) {
-    // count number of non-separator tokens
-    int numberOfTokenGroups = getNumberOfTokenGroups(input);
-    // try numberOfTokenGroups = numberOfTokenGroups-1 (in case time zone was Turkey or Zulu)
-    for (int i = numberOfTokenGroups; i >= numberOfTokenGroups - 1; i--) {
-      try {
-        if (TOKEN_COUNT_FORMATTER_MAP.containsKey(i)) {
-          return TOKEN_COUNT_FORMATTER_MAP.get(i).parseTimestampTZ(input, withTimeZone);
-        }
-      } catch (IllegalArgumentException e) {
-        // keep looping
-      }
-    }
-    throw new IllegalArgumentException(input + " couldn't be parsed to timestamp with local time zone.");
   }
 
   static int getNumberOfTokenGroups(String input) {

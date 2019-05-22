@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -37,16 +35,12 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
  * Convert from string to TIMESTAMP WITH LOCAL TIME ZONE.
  */
 @Description(name = "timestamp with local time zone",
-    value = "CAST(<STRING> as TIMESTAMP WITH LOCAL TIME ZONE [FORMAT <STRING>]) - returns the" +
-        "timestamp with local time zone represented by string. Optional parsing according to " +
-        "format string.",
-    extended = "The string should be of format 'yyyy-MM-dd HH:mm:ss[.SSS...] ZoneId/ZoneOffset',"
-        + "Examples of ZoneId and ZoneOffset are Asia/Shanghai and GMT+08:00. "
-        + "The time and zone parts are optional. If time is absent, '00:00:00.0' will be used."
-        + "If zone is absent, the system time zone will be used.\n"
-        + "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
-        + "used.")
-
+    value = "CAST(STRING as TIMESTAMP WITH LOCAL TIME ZONE) - returns the" +
+        "timestamp with local time zone represented by string.",
+    extended = "The string should be of format 'yyyy-MM-dd HH:mm:ss[.SSS...] ZoneId/ZoneOffset'. " +
+        "Examples of ZoneId and ZoneOffset are Asia/Shanghai and GMT+08:00. " +
+        "The time and zone parts are optional. If time is absent, '00:00:00.0' will be used. " +
+        "If zone is absent, the system time zone will be used.")
 public class GenericUDFToTimestampLocalTZ extends GenericUDF implements SettableUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
@@ -82,14 +76,6 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
     SettableTimestampLocalTZObjectInspector outputOI = (SettableTimestampLocalTZObjectInspector)
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
     converter = new TimestampLocalTZConverter(argumentOI, outputOI);
-
-    // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null) {
-      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(getConstantStringValue(arguments, 1), true);
-      converter.setDateTimeFormatter(formatter);
-    }
-
     return outputOI;
   }
 
@@ -104,16 +90,12 @@ public class GenericUDFToTimestampLocalTZ extends GenericUDF implements Settable
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1 || children.length == 2);
+    assert (children.length == 1);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
     sb.append(" AS ");
     sb.append(typeInfo.getTypeName());
-    if (children.length == 2) {
-      sb.append(" FORMAT ");
-      sb.append(children[1]);
-    }
     sb.append(")");
     return sb.toString();
   }

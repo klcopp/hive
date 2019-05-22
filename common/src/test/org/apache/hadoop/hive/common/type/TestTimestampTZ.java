@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.TimeZone;
 
 public class TestTimestampTZ {
@@ -89,14 +90,14 @@ public class TestTimestampTZ {
     try {
       TimestampTZUtil.parse("2017-01-01 13:33:00 foo");
       Assert.fail("Invalid timezone ID should cause exception");
-    } catch (IllegalArgumentException e) {
+    } catch (DateTimeParseException e) {
       // expected
     }
     // invalid time part
     try {
       TimestampTZUtil.parse("2017-01-01 13:33:61");
       Assert.fail("Invalid time should cause exception");
-    } catch (IllegalArgumentException e) {
+    } catch (DateTimeParseException e) {
       // expected
     }
   }

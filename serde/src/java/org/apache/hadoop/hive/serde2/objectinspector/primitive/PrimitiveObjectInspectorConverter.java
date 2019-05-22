@@ -309,7 +309,6 @@ public class PrimitiveObjectInspectorConverter {
     final SettableTimestampLocalTZObjectInspector outputOI;
     final Object r;
     final ZoneId timeZone;
-    private HiveDateTimeFormatter formatter = null;
 
     public TimestampLocalTZConverter(
         PrimitiveObjectInspector inputOI,
@@ -326,12 +325,7 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
 
-      return outputOI.set(r,
-          PrimitiveObjectInspectorUtils.getTimestampLocalTZ(input, inputOI, timeZone, formatter));
-    }
-
-    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
-      this.formatter = formatter;
+      return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestampLocalTZ(input, inputOI, timeZone));
     }
   }
 
@@ -512,8 +506,7 @@ public class PrimitiveObjectInspectorConverter {
             .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case TIMESTAMPLOCALTZ:
-        t.set(((TimestampLocalTZObjectInspector) inputOI)
-            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
+        t.set(((TimestampLocalTZObjectInspector) inputOI).getPrimitiveWritableObject(input).toString());
         return t;
       case INTERVAL_YEAR_MONTH:
         t.set(((HiveIntervalYearMonthObjectInspector) inputOI)

@@ -25,7 +25,6 @@ import org.apache.hadoop.hive.common.type.Timestamp;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
-import java.util.TimeZone;
 
 /**
  * Test class for HiveSqlDateTimeFormatter.
@@ -96,22 +95,18 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     assertEquals("8 01:02:03 am a.m. am a.m. AM A.M. AM A.M.", formatter.format(ts));
 
     formatter.setPattern("rrrr-mm-dd hh24 tzh:tzm", false);
-    formatter.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
-    ts = Timestamp.valueOf("2018-02-03 17:00:00");
-    assertEquals("2018-02-03 17 +05:30", formatter.format(ts));
-
-    formatter.setTimeZone(TimeZone.getTimeZone("Pacific/Marquesas"));
-    assertEquals("2018-02-03 17 -09:30", formatter.format(ts));
-
-    formatter.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
-    assertEquals("2018-02-03 17 +01:00", formatter.format(ts));
+//    formatter.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta")); //todo frogmethod
+//    ts = Timestamp.valueOf("2018-02-03 17:00:00");
+//    assertEquals("2018-02-03 17 +05:30", formatter.format(ts));
+//
+//    formatter.setTimeZone(TimeZone.getTimeZone("Pacific/Marquesas"));
+//    assertEquals("2018-02-03 17 -09:30", formatter.format(ts));
+//
+//    formatter.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
+//    assertEquals("2018-02-03 17 +01:00", formatter.format(ts));
   }
   
   public void testFormatDate() {
-    //todo frogmethod
-  }
-
-  public void testFormatTimestampTZ() {
     //todo frogmethod
   }
 
@@ -163,12 +158,6 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   public void testparseDate() {
     //todo frogmethod
-  }
-
-  public void testparseTimestampTZ() {
-    
-    //todo frogmethod
-//    "yyyymmddhh12miss", "2018020304:05:06 America/New_York"
   }
 
   public void testParseTimestampError() {

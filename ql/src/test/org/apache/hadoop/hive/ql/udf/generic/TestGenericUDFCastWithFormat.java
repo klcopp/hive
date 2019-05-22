@@ -19,28 +19,22 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.common.type.TimestampTZ;
-import org.apache.hadoop.hive.common.type.TimestampTZUtil;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DateWritableV2;
-import org.apache.hadoop.hive.serde2.io.TimestampLocalTZWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritableV2;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.io.Text;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 
 /**
- * Tests cast udfs GenericUDFToString, GenericUDFToDate, GenericUDFTimestamp,
- * GenericUDFToTimestampLocalTZ with second format argument.
- * E.g. CAST (<TIMESTAMP> AS STRING WITH FORMAT <STRING>)
+ * Tests cast udfs GenericUDFToString, GenericUDFToDate, GenericUDFTimestamp with second format
+ * argument. E.g. CAST (<TIMESTAMP> AS STRING WITH FORMAT <STRING>)
  */
 public class TestGenericUDFCastWithFormat {
 
@@ -73,15 +67,6 @@ public class TestGenericUDFCastWithFormat {
   }
 
   @Test
-  public void testStringToTimestampTZWithFormat() throws HiveException {
-    GenericUDFToTimestampLocalTZ udf = new GenericUDFToTimestampLocalTZ();
-    udf.setTypeInfo(new TimestampLocalTZTypeInfo("America/Los_Angeles"));
-    ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(udf, inputOI, "2009-07-30 07:00:00 America/New_York", "yyyy-MM-dd HH24:mi:ss", "2009-07-30 04:00:00.0 America/Los_Angeles");
-    //TODO
-  }
-
-  @Test
   public void testTimestampToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
@@ -89,13 +74,6 @@ public class TestGenericUDFCastWithFormat {
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 11:02:00")), "MM/dd/yyyy hh24miss", "07/30/2009 110200");
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 01:02:03")), "MM", "07");
     testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("1969-07-30 00:00:00")), "yy", "69");
-  }
-
-  @Test
-  public void testTimestampTZToStringWithFormat() throws HiveException {
-    GenericUDF udf = new GenericUDFToString();
-    ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampTZObjectInspector;
-    testCast(udf, inputOI, new TimestampLocalTZWritable(TimestampTZUtil.parse("2018-01-01 00:00:00 America/New_York")), "yyyy-MM-dd HH24:mi:ss", "2017-12-31 21:00:00");
   }
 
   private void testCast(

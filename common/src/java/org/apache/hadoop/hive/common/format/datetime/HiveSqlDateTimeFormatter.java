@@ -23,15 +23,12 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
-import org.apache.hadoop.hive.common.type.TimestampTZ;
 
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
@@ -56,8 +53,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   public static final int AM = 0;
   public static final int PM = 1;
   private String pattern;
-  // for offset hour/minute
-  private TimeZone timeZone;
   protected List<Token> tokens = new ArrayList<>();
 
   private static final Map<String, TemporalField> VALID_TEMPORAL_TOKENS =
@@ -328,7 +323,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         }
         break;
       case TIMEZONE:
-        outputString = formatTimeZone(timeZone, localDateTime, token);
+//        outputString = formatTimeZone(timeZone, localDateTime, token); //todo frogmethod
         break;
       case SEPARATOR:
         outputString = token.string;
@@ -344,17 +339,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   @Override public String format(Date date) {
     return format(Timestamp.ofEpochSecond(date.toEpochSecond()));
-  }
-
-  @Override public String format(TimestampTZ timestampTZ) {
-    // Format the timestamp that represents local time. Make sure formatter has time zone in case
-    // offset hour/minute is part of format.
-    LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
-    ZoneId zoneId = timestampTZ.getZonedDateTime().getZone();
-    Timestamp ts = Timestamp.ofEpochSecond(
-        ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
-    setTimeZone(TimeZone.getTimeZone(zoneId)); // todo well this might be an issue with race conditions. i'd prefer to pass the tz as an argument to format(ts, tz)
-    return format(ts) + " " + zoneId; //todo frogmethod not sure if tz should be added at the end?
   }
 
   private String formatTemporal(int value, Token token) {
@@ -393,6 +377,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return output;
   }
 
+  /**
+   * Left here for timestamp with local time zone.
+   */
   private String formatTimeZone(TimeZone timeZone, LocalDateTime localDateTime, Token token) {
     ZoneOffset offset = timeZone.toZoneId().getRules().getOffset(localDateTime);
     Duration seconds = Duration.of(offset.get(ChronoField.OFFSET_SECONDS), ChronoUnit.SECONDS);
@@ -432,33 +419,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   public Date parseDate(String input){
     return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
-  }
-
-  @Override public TimestampTZ parseTimestampTZ(String string){
-    return parseTimestampTZ(string, null);
-  }
-
-  public TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone){
-    ZoneId zoneId;
-    ParseResult result = parseInternal(input);
-    try {
-      zoneId = ZoneId.of(result.leftoverString.trim()); //todo could be null?
-    } catch (DateTimeException e) {
-      if (withTimeZone != null) {
-        zoneId = withTimeZone;
-      } else {
-        throw new IllegalArgumentException("Time zone not provided and substring " + result.leftoverString
-            + " not parseable to time zone. Full input:  " + input);
-      }
-    }
-
-    Timestamp ts = result.timestamp;
-    ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.ofEpochSecond(
-        ts.toEpochSecond(), ts.getNanos(), ZoneOffset.UTC), zoneId);
-    if (withTimeZone == null) {
-      return new TimestampTZ(zonedDateTime);
-    }
-    return new TimestampTZ(zonedDateTime.withZoneSameInstant(withTimeZone));
   }
   
   private ParseResult parseInternal(String fullInput){
@@ -635,9 +595,5 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   @Override public String getPattern() {
     return pattern;
-  }
-
-  @Override public void setTimeZone(TimeZone timeZone) {
-    this.timeZone = timeZone;
   }
 }

@@ -19,12 +19,21 @@ package org.apache.hadoop.hive.common.type;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,28 +41,80 @@ public class TimestampTZUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampTZ.class);
 
+  private static final LocalTime DEFAULT_LOCAL_TIME = LocalTime.of(0, 0);
+  private static final Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("[\\+-]\\d:\\d\\d");
+
+  static final DateTimeFormatter FORMATTER;
+  static {
+    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
+    // Date part
+    builder.append(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    // Time part
+    builder.optionalStart().appendLiteral(" ").append(DateTimeFormatter.ofPattern("HH:mm:ss")).
+        optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).
+        optionalEnd().optionalEnd();
+
+    // Zone part
+    builder.optionalStart().appendLiteral(" ").optionalEnd();
+    builder.optionalStart().appendZoneText(TextStyle.NARROW).optionalEnd();
+
+    FORMATTER = builder.toFormatter();
+  }
+
   public static TimestampTZ parse(String s) {
     return parse(s, null);
   }
 
   public static TimestampTZ parse(String s, ZoneId defaultTimeZone) {
-    return DefaultHiveSqlDateTimeFormatter.parseTimestampTZ(s, defaultTimeZone);
+    // need to handle offset with single digital hour, see JDK-8066806
+    s = handleSingleDigitHourOffset(s);
+    ZonedDateTime zonedDateTime;
+    try {
+      zonedDateTime = ZonedDateTime.parse(s, FORMATTER);
+    } catch (DateTimeParseException e) {
+      // try to be more tolerant
+      // if the input is invalid instead of incomplete, we'll hit exception here again
+      TemporalAccessor accessor = FORMATTER.parse(s);
+      // LocalDate must be present
+      LocalDate localDate = LocalDate.from(accessor);
+      LocalTime localTime;
+      ZoneId zoneId;
+      try {
+        localTime = LocalTime.from(accessor);
+      } catch (DateTimeException e1) {
+        localTime = DEFAULT_LOCAL_TIME;
+      }
+      try {
+        zoneId = ZoneId.from(accessor);
+      } catch (DateTimeException e2) {
+        if (defaultTimeZone == null) {
+          throw new DateTimeException("Time Zone not available");
+        }
+        zoneId = defaultTimeZone;
+      }
+      zonedDateTime = ZonedDateTime.of(localDate, localTime, zoneId);
+    }
+
+    if (defaultTimeZone == null) {
+      return new TimestampTZ(zonedDateTime);
+    }
+    return new TimestampTZ(zonedDateTime.withZoneSameInstant(defaultTimeZone));
+  }
+
+  private static String handleSingleDigitHourOffset(String s) {
+    Matcher matcher = SINGLE_DIGIT_PATTERN.matcher(s);
+    if (matcher.find()) {
+      int index = matcher.start() + 1;
+      s = s.substring(0, index) + "0" + s.substring(index, s.length());
+    }
+    return s;
   }
 
 
   public static TimestampTZ parseOrNull(String s, ZoneId defaultTimeZone) {
-    return parseOrNull(s, defaultTimeZone, null);
-  }
-
-  public static TimestampTZ parseOrNull(
-      String s, ZoneId convertToTimeZone, HiveDateTimeFormatter formatter) {
-    if (formatter == null) {
-      return parseOrNull(s, convertToTimeZone);
-    }
-
     try {
-      return formatter.parseTimestampTZ(s);
-    } catch (IllegalArgumentException e) {
+      return parse(s, defaultTimeZone);
+    } catch (DateTimeParseException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Invalid string " + s + " for TIMESTAMP WITH TIME ZONE", e);
       }

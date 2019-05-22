@@ -966,8 +966,7 @@ public final class PrimitiveObjectInspectorUtils {
           .toStringFormatted(formatter);
       break;
     case TIMESTAMPLOCALTZ:
-      result = ((TimestampLocalTZObjectInspector) oi).getPrimitiveWritableObject(o)
-          .toStringFormatted(formatter);
+      result = ((TimestampLocalTZObjectInspector) oi).getPrimitiveWritableObject(o).toString();
       break;
     case INTERVAL_YEAR_MONTH:
       result = ((HiveIntervalYearMonthObjectInspector) oi).getPrimitiveWritableObject(o).toString();
@@ -1339,11 +1338,6 @@ public final class PrimitiveObjectInspectorUtils {
 
   public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
           ZoneId timeZone) {
-    return getTimestampLocalTZ(o, oi, timeZone, null);
-  }
-
-  public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
-      ZoneId timeZone, HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }
@@ -1354,7 +1348,7 @@ public final class PrimitiveObjectInspectorUtils {
     case STRING: {
       StringObjectInspector soi = (StringObjectInspector) oi;
       String s = soi.getPrimitiveJavaObject(o).trim();
-      return TimestampTZUtil.parseOrNull(trimNanoTimestamp(s), timeZone, formatter);
+      return TimestampTZUtil.parseOrNull(trimNanoTimestamp(s), timeZone);
     }
     case CHAR:
     case VARCHAR: {
