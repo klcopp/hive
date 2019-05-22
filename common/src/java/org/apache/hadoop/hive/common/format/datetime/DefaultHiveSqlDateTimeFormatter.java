@@ -5,7 +5,6 @@ import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 
@@ -50,22 +49,17 @@ public class DefaultHiveSqlDateTimeFormatter {
     }
   }
 
-  public static String format(TimestampTZ timestampTZ) { //todo
-    String output;
-
-    //add local time part
-    ZoneId zoneId = timestampTZ.getZonedDateTime().getZone();
-    LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
-    Timestamp ts = Timestamp.ofEpochSecond(
-        ldt.toEpochSecond(zoneId.getRules().getOffset(ldt)), ldt.getNano());
-    output = format(ts);
-
-    //add the time zone part
-    output += " " + zoneId;
-    return output;
+  public static String format(TimestampTZ timestampTZ) {
+    try {
+      return (timestampTZ.getNanos() == 0) ? formatterNoNanos.format(timestampTZ) :
+          formatterWithNanos.format(timestampTZ);
+    } catch (FormatException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static Timestamp parseTimestamp(String input) throws ParseException {
+    input = input.trim();
     // count number of non-separator tokens
     int numberOfTokenGroups = getNumberOfTokenGroups(input);
     if (!TOKEN_COUNT_FORMATTER_MAP.containsKey(numberOfTokenGroups)) {
@@ -75,8 +69,8 @@ public class DefaultHiveSqlDateTimeFormatter {
     return formatter.parseTimestamp(input);
   }
   
-  public static Date parseDate(String input) throws ParseException {
-    return formatterDate.parseDate(input);
+  public static Date parseDate(String input) throws ParseException { //todo frogmethod : "Cannot create date, parsing error"
+    return formatterDate.parseDate(input.trim());
   }
 
   public static TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone)

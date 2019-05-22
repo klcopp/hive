@@ -1316,8 +1316,8 @@ public final class PrimitiveObjectInspectorUtils {
     s = trimNanoTimestamp(s);
 
     try {
-      return TimestampUtils.stringToTimestamp(s, formatter);
-    } catch (IllegalArgumentException e) { //frogmethod ParseException?
+      return Timestamp.valueOf(s, formatter);
+    } catch (ParseException e) {
       return null;
     }
   }

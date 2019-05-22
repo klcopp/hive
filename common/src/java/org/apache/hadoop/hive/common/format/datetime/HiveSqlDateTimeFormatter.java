@@ -371,7 +371,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       try {
         output = String.valueOf(value);
         output = padOrTruncateNumericTemporal(token, output);
-      } catch (Exception e) { //todo which excaption??
+      } catch (Exception e) { //todo which exception??
         throw new FormatException("Value: " + value + " couldn't be cast to string.");
       }
     }

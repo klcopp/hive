@@ -39,8 +39,14 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
   }
 
   public void testFormatTimestampTZ() {
-    String s1 ="2019-01-01 02:03:04 America/New_York"; //todo frogmethod i think this is wrong
-    assertEquals(s1, DefaultHiveSqlDateTimeFormatter.format(new TimestampTZ(_2019_01_01__02_03_04.toEpochSecond(), 0, ZoneId.of("America/New_York"))));
+    verifyFormatTimestampTZ("2019-01-01 02:03:04 US/Pacific", 8, 0);
+  }
+
+  private void verifyFormatTimestampTZ(String expected, int offsetHours, int nanos) {
+    assertEquals(expected, DefaultHiveSqlDateTimeFormatter.format(
+        new TimestampTZ(_2019_01_01__02_03_04.toEpochSecond() + offsetHours * SECONDS_PER_HOUR,
+            nanos, US_PACIFIC)));
+
   }
 
   public void testParseTimestamp() throws ParseException {
@@ -73,16 +79,16 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     String s4 ="2019-01-01 02:03:04.777Turkey";
     String s5 ="2019-01-01 02:03:04.777GMT"; // 00:00 UTC, 16:00 US/Pacific
     String s6 ="2019-01-01 02:03:04.777";
-    
-    verifyTimestampLocalTZ(s1, 8, 0, US_PACIFIC);
-    verifyTimestampLocalTZ(s2, 8, 0, US_PACIFIC);
-    verifyTimestampLocalTZ(s3, 8, 777000000, null);
-    verifyTimestampLocalTZ(s4, -3, 777000000, US_PACIFIC);
-//    verifyTimestampLocalTZ(s5, 0, 777000000, US_PACIFIC); // can't do 777GMT as ff9. above works because T is a separator. todo frogmethod
-    verifyTimestampLocalTZ(s6, 8, 777000000, US_PACIFIC);
+
+    verifyParseTimestampLocalTZ(s1, 8, 0, US_PACIFIC);
+    verifyParseTimestampLocalTZ(s2, 8, 0, US_PACIFIC);
+    verifyParseTimestampLocalTZ(s3, 8, 777000000, null);
+    verifyParseTimestampLocalTZ(s4, -3, 777000000, US_PACIFIC);
+//    verifyParseTimestampLocalTZ(s5, 0, 777000000, US_PACIFIC); // fails, can't do 777GMT as ff9. above works because T is a separator. todo frogmethod
+    verifyParseTimestampLocalTZ(s6, 8, 777000000, US_PACIFIC);
   }
   
-  private void verifyTimestampLocalTZ(String input, long offsetHours, int nanos, ZoneId withTimeZone)
+  private void verifyParseTimestampLocalTZ(String input, long offsetHours, int nanos, ZoneId withTimeZone)
       throws ParseException {
     TimestampTZ expected = new TimestampTZ(_2019_01_01__02_03_04.toEpochSecond() + offsetHours * SECONDS_PER_HOUR, nanos, US_PACIFIC);
     assertEquals(expected, DefaultHiveSqlDateTimeFormatter.parseTimestampTZ(input, withTimeZone));

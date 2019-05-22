@@ -135,8 +135,6 @@ public class Timestamp implements Comparable<Timestamp> {
     if (formatter == null) {
       return valueOf(s);
     }
-
-    s = s.trim();
     return formatter.parseTimestamp(s);
   }
 

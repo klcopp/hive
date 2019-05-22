@@ -171,16 +171,4 @@ public class TimestampUtils {
       return (millis - 999) / 1000;
     }
   }
-
-  public static Timestamp stringToTimestamp(String s, HiveDateTimeFormatter formatter) {
-    if (formatter == null) {
-      return DefaultHiveSqlDateTimeFormatter.parseTimestamp(s.trim());
-    }
-
-    try {
-      return Timestamp.valueOf(s, formatter);
-    } catch (ParseException e) {
-      return null;
-    }
-  }
 }

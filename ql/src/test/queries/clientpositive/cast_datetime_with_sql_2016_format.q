@@ -7,25 +7,25 @@ drop table if exists varchars;
 
 --non-vectorized
 set hive.vectorized.execution.enabled=false;
-set hive.fetch.task.conversion=none;
+set hive.fetch.task.conversion=more;
 
 create table timestamps (t timestamp) stored as parquet;
 insert into timestamps values
 ("2020-02-03"),
 ("1969-12-31 23:59:59.999999999")
 ;
-from timestamps select cast (t as string      format "yyyy hh24...PM");
-from timestamps select cast (t as char(11)    format "yyyy hh24...PM"); -- will be truncated
-from timestamps select cast (t as varchar(11) format "yyyy hh24...PM"); -- will be truncated
+from timestamps select cast (t as string      format "yyyy hh24...PM ff");
+from timestamps select cast (t as char(11)    format "yyyy hh24...PM ff"); -- will be truncated
+from timestamps select cast (t as varchar(11) format "yyyy hh24...PM ff"); -- will be truncated
 
 create table dates (d date) stored as parquet;
 insert into dates values
 ("2020-02-03"),
 ("1969-12-31")
 ;
-from timestamps select cast (t as string      format "yyyy");
-from timestamps select cast (t as char(10)    format "yyyy");
-from timestamps select cast (t as varchar(10) format "yyyy");
+from dates select cast (d as string      format "yyyy mm dd , hh24 mi ss ff99");
+from dates select cast (d as char(10)    format "yyyy mm dd , hh24 mi ss ff99"); -- will be truncated
+from dates select cast (d as varchar(10) format "yyyy mm dd , hh24 mi ss ff99"); -- will be truncated
 
 create table timestampLocalTzs (t timestamp with local time zone);
 insert into timestampLocalTzs values

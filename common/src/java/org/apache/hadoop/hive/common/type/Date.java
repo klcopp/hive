@@ -123,7 +123,6 @@ public class Date implements Comparable<Date> {
     if (formatter == null) {
       return valueOf(s);
     }
-    s = s.trim();
     return formatter.parseDate(s);
   }
 
