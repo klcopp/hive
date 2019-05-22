@@ -30,7 +30,6 @@ import java.util.Map;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -1202,7 +1201,7 @@ public final class PrimitiveObjectInspectorUtils {
     if (formatter != null) {
       try {
         return Date.valueOf(s, formatter);
-      } catch (ParseException e) {
+      } catch (IllegalArgumentException e) {
         return null;
       }
     }
@@ -1317,7 +1316,7 @@ public final class PrimitiveObjectInspectorUtils {
 
     try {
       return Timestamp.valueOf(s, formatter);
-    } catch (ParseException e) {
+    } catch (IllegalArgumentException e) {
       return null;
     }
   }

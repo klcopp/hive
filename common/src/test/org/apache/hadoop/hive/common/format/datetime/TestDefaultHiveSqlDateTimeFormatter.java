@@ -49,7 +49,7 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
 
   }
 
-  public void testParseTimestamp() throws ParseException {
+  public void testParseTimestamp() {
     String s1 = "2019-01-01 02:03:04";
     String s2 = "2019-01-01 02:03:04.000";
     String s3 = "2019-01-01T02:03:04Z";
@@ -72,7 +72,7 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     assertEquals(_2019_01_01, parseDate(s2));
   }
 
-  public void testParseTimestampLocalTZ() throws ParseException {
+  public void testParseTimestampLocalTZ() {
     String s1 ="2019-01-01 05:03:04 America/New_York"; // 00:03 UTC, 10:03 US/Pacific
     String s2 ="2019-01-01 05:03:04America/New_York"; // 8:00 UTC, 00:00 US/Pacific
     String s3 ="2019-01-01 02:03:04.777 US/Pacific";
@@ -88,8 +88,7 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     verifyParseTimestampLocalTZ(s6, 8, 777000000, US_PACIFIC);
   }
   
-  private void verifyParseTimestampLocalTZ(String input, long offsetHours, int nanos, ZoneId withTimeZone)
-      throws ParseException {
+  private void verifyParseTimestampLocalTZ(String input, long offsetHours, int nanos, ZoneId withTimeZone) {
     TimestampTZ expected = new TimestampTZ(_2019_01_01__02_03_04.toEpochSecond() + offsetHours * SECONDS_PER_HOUR, nanos, US_PACIFIC);
     assertEquals(expected, DefaultHiveSqlDateTimeFormatter.parseTimestampTZ(input, withTimeZone));
   }

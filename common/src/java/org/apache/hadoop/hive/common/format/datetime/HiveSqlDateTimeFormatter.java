@@ -153,8 +153,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   /**
    * Parse and perhaps verify the pattern.
    */
-  @Override public void setPattern(String pattern, boolean forParsing)
-      throws IllegalArgumentException {
+  @Override public void setPattern(String pattern, boolean forParsing) {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
 
     this.pattern = parsePatternToTokens(pattern);
@@ -168,7 +167,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   /**
    * Parse pattern to list of tokens.
    */
-  private String parsePatternToTokens(String pattern) throws IllegalArgumentException {
+  private String parsePatternToTokens(String pattern) {
     tokens.clear();
     String originalPattern = pattern;
     pattern = pattern.toLowerCase();
@@ -251,7 +250,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    * not done: "Both year and round year are provided"
    */
 
-  private void verifyTokenList() throws IllegalArgumentException {
+  private void verifyTokenList() {
 
     // create a list of tokens' temporal fields
     ArrayList<TemporalField> temporalFields = new ArrayList<>();
@@ -311,7 +310,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  @Override public String format(Timestamp ts) throws FormatException {
+  @Override public String format(Timestamp ts) {
     StringBuilder fullOutputSb = new StringBuilder();
     String outputString = null;
     int value;
@@ -324,7 +323,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           value = localDateTime.get(token.temporalField);
           outputString = formatTemporal(value, token);
         } catch (DateTimeException e) {
-          throw new FormatException(token.temporalField + " couldn't be obtained from"
+          throw new IllegalArgumentException(token.temporalField + " couldn't be obtained from"
               + "LocalDateTime " + localDateTime, e);
         }
         break;
@@ -343,11 +342,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return fullOutputSb.toString();
   }
 
-  @Override public String format(Date date) throws FormatException {
+  @Override public String format(Date date) {
     return format(Timestamp.ofEpochSecond(date.toEpochSecond()));
   }
 
-  @Override public String format(TimestampTZ timestampTZ) throws FormatException {
+  @Override public String format(TimestampTZ timestampTZ) {
     // Format the timestamp that represents local time. Make sure formatter has time zone in case
     // offset hour/minute is part of format.
     LocalDateTime ldt = timestampTZ.getZonedDateTime().toLocalDateTime();
@@ -358,7 +357,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return format(ts) + " " + zoneId; //todo frogmethod not sure if tz should be added at the end?
   }
 
-  private String formatTemporal(int value, Token token) throws FormatException {
+  private String formatTemporal(int value, Token token) {
     String output;
     if (token.temporalField == ChronoField.AMPM_OF_DAY) {
       output = value == 0 ? "a" : "p";
@@ -371,8 +370,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       try {
         output = String.valueOf(value);
         output = padOrTruncateNumericTemporal(token, output);
-      } catch (Exception e) { //todo which exception??
-        throw new FormatException("Value: " + value + " couldn't be cast to string.");
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Value: " + value + " couldn't be cast to string.", e);
       }
     }
     return output;
@@ -423,23 +422,23 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  @Override public Timestamp parseTimestamp(String input) throws ParseException {
+  @Override public Timestamp parseTimestamp(String input){
     ParseResult result = parseInternal(input);
     if (result.leftoverString.isEmpty()) {
       return result.timestamp;
     }
-    throw new ParseException("Leftover input: " + result.leftoverString + " in string " + input);
+    throw new IllegalArgumentException("Leftover input: " + result.leftoverString + " in string " + input);
   }
 
-  public Date parseDate(String input) throws ParseException {
+  public Date parseDate(String input){
     return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
   }
 
-  @Override public TimestampTZ parseTimestampTZ(String string) throws ParseException {
+  @Override public TimestampTZ parseTimestampTZ(String string){
     return parseTimestampTZ(string, null);
   }
 
-  public TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone) throws ParseException {
+  public TimestampTZ parseTimestampTZ(String input, ZoneId withTimeZone){
     ZoneId zoneId;
     ParseResult result = parseInternal(input);
     try {
@@ -448,7 +447,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       if (withTimeZone != null) {
         zoneId = withTimeZone;
       } else {
-        throw new ParseException("Time zone not provided and substring " + result.leftoverString
+        throw new IllegalArgumentException("Time zone not provided and substring " + result.leftoverString
             + " not parseable to time zone. Full input:  " + input);
       }
     }
@@ -462,7 +461,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     return new TimestampTZ(zonedDateTime.withZoneSameInstant(withTimeZone));
   }
   
-  private ParseResult parseInternal(String fullInput) throws ParseException {
+  private ParseResult parseInternal(String fullInput){
     LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
     String substring;
     int index = 0;
@@ -477,7 +476,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         try {
           ldt = ldt.with(token.temporalField, value);
         } catch (DateTimeException e){
-          throw new ParseException("Value " + value + " not valid for token " + token.toString());
+          throw new IllegalArgumentException("Value " + value + " not valid for token " + token.toString());
         }
         index += substring.length();
         break;
@@ -501,7 +500,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         if (token.string.equalsIgnoreCase(substring)) {
           index++;
         } else {
-          throw new ParseException("Missing ISO 8601 delimiter " + token.string.toUpperCase());
+          throw new IllegalArgumentException("Missing ISO 8601 delimiter " + token.string.toUpperCase());
         }
       }
     }
@@ -544,7 +543,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   /**
    * Get the integer value of a temporal substring.
    */
-  private int parseTemporal(String substring, Token token) throws ParseException {
+  private int parseTemporal(String substring, Token token){
     // exceptions to the rule
     if (token.temporalField == ChronoField.AMPM_OF_DAY) {
       return substring.toLowerCase().startsWith("a") ? AM : PM;
@@ -575,7 +574,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     try {
       return Integer.valueOf(substring);
     } catch (NumberFormatException e) {
-      throw new ParseException(
+      throw new IllegalArgumentException(
           "Couldn't parse substring " + substring + " with token " + token + " to int. Pattern is "
               + pattern, e);
     }
@@ -590,9 +589,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    *     separator, UNLESS this is the only separator character in the separator substring (in
    *     which case it is not counted as the negative sign).
    *
-   * @throws ParseException if separator is missing
+   * @throws IllegalArgumentException if separator is missing
    */
-  private int parseSeparator(String fullInput, int index, Token token) throws ParseException {
+  private int parseSeparator(String fullInput, int index, Token token){
     int separatorsFound = 0;
     int begin = index;
 
@@ -606,7 +605,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
 
     if (separatorsFound == 0) {
-      throw new ParseException("Missing separator at index " + index);
+      throw new IllegalArgumentException("Missing separator at index " + index);
     }
     return begin + separatorsFound;
   }

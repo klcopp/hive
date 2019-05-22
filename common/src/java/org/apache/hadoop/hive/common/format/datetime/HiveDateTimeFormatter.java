@@ -35,39 +35,45 @@ import java.util.TimeZone;
 public interface HiveDateTimeFormatter {
   /**
    * Format the given timestamp into a string.
+   * 
+   * @throws IllegalArgumentException if timestamp cannot be formatted.
    */
-  String format(Timestamp ts) throws FormatException;
+  String format(Timestamp ts);
 
   /**
    * Format the given date into a string.
+   * 
+   * @throws IllegalArgumentException if date cannot be formatted.
    */
-  String format(Date date) throws FormatException;
+  String format(Date date);
 
   /**
    * Format the given timestamp with local time zone into a string.
+   * 
+   * @throws IllegalArgumentException if timestampTZ cannot be formatted.
    */
-  String format(TimestampTZ timestampTZ) throws FormatException;
+  String format(TimestampTZ timestampTZ);
 
   /**
    * Parse the given string into a timestamp.
    *
-   * @throws ParseException if string cannot be parsed.
+   * @throws IllegalArgumentException if string cannot be parsed.
    */
-  Timestamp parseTimestamp(String string) throws ParseException;
+  Timestamp parseTimestamp(String string);
 
   /**
    * Parse the given string into a timestamp.
    *
-   * @throws ParseException if string cannot be parsed.
+   * @throws IllegalArgumentException if string cannot be parsed.
    */
-  Date parseDate(String string) throws ParseException;
+  Date parseDate(String string);
 
   /**
    * Parse the given string into a timestamp.
    *
-   * @throws ParseException if string cannot be parsed.
+   * @throws IllegalArgumentException if string cannot be parsed.
    */
-  TimestampTZ parseTimestampTZ(String string) throws ParseException;
+  TimestampTZ parseTimestampTZ(String string);
 
   /**
    * Set the format pattern to be used for formatting timestamps or parsing strings.

@@ -18,7 +18,7 @@
 package org.apache.hadoop.hive.serde2.io;
 
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.hive.common.format.datetime.FormatException;
+import java.lang.IllegalArgumentException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.common.type.TimestampTZ;
@@ -261,7 +261,7 @@ public class TimestampLocalTZWritable implements WritableComparable<TimestampLoc
     populateTimestampTZ();
     try {
       return formatter.format(timestampTZ);
-    } catch (FormatException e) {
+    } catch (IllegalArgumentException e) {
       return null;
     }
   }

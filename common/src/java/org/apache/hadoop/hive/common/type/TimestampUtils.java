@@ -18,14 +18,10 @@
 
 package org.apache.hadoop.hive.common.type;
 
-import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 
 import java.math.BigDecimal;
 import java.time.DateTimeException;
-import java.time.format.DateTimeParseException;
 
 /**
  * Utilities for Timestamps and the relevant conversions.

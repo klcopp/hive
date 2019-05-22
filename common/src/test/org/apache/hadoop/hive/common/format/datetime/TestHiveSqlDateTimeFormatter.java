@@ -35,7 +35,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private HiveSqlDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
 
-  public void testSetPattern() throws IllegalArgumentException{
+  public void testSetPattern() {
     verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", new ArrayList<>(List.of(
         null,
         ChronoField.YEAR,
@@ -78,7 +78,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     verifyBadPattern("yyyyTr");
   }
 
-  public void testFormatTimestamp() throws FormatException {
+  public void testFormatTimestamp() {
     formatter.setPattern("rr", false);
     Timestamp ts = Timestamp.valueOf("2018-02-03 00:00:00");
     assertEquals("18", formatter.format(ts));
@@ -116,7 +116,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
 
-  public void testparseTimestamp() throws ParseException {
+  public void testparseTimestamp() {
     formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ff8z", true);
     assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.5665"), formatter.parseTimestamp("2018-02-03T04:05:06.5665Z"));
 
@@ -187,18 +187,17 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     }
   }
 
-  private void verifyPatternParsing(String pattern, ArrayList<TemporalField> expected)
-      throws IllegalArgumentException {
+  private void verifyPatternParsing(String pattern, ArrayList<TemporalField> expected) {
     verifyPatternParsing(pattern, pattern.length(), expected);
   }
 
   private void verifyPatternParsing(String pattern, int expectedPatternLength,
-      ArrayList<TemporalField> expected) throws IllegalArgumentException {
+      ArrayList<TemporalField> expected) {
     verifyPatternParsing(pattern, expectedPatternLength, pattern.toLowerCase(), expected);
   }
 
   private void verifyPatternParsing(String pattern, int expectedPatternLength,
-      String expectedPattern, ArrayList<TemporalField> expected) throws IllegalArgumentException {
+      String expectedPattern, ArrayList<TemporalField> expected)  {
     formatter.setPattern(pattern, false);
     assertEquals(expected.size(), formatter.tokens.size());
     StringBuilder sb = new StringBuilder();
@@ -220,7 +219,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
       formatter.parseTimestamp(string);
       fail();
     } catch (Exception e) {
-      assertEquals(e.getClass().getName(), ParseException.class.getName());
+      assertEquals(e.getClass().getName(), IllegalArgumentException.class.getName());
     }
   }
 }

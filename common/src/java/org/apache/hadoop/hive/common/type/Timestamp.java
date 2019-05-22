@@ -18,9 +18,7 @@
 package org.apache.hadoop.hive.common.type;
 
 import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.FormatException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -71,7 +69,7 @@ public class Timestamp implements Comparable<Timestamp> {
     }
     try {
       return formatter.format(this);
-    } catch (FormatException e) {
+    } catch (IllegalArgumentException e) {
       return null;
     }
   }
@@ -125,13 +123,12 @@ public class Timestamp implements Comparable<Timestamp> {
     return localDateTime.getNano();
   }
 
-  //todo throws illegalargumetnexception "Cannot create timestamp, parsing error"
+  //todo frogmethod throws illegalargumetnexception "Cannot create timestamp, parsing error"
   public static Timestamp valueOf(String s) {
     return DefaultHiveSqlDateTimeFormatter.parseTimestamp(s.trim());
   }
 
-  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter)
-      throws ParseException {
+  public static Timestamp valueOf(String s, HiveDateTimeFormatter formatter) {
     if (formatter == null) {
       return valueOf(s);
     }

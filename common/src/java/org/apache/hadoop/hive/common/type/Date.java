@@ -18,9 +18,8 @@
 package org.apache.hadoop.hive.common.type;
 
 import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.FormatException;
+import java.lang.IllegalArgumentException;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -60,7 +59,7 @@ public class Date implements Comparable<Date> {
     }
     try {
       return formatter.format(this);
-    } catch (FormatException e) {
+    } catch (IllegalArgumentException e) {
       return null;
     }
   }
@@ -119,7 +118,7 @@ public class Date implements Comparable<Date> {
     return DefaultHiveSqlDateTimeFormatter.parseDate(s.trim());
   }
 
-  public static Date valueOf(String s, HiveDateTimeFormatter formatter) throws ParseException {
+  public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
     if (formatter == null) {
       return valueOf(s);
     }

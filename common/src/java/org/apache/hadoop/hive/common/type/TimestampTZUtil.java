@@ -19,24 +19,12 @@ package org.apache.hadoop.hive.common.type;
 
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.format.TextStyle;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +40,11 @@ public class TimestampTZUtil {
     return DefaultHiveSqlDateTimeFormatter.parseTimestampTZ(s, defaultTimeZone);
   }
 
+
+  public static TimestampTZ parseOrNull(String s, ZoneId defaultTimeZone) {
+    return parseOrNull(s, defaultTimeZone, null);
+  }
+
   public static TimestampTZ parseOrNull(
       String s, ZoneId convertToTimeZone, HiveDateTimeFormatter formatter) {
     if (formatter == null) {
@@ -60,15 +53,7 @@ public class TimestampTZUtil {
 
     try {
       return formatter.parseTimestampTZ(s);
-    } catch (ParseException e) {
-      return null;
-    }
-  }
-
-  public static TimestampTZ parseOrNull(String s, ZoneId defaultTimeZone) {
-    try {
-      return parse(s, defaultTimeZone);
-    } catch (ParseException e) {
+    } catch (IllegalArgumentException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Invalid string " + s + " for TIMESTAMP WITH TIME ZONE", e);
       }
