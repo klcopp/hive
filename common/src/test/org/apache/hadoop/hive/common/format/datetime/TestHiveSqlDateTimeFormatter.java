@@ -71,10 +71,12 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   public void testSetPatternWithBadPatterns() {
-    verifyBadPattern("e");
-    verifyBadPattern("yyyy-1");
-    verifyBadPattern("yyyyTy"); // too many years
-    verifyBadPattern("yyyyTr");
+    verifyBadPattern("e", true);
+    verifyBadPattern("yyyy-1", true);
+    verifyBadPattern("yyyyTy", true); // too many years
+    verifyBadPattern("yyyyTr", true); // both year and round year provided
+    verifyBadPattern("tzm", false);
+    verifyBadPattern("tzh", false);
   }
 
   public void testFormatTimestamp() {
@@ -94,16 +96,9 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     ts = Timestamp.valueOf("2018-02-03 01:02:03");
     assertEquals("8 01:02:03 am a.m. am a.m. AM A.M. AM A.M.", formatter.format(ts));
 
-    formatter.setPattern("rrrr-mm-dd hh24 tzh:tzm", false);
-//    formatter.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta")); //todo frogmethod
-//    ts = Timestamp.valueOf("2018-02-03 17:00:00");
-//    assertEquals("2018-02-03 17 +05:30", formatter.format(ts));
-//
-//    formatter.setTimeZone(TimeZone.getTimeZone("Pacific/Marquesas"));
-//    assertEquals("2018-02-03 17 -09:30", formatter.format(ts));
-//
-//    formatter.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
-//    assertEquals("2018-02-03 17 +01:00", formatter.format(ts));
+    formatter.setPattern("yyyy-mm-ddtsssss.ffz", false);
+    ts = Timestamp.valueOf("2018-02-03 00:00:10.0070070");
+    assertEquals("2018-02-03T00010.007007Z", formatter.format(ts));
   }
   
   public void testFormatDate() {
@@ -154,6 +149,15 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
     formatter.setPattern("TZM:TZH", true);
     assertEquals(Timestamp.valueOf("1970-01-01 03:01:00"), formatter.parseTimestamp("1 -3"));
+
+    formatter.setPattern("TZHYYY-MM-DD", true);
+    assertEquals(Timestamp.valueOf("2333-01-01 13:00:00"), formatter.parseTimestamp("11333-01-02"));
+
+    formatter.setPattern("YYYY-MM-DD HH12:MI AM", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 p.m.")); //todo frogmethod fails
+
+    formatter.setPattern("YYYY-MM-DD HH12:MI A.M.", true);
+    assertEquals(Timestamp.valueOf("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 pm"));
   }
 
   public void testparseDate() {
@@ -167,9 +171,9 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     verifyBadParseString("yyyymmddhh12miss", "2018020304:05:06 America/New_York");
   }
 
-  private void verifyBadPattern(String string) {
+  private void verifyBadPattern(String string, boolean forParsing) {
     try {
-      formatter.setPattern(string, true);
+      formatter.setPattern(string, forParsing);
       fail();
     } catch (Exception e) {
       assertEquals(e.getClass().getName(), IllegalArgumentException.class.getName());

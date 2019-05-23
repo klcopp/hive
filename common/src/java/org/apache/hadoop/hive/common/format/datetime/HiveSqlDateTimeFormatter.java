@@ -155,7 +155,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     // throw Exception if list of tokens doesn't make sense for parsing. Formatting is less picky.
     if (forParsing) {
-      verifyTokenList();
+      verifyForParse();
+    } else {
+      verifyForFormat();
     }
   }
 
@@ -245,7 +247,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
    * not done: "Both year and round year are provided"
    */
 
-  private void verifyTokenList() {
+  private void verifyForParse() {
 
     // create a list of tokens' temporal fields
     ArrayList<TemporalField> temporalFields = new ArrayList<>();
@@ -305,6 +307,15 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
+  private void verifyForFormat() {
+    for (Token token : tokens) {
+      if (token.type == TokenType.TIMEZONE) {
+        throw new IllegalArgumentException(token.string.toUpperCase() + " not a valid format for " 
+            + "timestamp or date.");
+      }
+    }
+  }
+
   @Override public String format(Timestamp ts) {
     StringBuilder fullOutputSb = new StringBuilder();
     String outputString = null;
@@ -322,8 +333,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
               + "LocalDateTime " + localDateTime, e);
         }
         break;
-      case TIMEZONE:
-//        outputString = formatTimeZone(timeZone, localDateTime, token); //todo frogmethod
+      case TIMEZONE: //invalid for timestamp and date
         break;
       case SEPARATOR:
         outputString = token.string;
@@ -374,6 +384,10 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         output = output.substring(output.length() - token.length); // truncate left
       }
     }
+    if (token.temporalField == ChronoField.NANO_OF_SECOND
+        && token.string.equalsIgnoreCase("ff")) {
+      output = output.replaceAll("0*$", ""); //truncate trailing 0's
+    }
     return output;
   }
 
@@ -414,7 +428,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (result.leftoverString.isEmpty()) {
       return result.timestamp;
     }
-    throw new IllegalArgumentException("Leftover input: " + result.leftoverString + " in string " + input);
+    throw new IllegalArgumentException(
+        "Leftover input: " + result.leftoverString + " in string " + input);
   }
 
   public Date parseDate(String input){
@@ -426,7 +441,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     String substring;
     int index = 0;
     int value;
-    int timeZoneSign = 0, timeZoneMinutes = 0;
+    int timeZoneSign = 0, timeZoneHours = 0, timeZoneMinutes = 0;
 
     for (Token token : tokens) {
       switch (token.type) {
@@ -436,19 +451,24 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         try {
           ldt = ldt.with(token.temporalField, value);
         } catch (DateTimeException e){
-          throw new IllegalArgumentException("Value " + value + " not valid for token " + token.toString());
+          throw new IllegalArgumentException(
+              "Value " + value + " not valid for token " + token.toString());
         }
         index += substring.length();
         break;
       case TIMEZONE:
-        substring = getNextSubstring(fullInput, index, token);
-        value = Integer.valueOf(substring);
         if (token.temporalUnit == ChronoUnit.HOURS) {
-          ldt = ldt.minus(value, token.temporalUnit);
-          //save sign for time zone minutes
-          timeZoneSign = "-".equals(fullInput.substring(index, index + 1)) ? -1 : 1;
-        } else {
-          timeZoneMinutes = value;
+          String nextCharacter = fullInput.substring(index, index + 1);
+          timeZoneSign = "-".equals(nextCharacter) ? -1 : 1;
+          if ("-".equals(nextCharacter) || "+".equals(nextCharacter)) {
+            index++;
+          }
+          // parse next two digits
+          substring = getNextSubstring(fullInput, index, index + 2, token);
+          timeZoneHours = Integer.valueOf(substring);
+        } else { // time zone minutes
+          substring = getNextSubstring(fullInput, index, token);
+          timeZoneMinutes = Integer.valueOf(substring);
         }
         index += substring.length();
         break;
@@ -460,25 +480,32 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         if (token.string.equalsIgnoreCase(substring)) {
           index++;
         } else {
-          throw new IllegalArgumentException("Missing ISO 8601 delimiter " + token.string.toUpperCase());
+          throw new IllegalArgumentException(
+              "Missing ISO 8601 delimiter " + token.string.toUpperCase());
         }
       }
     }
+    // time zone hours -- process here because hours may be parsed after tzh
+    ldt = ldt.minus(timeZoneSign * timeZoneHours, ChronoUnit.HOURS);
     // time zone minutes -- process here because sign depends on tzh sign
-    ldt = ldt.minus(timeZoneSign * timeZoneMinutes, ChronoUnit.MINUTES);
+    ldt = ldt.minus(
+        timeZoneSign * timeZoneMinutes, ChronoUnit.MINUTES);
     
     return new ParseResult(Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano()),
         fullInput.substring(index));
   }
 
   /**
-   * Return the next substring to parse. Length is expected token.length, but a separator or an
-   * ISO-8601 delimiter can cut the substring short. (e.g. if the token pattern is "YYYY" we expect
-   * the next 4 characters to be 4 numbers. However, if it is "976/" then we return "976" because a
-   * separator cuts it short.)
+   * Return the next substring to parse. Length is either specified or token.length, but a
+   * separator or an ISO-8601 delimiter can cut the substring short. (e.g. if the token pattern is
+   * "YYYY" we expect the next 4 characters to be 4 numbers. However, if it is "976/" then we
+   * return "976" because a separator cuts it short.)
    */
   private String getNextSubstring(String s, int begin, Token token) {
-    int end = begin + token.length;
+    return getNextSubstring(s, begin, begin + token.length, token);
+  }
+
+  private String getNextSubstring(String s, int begin, int end, Token token) {
     if (end > s.length()) {
       end = s.length();
     }
@@ -487,12 +514,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       if (s.contains(sep) &&
           // "." is a separator but e.g. "A.M." is a token, so ignore "."s if necessary
           !(sep.equals(".") && token.type == TokenType.TEMPORAL &&
-              token.temporalField == ChronoField.AMPM_OF_DAY & token.length == 4) &&
-          !(sep.equals("-") && token.type == TokenType.TIMEZONE)) {
+              token.temporalField == ChronoField.AMPM_OF_DAY /*& token.length == 4*/)) { //frogmethod
         s = s.substring(0, s.indexOf(sep));
       }
     }
-    for (String delimiter : VALID_ISO_8601_DELIMITERS) {
+    for (String delimiter : VALID_ISO_8601_DELIMITERS) { // this will cause problems with DAY (for example, Thursday)
       if (s.toLowerCase().contains(delimiter)) {
         s = s.substring(0, s.toLowerCase().indexOf(delimiter));
       }

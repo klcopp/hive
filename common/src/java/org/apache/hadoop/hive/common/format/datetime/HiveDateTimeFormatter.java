@@ -58,11 +58,18 @@ public interface HiveDateTimeFormatter {
   /**
    * Set the format pattern to be used for formatting timestamps or parsing strings.
    * This method parses the pattern into tokens, so it comes with some performance overhead.
+   * 
+   * @param pattern string representing a pattern
+   * @param forParsing true if the pattern will be used to parse a string; false if for formatting
+   *                   a datetime object
+   * 
+   * @throws IllegalArgumentException if contains invalid patterns: generally invalid patterns,
+   * or patterns specifically not allowed for parsing or formatting)
    */
-  void setPattern(String pattern, boolean forParsing) throws IllegalArgumentException;
+  void setPattern(String pattern, boolean forParsing);
 
   /**
-   * Get the format pattern to be used for formatting timestamps or parsing strings.
+   * Get the format pattern to be used for formatting datetime objects or parsing strings.
    */
   String getPattern();
 }
