@@ -413,30 +413,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
-  private class ParseResult {
-    final Timestamp timestamp;
-    final String leftoverString;
-    
-    ParseResult(Timestamp timestamp, String leftoverString) {
-      this.timestamp = timestamp;
-      this.leftoverString = leftoverString;
-    }
-  }
-
-  @Override public Timestamp parseTimestamp(String input){
-    ParseResult result = parseInternal(input);
-    if (result.leftoverString.isEmpty()) {
-      return result.timestamp;
-    }
-    throw new IllegalArgumentException(
-        "Leftover input: " + result.leftoverString + " in string " + input);
-  }
-
-  public Date parseDate(String input){
-    return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
-  }
-  
-  private ParseResult parseInternal(String fullInput){
+  @Override public Timestamp parseTimestamp(String fullInput){
     LocalDateTime ldt = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
     String substring;
     int index = 0;
@@ -490,11 +467,18 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     // time zone minutes -- process here because sign depends on tzh sign
     ldt = ldt.minus(
         timeZoneSign * timeZoneMinutes, ChronoUnit.MINUTES);
-    
-    return new ParseResult(Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano()),
-        fullInput.substring(index));
-  }
 
+    // anything left unparsed at end of string? throw error
+    if (!fullInput.substring(index).isEmpty()) {
+      throw new IllegalArgumentException("Leftover input: " + fullInput.substring(index).isEmpty() + " in string " + fullInput);
+    }
+
+    return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
+  }
+  
+  public Date parseDate(String input){
+    return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
+  }
   /**
    * Return the next substring to parse. Length is either specified or token.length, but a
    * separator or an ISO-8601 delimiter can cut the substring short. (e.g. if the token pattern is
