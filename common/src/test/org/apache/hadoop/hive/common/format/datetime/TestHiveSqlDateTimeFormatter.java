@@ -20,11 +20,26 @@ package org.apache.hadoop.hive.common.format.datetime;
 
 import com.sun.tools.javac.util.List;
 import junit.framework.TestCase;
+import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.ResolverStyle;
+import java.time.format.SignStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
+
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+import static java.time.temporal.ChronoField.YEAR;
 
 /**
  * Test class for HiveSqlDateTimeFormatter.
@@ -81,23 +96,23 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   public void testFormatTimestamp() {
     formatter.setPattern("rr", false);
-    Timestamp ts = Timestamp.valueOf("2018-02-03 00:00:00");
+    Timestamp ts = toTimestamp("2018-02-03 00:00:00");
     assertEquals("18", formatter.format(ts));
 
     formatter.setPattern("yyyy-mm-ddtsssss.ff4z", false);
-    ts = Timestamp.valueOf("2018-02-03 00:00:10.777777777");
+    ts = toTimestamp("2018-02-03 00:00:10.777777777");
     assertEquals("2018-02-03T00010.7777Z", formatter.format(ts));
 
     formatter.setPattern("hh24:mi:ss.ff1", false);
-    ts = Timestamp.valueOf("2018-02-03 01:02:03.999999999");
+    ts = toTimestamp("2018-02-03 01:02:03.999999999");
     assertEquals("01:02:03.9", formatter.format(ts));
 
     formatter.setPattern("y hh:mi:ss am a.m. pm p.m. AM A.M. PM P.M.", false);
-    ts = Timestamp.valueOf("2018-02-03 01:02:03");
+    ts = toTimestamp("2018-02-03 01:02:03");
     assertEquals("8 01:02:03 am a.m. am a.m. AM A.M. AM A.M.", formatter.format(ts));
 
     formatter.setPattern("yyyy-mm-ddtsssss.ffz", false);
-    ts = Timestamp.valueOf("2018-02-03 00:00:10.0070070");
+    ts = toTimestamp("2018-02-03 00:00:10.0070070");
     assertEquals("2018-02-03T00010.007007Z", formatter.format(ts));
   }
   
@@ -108,56 +123,56 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   public void testparseTimestamp() {
     formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ff8z", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.5665"), formatter.parseTimestamp("2018-02-03T04:05:06.5665Z"));
+    assertEquals(toTimestamp("2018-02-03 04:05:06.5665"), formatter.parseTimestamp("2018-02-03T04:05:06.5665Z"));
 
     formatter.setPattern("yyyy-mm-dd hh24:mi:ss.ff", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.555555555"), formatter.parseTimestamp("2018-02-03 04:05:06.555555555"));
+    assertEquals(toTimestamp("2018-02-03 04:05:06.555555555"), formatter.parseTimestamp("2018-02-03 04:05:06.555555555"));
 
     formatter.setPattern("yy-mm-dd hh12:mi:ss", true);
-    assertEquals(Timestamp.valueOf("2099-02-03 04:05:06"), formatter.parseTimestamp("99-02-03 04:05:06"));
+    assertEquals(toTimestamp("2099-02-03 04:05:06"), formatter.parseTimestamp("99-02-03 04:05:06"));
 
     formatter.setPattern("rr-mm-dd", true); // test will fail in 2050
-    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
-    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
-    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
+    assertEquals(toTimestamp("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
+    assertEquals(toTimestamp("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
+    assertEquals(toTimestamp("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
 
     formatter.setPattern("rrrr-mm-dd", true); // test will fail in 2050
-    assertEquals(Timestamp.valueOf("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
-    assertEquals(Timestamp.valueOf("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
-    assertEquals(Timestamp.valueOf("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
+    assertEquals(toTimestamp("2000-02-03 00:00:00"), formatter.parseTimestamp("00-02-03"));
+    assertEquals(toTimestamp("2049-02-03 00:00:00"), formatter.parseTimestamp("49-02-03"));
+    assertEquals(toTimestamp("1950-02-03 00:00:00"), formatter.parseTimestamp("50-02-03"));
 
     formatter.setPattern("yyy-mm-dd", true);
-    assertEquals(Timestamp.valueOf("2018-01-01 00:00:00"), formatter.parseTimestamp("018-01-01"));
+    assertEquals(toTimestamp("2018-01-01 00:00:00"), formatter.parseTimestamp("018-01-01"));
 
     formatter.setPattern("yyyyddd", true);
-    assertEquals(Timestamp.valueOf("2018-10-11 00:00:00"), formatter.parseTimestamp("2018284"));
+    assertEquals(toTimestamp("2018-10-11 00:00:00"), formatter.parseTimestamp("2018284"));
 
     formatter.setPattern("yyyyddd", true);
-    assertEquals(Timestamp.valueOf("2018-01-04 00:00:00"), formatter.parseTimestamp("20184"));
+    assertEquals(toTimestamp("2018-01-04 00:00:00"), formatter.parseTimestamp("20184"));
 
     formatter.setPattern("yyyy-mm-ddThh24:mi:ss.ffz", true);
-    assertEquals(Timestamp.valueOf("2018-02-03 04:05:06.444"), formatter.parseTimestamp("2018------02-03t04:05:06.444Z"));
+    assertEquals(toTimestamp("2018-02-03 04:05:06.444"), formatter.parseTimestamp("2018------02-03t04:05:06.444Z"));
 
     formatter.setPattern("hh:mi:ss A.M.", true);
-    assertEquals(Timestamp.valueOf("1970-01-01 16:05:06"), formatter.parseTimestamp("04:05:06 P.M."));
+    assertEquals(toTimestamp("1970-01-01 16:05:06"), formatter.parseTimestamp("04:05:06 P.M."));
 
     formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 15:30:00"), formatter.parseTimestamp("2019-1-1 14:00 -1:30"));
+    assertEquals(toTimestamp("2019-01-01 15:30:00"), formatter.parseTimestamp("2019-1-1 14:00 -1:30"));
 
     formatter.setPattern("YYYY-MM-DD HH24:MI TZH:TZM", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 12:30:00"), formatter.parseTimestamp("2019-1-1 14:00-1:30"));
+    assertEquals(toTimestamp("2019-01-01 12:30:00"), formatter.parseTimestamp("2019-1-1 14:00-1:30"));
 
     formatter.setPattern("TZM:TZH", true);
-    assertEquals(Timestamp.valueOf("1970-01-01 03:01:00"), formatter.parseTimestamp("1 -3"));
+    assertEquals(toTimestamp("1970-01-01 03:01:00"), formatter.parseTimestamp("1 -3"));
 
     formatter.setPattern("TZHYYY-MM-DD", true);
-    assertEquals(Timestamp.valueOf("2333-01-01 13:00:00"), formatter.parseTimestamp("11333-01-02"));
+    assertEquals(toTimestamp("2333-01-01 13:00:00"), formatter.parseTimestamp("11333-01-02"));
 
     formatter.setPattern("YYYY-MM-DD HH12:MI AM", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 p.m.")); //todo frogmethod fails
+    assertEquals(toTimestamp("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 p.m.")); //todo frogmethod fails
 
     formatter.setPattern("YYYY-MM-DD HH12:MI A.M.", true);
-    assertEquals(Timestamp.valueOf("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 pm"));
+    assertEquals(toTimestamp("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 pm"));
   }
 
   public void testparseDate() {
@@ -214,5 +229,39 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     } catch (Exception e) {
       assertEquals(e.getClass().getName(), IllegalArgumentException.class.getName());
     }
+  }
+
+
+  // Methods that construct datetime objects using java.time.DateTimeFormatter.
+
+  public static Date toDate(String s) {
+    LocalDate localDate = LocalDate.parse(s, DATE_FORMATTER);
+    return Date.ofEpochDay((int) localDate.toEpochDay());
+  }
+  
+  /**
+   * This is effectively the old Timestamp.valueOf method.
+   */
+  public static Timestamp toTimestamp(String s) {
+    LocalDateTime localDateTime = LocalDateTime.parse(s.trim(), TIMESTAMP_FORMATTER);
+    return Timestamp.ofEpochSecond(
+        localDateTime.toEpochSecond(ZoneOffset.UTC), localDateTime.getNano());
+  }
+
+  private static final DateTimeFormatter DATE_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  private static final DateTimeFormatter TIMESTAMP_FORMATTER;
+  static {
+    DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
+    builder.appendValue(YEAR, 1, 10, SignStyle.NORMAL).appendLiteral('-')
+        .appendValue(MONTH_OF_YEAR, 1, 2, SignStyle.NORMAL).appendLiteral('-')
+        .appendValue(DAY_OF_MONTH, 1, 2, SignStyle.NORMAL)
+        .optionalStart().appendLiteral(" ")
+        .appendValue(HOUR_OF_DAY, 1, 2, SignStyle.NORMAL).appendLiteral(':')
+        .appendValue(MINUTE_OF_HOUR, 1, 2, SignStyle.NORMAL).appendLiteral(':')
+        .appendValue(SECOND_OF_MINUTE, 1, 2, SignStyle.NORMAL)
+        .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).optionalEnd()
+        .optionalEnd();
+    TIMESTAMP_FORMATTER = builder.toFormatter().withResolverStyle(ResolverStyle.LENIENT);
   }
 }
