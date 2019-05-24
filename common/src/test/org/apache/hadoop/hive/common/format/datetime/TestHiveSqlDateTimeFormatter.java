@@ -78,7 +78,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
         ChronoField.YEAR
     )));
 
-    verifyPatternParsing("Y A.M. pm", "y A.M. pm".length(), "y A.M. pm", new ArrayList<>(List.of(
+    verifyPatternParsing("Y A.M. pm", 11, "y A.M. pm", new ArrayList<>(List.of(
         ChronoField.YEAR,
         null, ChronoField.AMPM_OF_DAY,
         null, ChronoField.AMPM_OF_DAY
@@ -169,7 +169,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     assertEquals(toTimestamp("2333-01-01 13:00:00"), formatter.parseTimestamp("11333-01-02"));
 
     formatter.setPattern("YYYY-MM-DD HH12:MI AM", true);
-    assertEquals(toTimestamp("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 p.m.")); //todo frogmethod fails
+    assertEquals(toTimestamp("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 p.m."));
 
     formatter.setPattern("YYYY-MM-DD HH12:MI A.M.", true);
     assertEquals(toTimestamp("2019-01-01 23:00:00"), formatter.parseTimestamp("2019-01-01 11:00 pm"));

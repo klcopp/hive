@@ -89,7 +89,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       ImmutableList.of("-", ":", " ", ".", "/", ";", "\'", ",");
 
   private static final Map<String, Integer> SPECIAL_LENGTHS = ImmutableMap.<String, Integer>builder()
-      .put("hh12", 2).put("hh24", 2).put("tzm", 2)
+      .put("hh12", 2).put("hh24", 2).put("tzm", 2).put("am", 4).put("pm", 4)
       .put("ff1", 1).put("ff2", 2).put("ff3", 3).put("ff4", 4).put("ff5", 5)
       .put("ff6", 6).put("ff7", 7).put("ff8", 8).put("ff9", 9).put("ff", 9)
       .build();
@@ -210,12 +210,13 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         } else if (VALID_TEMPORAL_TOKENS.keySet().contains(candidate)) {
           // for AM/PM, keep original case
           if (VALID_TEMPORAL_TOKENS.get(candidate) == ChronoField.AMPM_OF_DAY) {
-            int subStringEnd = begin + getTokenStringLength(candidate);
+            int subStringEnd = begin + candidate.length();
             candidate = originalPattern.substring(begin, subStringEnd);
+            //token string may be capitalized, update pattern
             pattern = pattern.substring(0, begin) + candidate + pattern.substring(subStringEnd);
           }
           lastAddedToken = new Token(VALID_TEMPORAL_TOKENS.get(candidate.toLowerCase()), candidate,
-              getTokenStringLength(candidate));
+              getTokenStringLength(candidate.toLowerCase()));
           tokens.add(lastAddedToken);
           begin = end;
           break;
@@ -355,7 +356,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     String output;
     if (token.temporalField == ChronoField.AMPM_OF_DAY) {
       output = value == 0 ? "a" : "p";
-      output += token.length == 2 ? "m" : ".m.";
+      output += token.string.length() == 2 ? "m" : ".m.";
       if (token.string.startsWith("A") || token.string.startsWith("P")) {
         output = output.toUpperCase();
       }
@@ -470,7 +471,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     // anything left unparsed at end of string? throw error
     if (!fullInput.substring(index).isEmpty()) {
-      throw new IllegalArgumentException("Leftover input: " + fullInput.substring(index).isEmpty() + " in string " + fullInput);
+      throw new IllegalArgumentException("Leftover input after parsing: " +
+          fullInput.substring(index) + " in string " + fullInput);
     }
 
     return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
@@ -494,19 +496,24 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       end = s.length();
     }
     s = s.substring(begin, end);
+    if (token.temporalField == ChronoField.AMPM_OF_DAY) {
+      if (s.charAt(1) == 'm') { // length 2
+        return s.substring(0, 2);
+      } else {
+        return s;
+      }
+    }
     for (String sep : VALID_SEPARATORS) {
-      if (s.contains(sep) &&
-          // "." is a separator but e.g. "A.M." is a token, so ignore "."s if necessary
-          !(sep.equals(".") && token.type == TokenType.TEMPORAL &&
-              token.temporalField == ChronoField.AMPM_OF_DAY /*& token.length == 4*/)) { //frogmethod
+      if (s.contains(sep)) {
         s = s.substring(0, s.indexOf(sep));
       }
     }
-    for (String delimiter : VALID_ISO_8601_DELIMITERS) { // this will cause problems with DAY (for example, Thursday)
+    for (String delimiter : VALID_ISO_8601_DELIMITERS) { // this will cause problems with DAY (for example, Thursday starts with T)
       if (s.toLowerCase().contains(delimiter)) {
         s = s.substring(0, s.toLowerCase().indexOf(delimiter));
       }
     }
+    
     return s;
   }
 
