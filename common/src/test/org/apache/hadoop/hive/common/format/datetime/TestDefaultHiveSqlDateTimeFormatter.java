@@ -24,7 +24,7 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     String s2 = "2019-01-01 02:03:04.44444";
     String s3 = "2019-01-01 02:03:04.444444444";
     assertEquals(s1, DefaultHiveSqlDateTimeFormatter.format(_2019_01_01__02_03_04));
-//    assertEquals(s2, DefaultHiveSqlDateTimeFormatter.format(timestamp(_2019_01_01__02_03_04, 444440000))); //todo fails  (444440000) - hack this? frogmethod
+    assertEquals(s2, DefaultHiveSqlDateTimeFormatter.format(timestamp(_2019_01_01__02_03_04, 444440000)));
     assertEquals(s3, DefaultHiveSqlDateTimeFormatter.format(timestamp(_2019_01_01__02_03_04, 444444444)));
   }
 
