@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hadoop.hive.common.format.datetime;
 
 import com.google.common.collect.ImmutableMap;
@@ -14,22 +32,37 @@ public class DefaultHiveSqlDateTimeFormatter {
   private static HiveSqlDateTimeFormatter formatterDate = new HiveSqlDateTimeFormatter();
   private static HiveSqlDateTimeFormatter formatterNoNanos = new HiveSqlDateTimeFormatter();
   private static HiveSqlDateTimeFormatter formatterWithNanos = new HiveSqlDateTimeFormatter();
+
   private static HiveSqlDateTimeFormatter formatterIsoNoNanos = new HiveSqlDateTimeFormatter();
   private static HiveSqlDateTimeFormatter formatterIsoWithNanos = new HiveSqlDateTimeFormatter();
+
+  private static HiveSqlDateTimeFormatter formatterIsoNoNanosNoZ = new HiveSqlDateTimeFormatter();
+  private static HiveSqlDateTimeFormatter formatterIsoWithNanosNoZ = new HiveSqlDateTimeFormatter();
 
   static {
     //forParsing is false because there's no need to verify pattern
     formatterDate.setPattern("yyyy-mm-dd", false);
     formatterNoNanos.setPattern("yyyy-mm-dd hh24:mi:ss", false);
     formatterWithNanos.setPattern("yyyy-mm-dd hh24:mi:ss.ff", false);
+
     formatterIsoNoNanos.setPattern("yyyy-mm-ddThh24:mi:ssZ", false);
     formatterIsoWithNanos.setPattern("yyyy-mm-ddThh24:mi:ss.ffZ", false);
+
+    formatterIsoNoNanosNoZ.setPattern("yyyy-mm-ddThh24:mi:ss", false);
+    formatterIsoWithNanosNoZ.setPattern("yyyy-mm-ddThh24:mi:ss.ff", false);
   }
 
   private static final Map<Integer, HiveSqlDateTimeFormatter> TOKEN_COUNT_FORMATTER_MAP =
-      ImmutableMap.<Integer, HiveSqlDateTimeFormatter>builder().put(3, formatterDate)
-          .put(6, formatterNoNanos).put(7, formatterWithNanos).put(8, formatterIsoNoNanos)
-          .put(9, formatterIsoWithNanos).build();
+      ImmutableMap.<Integer, HiveSqlDateTimeFormatter>builder()
+          .put(3, formatterDate).put(6, formatterNoNanos).put(7, formatterWithNanos).build();
+
+  private static final Map<Integer, HiveSqlDateTimeFormatter> TOKEN_COUNT_ISO_FORMATTER_MAP =
+      ImmutableMap.<Integer, HiveSqlDateTimeFormatter>builder()
+          .put(8, formatterIsoNoNanos).put(9, formatterIsoWithNanos).build();
+
+  private static final Map<Integer, HiveSqlDateTimeFormatter> TOKEN_COUNT_ISO_FORMATTER_MAP_NO_Z =
+      ImmutableMap.<Integer, HiveSqlDateTimeFormatter>builder()
+          .put(7, formatterIsoNoNanosNoZ).put(8, formatterIsoWithNanosNoZ).build();
 
   public static String format(Timestamp ts) {
     return (ts.getNanos() == 0) ? formatterNoNanos.format(ts) : formatterWithNanos.format(ts);
@@ -41,19 +74,35 @@ public class DefaultHiveSqlDateTimeFormatter {
 
   public static Timestamp parseTimestamp(String input) {
     input = input.trim();
-    // count number of non-separator tokens
-    int numberOfTokenGroups = getNumberOfTokenGroups(input);
-    if (!TOKEN_COUNT_FORMATTER_MAP.containsKey(numberOfTokenGroups)) {
-      throw new IllegalArgumentException("No available default timestamp parser for input: " + input);
-    }
-    HiveSqlDateTimeFormatter formatter = TOKEN_COUNT_FORMATTER_MAP.get(numberOfTokenGroups);
+    HiveSqlDateTimeFormatter formatter = getFormatter(input);
     return formatter.parseTimestamp(input);
   }
 
-  public static Date parseDate(String input) { //todo frogmethod : "Cannot create date, parsing error"
-    return formatterDate.parseDate(input.trim());
+  public static Date parseDate(String input) {
+    HiveSqlDateTimeFormatter formatter = getFormatter(input);
+    return formatter.parseDate(input.trim());
   }
 
+  private static HiveSqlDateTimeFormatter getFormatter(String input) {
+    Map<Integer, HiveSqlDateTimeFormatter> map;
+    if (input.toLowerCase().contains("t")) {
+      if (input.toLowerCase().contains("z")) {
+        map = TOKEN_COUNT_ISO_FORMATTER_MAP;
+      } else {
+        map = TOKEN_COUNT_ISO_FORMATTER_MAP_NO_Z;
+      }
+    } else {
+      map = TOKEN_COUNT_FORMATTER_MAP;
+    }
+
+    int numberOfTokenGroups = getNumberOfTokenGroups(input);
+    if (!map.containsKey(numberOfTokenGroups)) {
+      throw new IllegalArgumentException("No available default parser for input: " + input);
+    }
+    return map.get(numberOfTokenGroups);
+  }
+
+  // count number of non-separator tokens
   static int getNumberOfTokenGroups(String input) {
     int count = 0;
     boolean lastCharWasSep = true, isIsoDelimiter;

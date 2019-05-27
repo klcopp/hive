@@ -101,7 +101,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     ISO_8601_DELIMITER
   }
 
-  public class Token {
+  public static class Token {
     TokenType type;
     TemporalField temporalField; // for type TEMPORAL e.g. ChronoField.YEAR
     TemporalUnit temporalUnit; // for type TIMEZONE e.g. ChronoUnit.HOURS
@@ -336,7 +336,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
               + "LocalDateTime " + localDateTime, e);
         }
         break;
-      case TIMEZONE: //invalid for timestamp and date
+      case TIMEZONE: //invalid for timestamp and date todo frogmethod throw exception
         break;
       case SEPARATOR:
         outputString = token.string;
@@ -449,7 +449,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           // parse next two digits
           substring = getNextSubstring(fullInput, index, index + 2, token);
           try {
-            timeZoneHours = Integer.valueOf(substring);
+            timeZoneHours = Integer.parseInt(substring);
           } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Couldn't parse substring \"" + substring +
                 "\" with token " + token + " to int. Pattern is " + pattern, e);
@@ -461,7 +461,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         } else { // time zone minutes
           substring = getNextSubstring(fullInput, index, token);
           try {
-            timeZoneMinutes = Integer.valueOf(substring);
+            timeZoneMinutes = Integer.parseInt(substring);
           } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Couldn't parse substring \"" + substring +
             "\" with token " + token + " to int. Pattern is " + pattern, e);
@@ -546,9 +546,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       String currentYearString = String.valueOf(LocalDateTime.now().getYear());
       //deal with round years
       if (token.string.startsWith("r") && substring.length() == 2) {
-        int currFirst2Digits = Integer.valueOf(currentYearString.substring(0, 2));
-        int currLast2Digits = Integer.valueOf(currentYearString.substring(2));
-        int valLast2Digits = Integer.valueOf(substring);
+        int currFirst2Digits = Integer.parseInt(currentYearString.substring(0, 2));
+        int currLast2Digits = Integer.parseInt(currentYearString.substring(2));
+        int valLast2Digits = Integer.parseInt(substring);
         if (valLast2Digits < _50 && currLast2Digits >= _50) {
           currFirst2Digits += 1;
         } else if (valLast2Digits >= _50 && currLast2Digits < _50) {
@@ -566,7 +566,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     // the rule
     try {
-      return Integer.valueOf(substring);
+      return Integer.parseInt(substring);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Couldn't parse substring \"" + substring +
           "\" with token " + token + " to integer. Pattern is " + pattern, e);
