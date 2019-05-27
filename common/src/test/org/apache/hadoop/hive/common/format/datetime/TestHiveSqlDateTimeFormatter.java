@@ -115,7 +115,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkFormatDate("DDD", "2019-12-31", "365");
     checkFormatDate("DDD", "2020-12-31", "366");
   }
-  
+
   private void checkFormatDate(String pattern, String input, String expectedOutput) {
     formatter.setPattern(pattern, false);
     assertEquals(expectedOutput, formatter.format(toDate(input)));
@@ -153,7 +153,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM0515", "2018-12-31 02:45:00");
     checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM-0515", "2018-12-31 13:15:00");
   }
-  
+
   private void checkParseTimestamp(String pattern, String input, String expectedOutput) {
     formatter.setPattern(pattern, true);
     assertEquals(toTimestamp(expectedOutput), formatter.parseTimestamp(input));
@@ -236,7 +236,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     LocalDate localDate = LocalDate.parse(s, DATE_FORMATTER);
     return Date.ofEpochDay((int) localDate.toEpochDay());
   }
-  
+
   /**
    * This is effectively the old Timestamp.valueOf method.
    */

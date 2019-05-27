@@ -313,7 +313,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private void verifyForFormat() {
     for (Token token : tokens) {
       if (token.type == TokenType.TIMEZONE) {
-        throw new IllegalArgumentException(token.string.toUpperCase() + " not a valid format for " 
+        throw new IllegalArgumentException(token.string.toUpperCase() + " not a valid format for "
             + "timestamp or date.");
       }
     }
@@ -462,9 +462,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
           substring = getNextSubstring(fullInput, index, token);
           try {
             timeZoneMinutes = Integer.valueOf(substring);
-          } catch (NumberFormatException e) { 
+          } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Couldn't parse substring \"" + substring +
-            "\" with token " + token + " to int. Pattern is " + pattern, e); 
+            "\" with token " + token + " to int. Pattern is " + pattern, e);
           }
           if (timeZoneMinutes < 0 || timeZoneMinutes > 59) {
             throw new IllegalArgumentException("Couldn't parse substring \"" + substring +
@@ -494,7 +494,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     return Timestamp.ofEpochSecond(ldt.toEpochSecond(ZoneOffset.UTC), ldt.getNano());
   }
-  
+
   public Date parseDate(String input){
     return Date.ofEpochMilli(parseTimestamp(input).toEpochMilli());
   }
@@ -530,7 +530,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         s = s.substring(0, s.toLowerCase().indexOf(delimiter));
       }
     }
-    
+
     return s;
   }
 

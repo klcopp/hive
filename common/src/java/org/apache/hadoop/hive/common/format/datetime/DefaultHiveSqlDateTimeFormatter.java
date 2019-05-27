@@ -16,7 +16,7 @@ public class DefaultHiveSqlDateTimeFormatter {
   private static HiveSqlDateTimeFormatter formatterWithNanos = new HiveSqlDateTimeFormatter();
   private static HiveSqlDateTimeFormatter formatterIsoNoNanos = new HiveSqlDateTimeFormatter();
   private static HiveSqlDateTimeFormatter formatterIsoWithNanos = new HiveSqlDateTimeFormatter();
-  
+
   static {
     //forParsing is false because there's no need to verify pattern
     formatterDate.setPattern("yyyy-mm-dd", false);
@@ -49,7 +49,7 @@ public class DefaultHiveSqlDateTimeFormatter {
     HiveSqlDateTimeFormatter formatter = TOKEN_COUNT_FORMATTER_MAP.get(numberOfTokenGroups);
     return formatter.parseTimestamp(input);
   }
-  
+
   public static Date parseDate(String input) { //todo frogmethod : "Cannot create date, parsing error"
     return formatterDate.parseDate(input.trim());
   }
