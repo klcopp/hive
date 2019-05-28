@@ -58,6 +58,8 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     String s4 = "2019-01-01 02:03:04.44444";
     String s5 = "2019-01-01T02:03:04.44444Z";
     String s6 = "2019.01.01T02....03:04..44444Z";
+    String s7 = "2019-01-01T02:03:04";
+    String s8 = "2019-01-01T02:03:04.444440";
 
     assertEquals(_2019_01_01__02_03_04, parseTimestamp(s1));
     assertEquals(_2019_01_01__02_03_04, parseTimestamp(s2));
@@ -65,6 +67,8 @@ public class TestDefaultHiveSqlDateTimeFormatter extends TestCase {
     assertEquals(timestamp(_2019_01_01__02_03_04, 444440000), parseTimestamp(s4));
     assertEquals(timestamp(_2019_01_01__02_03_04, 444440000), parseTimestamp(s5));
     assertEquals(timestamp(_2019_01_01__02_03_04, 444440000), parseTimestamp(s6));
+    assertEquals(_2019_01_01__02_03_04, parseTimestamp(s7));
+    assertEquals(timestamp(_2019_01_01__02_03_04, 444440000), parseTimestamp(s8));
   }
 
   public void testParseDate() {
