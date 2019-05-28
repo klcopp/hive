@@ -104,9 +104,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils.PrimitiveGrouping;
+import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -396,13 +399,13 @@ public class RexNodeConverter {
       childRexNodeLst.add(tmpRN);
     }
 
-    // See if this is an explicit cast.
+    // See if this is an explicit cast. Cast with format handled below.
     RexNode expr = null;
     RelDataType retType = null;
     expr = handleExplicitCast(func, childRexNodeLst);
 
     if (expr == null) {
-      // This is not a cast; process the function.
+      // This is not an explicit cast; process the function.
       retType = TypeConverter.convert(func.getTypeInfo(), cluster.getTypeFactory());
       SqlOperator calciteOp = SqlFunctionConverter.getCalciteOperator(func.getFuncText(),
           func.getGenericUDF(), argTypeBldr.build(), retType);
@@ -457,6 +460,29 @@ public class RexNodeConverter {
         childRexNodeLst.clear();
         childRexNodeLst.add(cluster.getRexBuilder().makeCall(cmpOp, rangeL, op));
         childRexNodeLst.add(cluster.getRexBuilder().makeCall(cmpOp, op, rangeH));
+
+      // Handle cast with format (TODO GenericUDFToTimestampLocalTZ will also need this treatment)
+      // by adding extra typeInfo parameters (e.g. length) as third argument to UDF,
+      // Otherwise an optimized TOK_FUNCTION subtree in the AST will look like:
+      // (tok_function char (. (tok_table_or_col <table>) <col>) '<pattern>')
+      // which is missing char length info and will throw a NPE.
+      // Resulting TOK_FUNCTION subtree in the AST will look like:
+      // (tok_function char (. (tok_table_or_col <table>) <col>) '<pattern>' <charLength>)
+      // and the 3rd argument will be handled in GenericUDFToChar and GenericUDFToVarchar.
+      } else if (childRexNodeLst.size() == 2) {
+        GenericUDF udf = func.getGenericUDF();
+        if (udf instanceof GenericUDFToVarchar || udf instanceof GenericUDFToChar) {
+          ExprNodeConstantDesc exprNodeDesc = new ExprNodeConstantDesc();
+          if (udf instanceof GenericUDFToChar) {
+            exprNodeDesc.setValue(
+                ((CharTypeInfo) ((GenericUDFToChar) udf).getTypeInfo()).getLength());
+          } else { //GenericUDFToVarchar
+            exprNodeDesc.setValue(
+                ((VarcharTypeInfo) ((GenericUDFToVarchar) udf).getTypeInfo()).getLength());
+          }
+          exprNodeDesc.setTypeInfo(TypeInfoFactory.getPrimitiveTypeInfo("int"));
+          childRexNodeLst.add(2, convert(exprNodeDesc));
+        }
       }
       expr = cluster.getRexBuilder().makeCall(retType, calciteOp, childRexNodeLst);
     } else {

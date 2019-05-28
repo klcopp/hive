@@ -68,6 +68,11 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
           "The function CHAR takes only primitive types");
     }
 
+    // Third argument could be char length.
+    if (typeInfo == null && arguments.length > 2 && arguments[2] != null) {
+      typeInfo = new CharTypeInfo(getConstantIntValue(arguments, 2));
+    }
+
     // Check if this UDF has been provided with type params for the output char type
     SettableHiveCharObjectInspector outputOI;
     outputOI = (SettableHiveCharObjectInspector)
@@ -97,14 +102,18 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1 || children.length == 2);
+    assert (children.length >= 1 && children.length <= 3);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
     sb.append(" AS CHAR(");
-    sb.append("" + typeInfo.getLength());
+    if (typeInfo != null) {
+      sb.append(typeInfo.getLength());
+    } else if (children.length > 2) {
+      sb.append(children[2]);
+    }
     sb.append(")");
-    if (children.length == 2) {
+    if (children.length > 1) {
       sb.append(" FORMAT ");
       sb.append(children[1]);
     }
