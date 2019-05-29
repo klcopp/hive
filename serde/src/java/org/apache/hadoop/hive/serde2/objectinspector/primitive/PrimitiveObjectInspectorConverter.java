@@ -585,13 +585,13 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       switch (inputOI.getPrimitiveCategory()) {
-        case BOOLEAN:
-          return outputOI.set(hc,
-              ((BooleanObjectInspector) inputOI).get(input) ?
-                  new HiveVarchar("TRUE", -1) : new HiveVarchar("FALSE", -1));
-        default:
-          return outputOI.set(hc,
-              PrimitiveObjectInspectorUtils.getHiveVarchar(input, inputOI, formatter));
+      case BOOLEAN:
+        return outputOI.set(hc,
+            ((BooleanObjectInspector) inputOI).get(input) ? new HiveVarchar("TRUE",
+                -1) : new HiveVarchar("FALSE", -1));
+      default:
+        return outputOI
+            .set(hc, PrimitiveObjectInspectorUtils.getHiveVarchar(input, inputOI, formatter));
       }
     }
 

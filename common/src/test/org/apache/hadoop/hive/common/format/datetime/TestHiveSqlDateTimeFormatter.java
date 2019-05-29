@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,18 +131,18 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("rrrr-mm-dd", "00-02-03", "2000-02-03 00:00:00");
     checkParseTimestamp("rrrr-mm-dd", "49-02-03", "2049-02-03 00:00:00");
     checkParseTimestamp("rrrr-mm-dd", "50-02-03", "1950-02-03 00:00:00");
-    checkParseTimestamp("yyy-mm-dd","018-01-01","2018-01-01 00:00:00");
-    checkParseTimestamp("yyyyddd", "2018284","2018-10-11 00:00:00");
-    checkParseTimestamp("yyyyddd", "20184","2018-01-04 00:00:00");
-    checkParseTimestamp("yyyy-mm-ddThh24:mi:ss.ffz", "2018-02-03t04:05:06.444Z","2018-02-03 04:05:06.444");
-    checkParseTimestamp("hh:mi:ss A.M.", "04:05:06 P.M.","1970-01-01 16:05:06");
-    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00--1:-30","2019-01-01 15:30:00");
-    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00-1:30","2019-01-01 12:30:00");
-    checkParseTimestamp("TZM:TZH", "1 -3","1970-01-01 03:01:00");
-    checkParseTimestamp("TZH:TZM", "-0:30","1970-01-01 00:30:00");
-    checkParseTimestamp("TZM/YYY-MM-TZH/DD", "0/333-01-11/02","2333-01-01 13:00:00");
-    checkParseTimestamp("YYYY-MM-DD HH12:MI AM", "2019-01-01 11:00 p.m.","2019-01-01 23:00:00");
-    checkParseTimestamp("YYYY-MM-DD HH12:MI A.M..", "2019-01-01 11:00 pm.","2019-01-01 23:00:00");
+    checkParseTimestamp("yyy-mm-dd", "018-01-01", "2018-01-01 00:00:00");
+    checkParseTimestamp("yyyyddd", "2018284", "2018-10-11 00:00:00");
+    checkParseTimestamp("yyyyddd", "20184", "2018-01-04 00:00:00");
+    checkParseTimestamp("yyyy-mm-ddThh24:mi:ss.ffz", "2018-02-03t04:05:06.444Z", "2018-02-03 04:05:06.444");
+    checkParseTimestamp("hh:mi:ss A.M.", "04:05:06 P.M.", "1970-01-01 16:05:06");
+    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00--1:-30", "2019-01-01 15:30:00");
+    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00-1:30", "2019-01-01 12:30:00");
+    checkParseTimestamp("TZM:TZH", "1 -3", "1970-01-01 03:01:00");
+    checkParseTimestamp("TZH:TZM", "-0:30", "1970-01-01 00:30:00");
+    checkParseTimestamp("TZM/YYY-MM-TZH/DD", "0/333-01-11/02", "2333-01-01 13:00:00");
+    checkParseTimestamp("YYYY-MM-DD HH12:MI AM", "2019-01-01 11:00 p.m.", "2019-01-01 23:00:00");
+    checkParseTimestamp("YYYY-MM-DD HH12:MI A.M..", "2019-01-01 11:00 pm.", "2019-01-01 23:00:00");
 
     //Test "day in year" token in a leap year scenario
     checkParseTimestamp("YYYY DDD", "2000 60", "2000-02-29 00:00:00");
@@ -193,7 +193,8 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   /**
-   * Checks:
+   * Verify pattern is parsed correctly.
+   * Check:
    * -token.temporalField for each token
    * -sum of token.lengths
    * -concatenation of token.strings

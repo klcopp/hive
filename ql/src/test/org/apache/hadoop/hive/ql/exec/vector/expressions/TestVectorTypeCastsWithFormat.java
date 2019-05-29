@@ -25,7 +25,6 @@ import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.serde2.io.DateWritableV2;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +47,7 @@ public class TestVectorTypeCastsWithFormat {
     verifyString(1, "1776", resultV);
     verifyString(2, "2012", resultV);
     verifyString(3, "1580", resultV);
-    verifyString(4, "0005", resultV); //
+    verifyString(4, "0005", resultV);
     verifyString(5, "9999", resultV);
 
     expr = new CastDateToStringWithFormat(0, "MM".getBytes(), 1);

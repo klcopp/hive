@@ -24,6 +24,9 @@ import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Vectorized UDF for CAST (<DATE> TO VARCHAR(<LENGTH>) WITH FORMAT <STRING>).
+ */
 public class CastDateToVarCharWithFormat extends CastDateToVarChar {
 
   private static final long serialVersionUID = 1L;

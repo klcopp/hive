@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private static final int LONGEST_TOKEN_LENGTH = 5;
   private static final int LONGEST_ACCEPTED_PATTERN = 100; // for sanity's sake
   private static final long MINUTES_PER_HOUR = 60;
-  private static final int _50 = 50;
+  private static final int FIFTY = 50;
   private static final int NANOS_MAX_LENGTH = 9;
   public static final int AM = 0;
   public static final int PM = 1;
@@ -94,6 +94,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       .put("ff6", 6).put("ff7", 7).put("ff8", 8).put("ff9", 9).put("ff", 9)
       .build();
 
+  /**
+   * Represents broad categories of tokens.
+   */
   public enum TokenType {
     TEMPORAL,
     SEPARATOR,
@@ -101,6 +104,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     ISO_8601_DELIMITER
   }
 
+  /**
+   * Token representation.
+   */
   public static class Token {
     TokenType type;
     TemporalField temporalField; // for type TEMPORAL e.g. ChronoField.YEAR
@@ -248,7 +254,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     // create a list of tokens' temporal fields
     ArrayList<TemporalField> temporalFields = new ArrayList<>();
     ArrayList<TemporalUnit> timeZoneTemporalUnits = new ArrayList<>();
-    int roundYearCount=0 ,yearCount=0;
+    int roundYearCount=0, yearCount=0;
     for (Token token : tokens) {
       if (token.temporalField != null) {
         temporalFields.add(token.temporalField);
@@ -344,6 +350,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       case ISO_8601_DELIMITER:
         outputString = token.string.toUpperCase();
         break;
+      default:
+        //do nothing
       }
       fullOutputSb.append(outputString);
     }
@@ -478,6 +486,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         break;
       case ISO_8601_DELIMITER:
         index = parseIso8601Delimiter(fullInput, index, token);
+      default:
+        //do nothing
       }
     }
     // time zone hours -- process here because hh/hh24 may be parsed after tzh
@@ -525,7 +535,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         s = s.substring(0, s.indexOf(sep));
       }
     }
-    for (String delimiter : VALID_ISO_8601_DELIMITERS) { // this will cause problems with DAY (for example, Thursday starts with T)
+    // TODO this will cause problems with DAY (for example, Thursday starts with T)
+    for (String delimiter : VALID_ISO_8601_DELIMITERS) {
       if (s.toLowerCase().contains(delimiter)) {
         s = s.substring(0, s.toLowerCase().indexOf(delimiter));
       }
@@ -549,9 +560,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         int currFirst2Digits = Integer.parseInt(currentYearString.substring(0, 2));
         int currLast2Digits = Integer.parseInt(currentYearString.substring(2));
         int valLast2Digits = Integer.parseInt(substring);
-        if (valLast2Digits < _50 && currLast2Digits >= _50) {
+        if (valLast2Digits < FIFTY && currLast2Digits >= FIFTY) {
           currFirst2Digits += 1;
-        } else if (valLast2Digits >= _50 && currLast2Digits < _50) {
+        } else if (valLast2Digits >= FIFTY && currLast2Digits < FIFTY) {
           currFirst2Digits -= 1;
         }
         substring = String.valueOf(currFirst2Digits) + substring;

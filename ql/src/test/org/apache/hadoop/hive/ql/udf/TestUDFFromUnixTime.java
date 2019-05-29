@@ -18,8 +18,6 @@
 
 package org.apache.hadoop.hive.ql.udf;
 
-import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.TestGenericUDFUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -32,7 +30,7 @@ import org.junit.Test;
 public class TestUDFFromUnixTime {
 
   @Test
-  public void testFromUnixTime() throws HiveException {
+  public void testFromUnixTime() {
     UDFFromUnixTime udf = new UDFFromUnixTime();
 
     //int, no format

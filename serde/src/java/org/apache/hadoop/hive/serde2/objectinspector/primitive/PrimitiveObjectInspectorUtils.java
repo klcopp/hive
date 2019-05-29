@@ -998,14 +998,14 @@ public final class PrimitiveObjectInspectorUtils {
 
     HiveChar result = null;
     switch (oi.getPrimitiveCategory()) {
-      case CHAR:
-        result = ((HiveCharObjectInspector) oi).getPrimitiveJavaObject(o);
-        break;
-      default:
-        // No char length available, copy whole string value here.
-        result = new HiveChar();
-        result.setValue(getString(o, oi, formatter));
-        break;
+    case CHAR:
+      result = ((HiveCharObjectInspector) oi).getPrimitiveJavaObject(o);
+      break;
+    default:
+      // No char length available, copy whole string value here.
+      result = new HiveChar();
+      result.setValue(getString(o, oi, formatter));
+      break;
     }
     return result;
   }
@@ -1023,16 +1023,16 @@ public final class PrimitiveObjectInspectorUtils {
 
     HiveVarchar result = null;
     switch (oi.getPrimitiveCategory()) {
-      case VARCHAR:
-        result = ((HiveVarcharObjectInspector)oi).getPrimitiveJavaObject(o);
-        break;
-      default:
-        // Is there a way to provide char length here?
-        // It might actually be ok as long as there is an object inspector (with char length)
-        // receiving this value.
-        result = new HiveVarchar();
-        result.setValue(getString(o, oi, formatter));
-        break;
+    case VARCHAR:
+      result = ((HiveVarcharObjectInspector) oi).getPrimitiveJavaObject(o);
+      break;
+    default:
+      // Is there a way to provide char length here?
+      // It might actually be ok as long as there is an object inspector (with char length)
+      // receiving this value.
+      result = new HiveVarchar();
+      result.setValue(getString(o, oi, formatter));
+      break;
     }
     return result;
   }

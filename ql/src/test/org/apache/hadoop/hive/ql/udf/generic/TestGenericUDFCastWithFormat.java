@@ -42,9 +42,9 @@ public class TestGenericUDFCastWithFormat {
   public void testDateToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
-    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy-MM-dd", "2009-07-30");
-    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("2009-07-30")), "yyyy", "2009");
-    testCast(udf, inputOI, new DateWritableV2(Date.valueOf("1969-07-30")), "dd", "30");
+    testCast(udf, inputOI, date("2009-07-30"),"yyyy-MM-dd", "2009-07-30");
+    testCast(udf, inputOI, date("2009-07-30"), "yyyy", "2009");
+    testCast(udf, inputOI, date("1969-07-30"), "dd", "30");
   }
 
   @Test
@@ -70,10 +70,20 @@ public class TestGenericUDFCastWithFormat {
   public void testTimestampToStringWithFormat() throws HiveException {
     GenericUDF udf = new GenericUDFToString();
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 00:00:08")), "yyyy-MM-dd HH24:mi:ss", "2009-07-30 00:00:08");
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 11:02:00")), "MM/dd/yyyy hh24miss", "07/30/2009 110200");
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("2009-07-30 01:02:03")), "MM", "07");
-    testCast(udf, inputOI, new TimestampWritableV2(Timestamp.valueOf("1969-07-30 00:00:00")), "yy", "69");
+    testCast(udf, inputOI, timestamp("2009-07-30 00:00:08"),
+        "yyyy-MM-dd HH24:mi:ss", "2009-07-30 00:00:08");
+    testCast(udf, inputOI, timestamp("2009-07-30 11:02:00"),
+        "MM/dd/yyyy hh24miss", "07/30/2009 110200");
+    testCast(udf, inputOI, timestamp("2009-07-30 01:02:03"), "MM", "07");
+    testCast(udf, inputOI, timestamp("1969-07-30 00:00:00"), "yy", "69");
+  }
+
+  private TimestampWritableV2 timestamp(String s) {
+    return new TimestampWritableV2(Timestamp.valueOf(s));
+  }
+
+  private DateWritableV2 date(String s) {
+    return new DateWritableV2(Date.valueOf(s));
   }
 
   private void testCast(
