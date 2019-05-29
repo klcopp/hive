@@ -36,13 +36,13 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 
 @Description(name = "char",
-value = "CAST(<value> as CHAR(length) [FORMAT <pattern>]) - Converts the argument to a char" 
+value = "CAST(<value> as CHAR(length) [FORMAT <pattern>]) - Converts the argument to a char"
     + "value.",
-extended = "Values will be truncated if the input value is too long to fit" 
-    + " within the char length. If format is specified with FORMAT argument then SQL:2016 datetime" 
-    + " formats will be used.\n" 
-    + "Example:\n " 
-    + "  > SELECT CAST(1234 AS char(10)) FROM src LIMIT 1;\n" 
+extended = "Values will be truncated if the input value is too long to fit"
+    + " within the char length. If format is specified with FORMAT argument then SQL:2016 datetime"
+    + " formats will be used.\n"
+    + "Example:\n "
+    + "  > SELECT CAST(1234 AS char(10)) FROM src LIMIT 1;\n"
     + "  '1234'")
 public class GenericUDFToChar extends GenericUDF implements SettableUDF, Serializable {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFToChar.class.getName());

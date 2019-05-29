@@ -36,10 +36,10 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
 @Description(name = "varchar",
-value = "CAST(<value> as VARCHAR(length) [FORMAT <pattern>]) - Converts the argument to a " 
+value = "CAST(<value> as VARCHAR(length) [FORMAT <pattern>]) - Converts the argument to a "
     + "varchar value.",
-extended = "Values will be truncated if the input value is too long to fit" 
-    + " within the varchar length. If format is specified with FORMAT argument then SQL:2016" 
+extended = "Values will be truncated if the input value is too long to fit"
+    + " within the varchar length. If format is specified with FORMAT argument then SQL:2016"
     + "datetime formats will be used.\n"
     + "Example:\n "
     + "  > SELECT CAST(1234 AS varchar(10)) FROM src LIMIT 1;\n"

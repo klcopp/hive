@@ -41,7 +41,7 @@ import java.util.TimeZone;
 
 /**
  * Formatter using SQL:2016 datetime patterns.
- * 
+ *
  * For all tokens:
  * - Patterns are case-insensitive, except AM/PM and T/Z. See these sections for more details.
  * - For string to datetime conversion, no duplicate format tokens are allowed, including tokens
@@ -85,7 +85,7 @@ import java.util.TimeZone;
  * RRRR
  * 4-digit rounded year
  * - String to datetime conversion:
- *   - If 2 digits are provided then acts like RR. 
+ *   - If 2 digits are provided then acts like RR.
  *   - If 1,3 or 4 digits provided then acts like YYYY.
  * - For datetime to string conversion, acts like YYYY.
  *
@@ -142,7 +142,7 @@ import java.util.TimeZone;
  * FF[1..9]
  * Fraction of second
  * - 1..9 indicates the number of decimal digits. "FF" (no number of digits specified) is also
- *   accepted. 
+ *   accepted.
  * - In datetime to string conversion, "FF" will omit trailing zeros, or output "0" if subsecond
  *   value is 0.
  * - In string to datetime conversion, fewer digits than expected are accepted if followed by a
