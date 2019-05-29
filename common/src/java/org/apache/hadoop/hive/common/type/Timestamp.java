@@ -123,7 +123,6 @@ public class Timestamp implements Comparable<Timestamp> {
     return localDateTime.getNano();
   }
 
-  //todo frogmethod throws illegalargumetnexception "Cannot create timestamp, parsing error"
   public static Timestamp valueOf(String s) {
     return DefaultHiveSqlDateTimeFormatter.parseTimestamp(s.trim());
   }

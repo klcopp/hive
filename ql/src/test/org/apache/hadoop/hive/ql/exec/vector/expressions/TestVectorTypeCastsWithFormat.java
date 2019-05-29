@@ -74,7 +74,7 @@ public class TestVectorTypeCastsWithFormat {
     Assert.assertEquals("1776", getStringFromBytesColumnVector(resultV, 1));
     Assert.assertEquals("2012", getStringFromBytesColumnVector(resultV, 2));
     Assert.assertEquals("1580", getStringFromBytesColumnVector(resultV, 3));
-    Assert.assertEquals("0004", getStringFromBytesColumnVector(resultV, 4)); //frogmethod should be 0005 because sql timestamp is used
+    Assert.assertEquals("0004", getStringFromBytesColumnVector(resultV, 4));
     Assert.assertEquals("9999", getStringFromBytesColumnVector(resultV, 5));
 
     resultV = new BytesColumnVector();

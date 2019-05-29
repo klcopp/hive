@@ -342,8 +342,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
               + "LocalDateTime " + localDateTime, e);
         }
         break;
-      case TIMEZONE: //invalid for timestamp and date todo frogmethod throw exception
-        break;
+      case TIMEZONE: //invalid for timestamp and date
+        throw new IllegalArgumentException(token.string.toUpperCase() + " not a valid format for "
+            + "timestamp or date.");
       case SEPARATOR:
         outputString = token.string;
         break;
