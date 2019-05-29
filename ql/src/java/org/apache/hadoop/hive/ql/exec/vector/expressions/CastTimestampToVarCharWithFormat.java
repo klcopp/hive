@@ -48,6 +48,12 @@ public class CastTimestampToVarCharWithFormat extends CastTimestampToVarChar {
     formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
+  public CastTimestampToVarCharWithFormat(
+      int inputColumn, byte[] patternBytes, int maxLength, int outputColumnNum) {
+    this(inputColumn, patternBytes, outputColumnNum);
+    setMaxLength(maxLength);
+  }
+
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
     super.func(outV, inV, i, formatter);
