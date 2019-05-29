@@ -41,6 +41,174 @@ import java.util.TimeZone;
 
 /**
  * Formatter using SQL:2016 datetime patterns.
+ * 
+ * For all tokens:
+ * - Patterns are case-insensitive, except AM/PM and T/Z. See these sections for more details.
+ * - For string to datetime conversion, no duplicate format tokens are allowed, including tokens
+ *   that have the same meaning but different lengths ("Y" and "YY" conflict) or different
+ *   behaviors ("RR" and "YY" conflict).
+ *
+ * For all numeric tokens:
+ * - The "expected length" of input/output is the number of tokens in the character (e.g. "YYY": 3,
+ *   "Y": 1, and so on), with some exceptions (see map SPECIAL_LENGTHS).
+ * - For string to datetime conversion, inputs of fewer digits than expected are accepted if
+ *   followed by a delimiter, e.g. format="YYYY-MM-DD", input="19-1-1", output=2019-01-01 00:00:00.
+ * - For datetime to string conversion, output is left padded with zeros, e.g. format="DD SSSSS",
+ *   input=2019-01-01 00:00:03, output="01 00003".
+ *
+ *
+ * Accepted format tokens:
+ * Note: "|" means "or". "Delimiter" means a separator, tokens T or Z, or end of input.
+ *
+ * A. Temporal tokens
+ * YYYY
+ * 4-digit year
+ * - For string to datetime conversion, prefix digits for 1, 2, and 3-digit inputs are obtained
+ *   from current date
+ *   E.g. input=‘9-01-01’, pattern =‘YYYY-MM-DD’, current year=2020, output=2029-01-01 00:00:00
+ *
+ *
+ * YYY
+ * Last 3 digits of a year
+ * - Gets the prefix digit from current date.
+ * - Can accept fewer digits than 3, similarly to YYYY.
+ *
+ * YY
+ * Last 2 digits of a year
+ * - Gets the 2 prefix digits from current date.
+ * - Can accept fewer digits than 2, similarly to YYYY.
+ *
+ * Y
+ * Last digit of a year
+ * - Gets the 3 prefix digits from current date.
+ *
+ * RRRR
+ * 4-digit rounded year
+ * - String to datetime conversion:
+ *   - If 2 digits are provided then acts like RR. 
+ *   - If 1,3 or 4 digits provided then acts like YYYY.
+ * - For datetime to string conversion, acts like YYYY.
+ *
+ * RR
+ * 2-digit rounded year
+ * -String to datetime conversion:
+ *   - Semantics:
+ *     Input:     Last 2 digits of current year:   First 2 digits of output:
+ *     0 to 49    00 to 49                         First 2 digits of current year
+ *     0 to 49    50 to 99                         First 2 digits of current year + 1
+ *     50 to 99   00 to 49                         First 2 digits of current year - 1
+ *     50 to 99   50 to 99                         First 2 digits of current year
+ *   - If 1-digit year is provided followed by a delimiter, falls back to YYYY with 1-digit year
+ *     input.
+ * - For datetime to string conversion, acts like YY.
+ *
+ * MM
+ * Month (1-12)
+ * - For string to datetime conversion, conflicts with DDD.
+ *
+ * DD
+ * Day of month (1-31)
+ * - For string to datetime conversion, conflicts with DDD.
+ *
+ * DDD
+ * Day of year (1-366)
+ * - For string to datetime conversion, conflicts with DD and MM.
+ *
+ * HH
+ * Hour of day (1-12)
+ * - If no AM/PM provided then defaults to AM.
+ * - In string to datetime conversion, conflicts with SSSSS and HH24.
+ *
+ * HH12
+ * Hour of day (1-12)
+ * See HH.
+ *
+ * HH24
+ * Hour of day (0-23)
+ * - In string to datetime conversion, conflicts with SSSSS, HH12 and AM/PM.
+ *
+ * MI
+ * Minute of hour (0-59)
+ * - In string to datetime conversion, conflicts with SSSSS.
+ *
+ * SS
+ * Second of minute (0-59)
+ * - In string to datetime conversion, conflicts with SSSSS.
+ *
+ * SSSSS
+ * Second of Day (0-86399)
+ * - In string to datetime conversion, conflicts with SS, HH, HH12, HH24, MI, AM/PM.
+ *
+ * FF[1..9]
+ * Fraction of second
+ * - 1..9 indicates the number of decimal digits. "FF" (no number of digits specified) is also
+ *   accepted. 
+ * - In datetime to string conversion, "FF" will omit trailing zeros, or output "0" if subsecond
+ *   value is 0.
+ * - In string to datetime conversion, fewer digits than expected are accepted if followed by a
+ *   delimiter. "FF" acts like "FF9".
+ *
+ * AM|A.M.
+ * Meridiem indicator or AM/PM
+ * - Datetime to string conversion:
+ *   - AM and PM mean the exact same thing in the pattern.
+ *     e.g. input=2019-01-01 20:00, format=“AM”, output=“PM”.
+ *   - Retains the exact format (capitalization and length) provided in the pattern string. If p.m.
+ *     is in the pattern, we expect a.m. or p.m. in the output; if AM is in the pattern, we expect
+ *     AM or PM in the output.
+ * - String to datetime conversion:
+ *   - Conflicts with HH24 and SSSSS.
+ *   - It doesn’t matter which meridian indicator is in the pattern.
+ *     E.g. input="2019-01-01 11:00 p.m.", pattern="YYYY-MM-DD HH12:MI AM",
+ *          output=2019-01-01 23:00:00
+ *
+ * PM|P.M.
+ * Meridiem indicator
+ * See AM|A.M.
+ *
+ * B. Time zone tokens
+ * TZH
+ * Time zone offset hour (-15 to +15)
+ * - 3-character-long input is expected: 1 character for the sign and 2 digits for the value.
+ *   e.g. “+10”, “-05”
+ * - 2-digit input is accepted without the sign, e.g. “04”.
+ * - Both these 2 and 3-digit versions are accepted even if not followed by separators.
+ * - Disabled for timestamp to string and date to string conversion, as timestamp and date are time
+ *   zone agnostic.
+ *
+ * TZM
+ * Time zone offset minute (0-59)
+ * - For string to datetime conversion:
+ *   - TZH token is required.
+ *   - Unsigned; sign comes from TZH.
+ *   - Therefore time zone offsets like “-30” minutes should be expressed thus: input=“-00:30”
+ *     pattern=“TZH:TZM”.
+ * - Disabled for timestamp to string and date to string conversion, as timestamp and date are time
+ *   zone agnostic.
+ *
+ * C. Separators
+ * -|.|/|,|'|;|:|<space>
+ * Separator
+ * - Uses loose matching. Existence of a sequence of separators in the format should match the
+ *   existence of a sequence of separators in the input regardless of the types of the separator or
+ *   the length of the sequence where length > 1. E.g. input=“2019-. ;10/10”, pattern=“YYYY-MM-DD”
+ *   is valid; input=“20191010”, pattern=“YYYY-MM-DD” is not valid.
+ * - If the last separator character in the separator substring is "-" and is immediately followed
+ *   by a time zone hour (tzh) token, it's a negative sign and not counted as a separator, UNLESS
+ *   this is the only possible separator character in the separator substring (in which case it is
+ *   not counted as the tzh's negative sign).
+ *
+ * D. ISO 8601 delimiters
+ * T
+ * ISO 8601 delimiter
+ * - Serves as a delimiter.
+ * - Function is to support formats like “YYYY-MM-DDTHH24:MI:SS.FF9Z”, “YYYY-MM-DD-HH24:MI:SSZ”
+ * - For datetime to string conversion, output is always capitalized ("T"), even if lowercase ("t")
+ *   is provided in the pattern.
+ *
+ * Z
+ * ISO 8601 delimiter
+ * See T.
  */
 
 public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
