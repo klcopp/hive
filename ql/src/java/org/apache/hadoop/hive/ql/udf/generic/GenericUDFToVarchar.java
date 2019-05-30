@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Serializable;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +82,8 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
 
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null) {
-      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(getConstantStringValue(arguments, 1), false);
-      converter.setDateTimeFormatter(formatter);
+      converter.setDateTimeFormatter(
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), false));
     }
 
     return outputOI;
@@ -107,8 +105,7 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS ");
-    sb.append(" AS VARCHAR(");
+    sb.append(" AS varchar(");
     if (typeInfo != null) {
       sb.append(typeInfo.getLength());
     } else if (children.length > 2) {

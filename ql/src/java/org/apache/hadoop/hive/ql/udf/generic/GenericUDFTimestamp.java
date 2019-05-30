@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -93,9 +92,8 @@ public class GenericUDFTimestamp extends GenericUDF {
 
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null) {
-      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(getConstantStringValue(arguments, 1), true);
-      tc.setDateTimeFormatter(formatter);
+      tc.setDateTimeFormatter(
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), true));
     }
 
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;

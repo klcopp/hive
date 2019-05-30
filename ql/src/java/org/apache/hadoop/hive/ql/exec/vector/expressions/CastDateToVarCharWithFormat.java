@@ -43,8 +43,8 @@ public class CastDateToVarCharWithFormat extends CastDateToVarChar {
       throw new IllegalStateException("Tried to cast (<date> to varchar with format <pattern>),"
           + " but <pattern> not found");
     }
-    formatter = new HiveSqlDateTimeFormatter();
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
+    formatter =
+        new HiveSqlDateTimeFormatter(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
   @Override

@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Serializable;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +82,8 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
 
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null) {
-      HiveDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
-      formatter.setPattern(getConstantStringValue(arguments, 1), false);
-      converter.setDateTimeFormatter(formatter);
+      converter.setDateTimeFormatter(
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), true));
     }
 
     return outputOI;

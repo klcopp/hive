@@ -45,8 +45,8 @@ public class CastDateToStringWithFormat extends CastDateToString {
       throw new IllegalStateException("Tried to cast (<date> to string with format <pattern>),"
           + " but <pattern> not found");
     }
-    formatter = new HiveSqlDateTimeFormatter();
-    formatter.setPattern(new String(patternBytes, StandardCharsets.UTF_8), false);
+    formatter =
+        new HiveSqlDateTimeFormatter(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
