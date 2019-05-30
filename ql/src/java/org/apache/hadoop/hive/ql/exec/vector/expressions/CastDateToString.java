@@ -18,20 +18,31 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import org.apache.hadoop.hive.common.format.datetime.DefaultHiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.type.Date;
+import org.apache.hadoop.hive.common.format.datetime.HiveSimpleDateFormatter;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
+
+import java.sql.Date;
+import java.util.TimeZone;
 
 public class CastDateToString extends LongToStringUnaryUDF {
   private static final long serialVersionUID = 1L;
+  protected transient Date dt = new Date(0);
+  private transient HiveDateTimeFormatter formatter;
 
   public CastDateToString() {
     super();
+    initFormatter();
   }
 
   public CastDateToString(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
+    initFormatter();
+  }
+
+  public void initFormatter() {
+    formatter = new HiveSimpleDateFormatter("yyyy-MM-dd", TimeZone.getTimeZone("UTC"));
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
@@ -46,15 +57,13 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, long[] vector, int i) {
-    func(outV, vector, i, null);
+    func(outV, vector, i, formatter);
   }
 
   protected void func(BytesColumnVector outV, long[] vector, int i, HiveDateTimeFormatter formatter) {
     try {
-      Date date = Date.ofEpochDay((int) vector[i]);
-      String output = (formatter != null) ? formatter.format(date) :
-          DefaultHiveSqlDateTimeFormatter.format(date);
-      byte[] temp = output.getBytes();
+      byte[] temp = formatter.format(Timestamp.ofEpochMilli(
+          org.apache.hadoop.hive.common.type.Date.ofEpochDay((int) vector[i]).toEpochMilli())).getBytes();
       assign(outV, i, temp, temp.length);
     } catch (Exception e) {
       assignNull(outV, i);

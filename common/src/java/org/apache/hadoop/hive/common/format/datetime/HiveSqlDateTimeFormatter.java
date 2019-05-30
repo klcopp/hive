@@ -319,10 +319,14 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     }
   }
 
+  public HiveSqlDateTimeFormatter(String pattern, boolean forParsing) {
+    setPattern(pattern, forParsing);
+  }
+
   /**
    * Parse and perhaps verify the pattern.
    */
-  @Override public void setPattern(String pattern, boolean forParsing) {
+  private void setPattern(String pattern, boolean forParsing) {
     assert pattern.length() < LONGEST_ACCEPTED_PATTERN : "The input format is too long";
 
     this.pattern = parsePatternToTokens(pattern);

@@ -47,7 +47,7 @@ import static java.time.temporal.ChronoField.YEAR;
 
 public class TestHiveSqlDateTimeFormatter extends TestCase {
 
-  private HiveSqlDateTimeFormatter formatter = new HiveSqlDateTimeFormatter();
+  private HiveSqlDateTimeFormatter formatter;
 
   public void testSetPattern() {
     verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", new ArrayList<>(List.of(
@@ -102,7 +102,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   private void checkFormatTs(String pattern, String input, String expectedOutput) {
-    formatter.setPattern(pattern, false);
+    formatter = new HiveSqlDateTimeFormatter(pattern, false);
     assertEquals(expectedOutput, formatter.format(toTimestamp(input)));
   }
 
@@ -117,7 +117,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   private void checkFormatDate(String pattern, String input, String expectedOutput) {
-    formatter.setPattern(pattern, false);
+    formatter = new HiveSqlDateTimeFormatter(pattern, false);
     assertEquals(expectedOutput, formatter.format(toDate(input)));
   }
 
@@ -155,7 +155,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   private void checkParseTimestamp(String pattern, String input, String expectedOutput) {
-    formatter.setPattern(pattern, true);
+    formatter = new HiveSqlDateTimeFormatter(pattern, true);
     assertEquals(toTimestamp(expectedOutput), formatter.parseTimestamp(input));
   }
 
@@ -167,7 +167,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   private void checkParseDate(String pattern, String input, String expectedOutput) {
-    formatter.setPattern(pattern, true);
+    formatter = new HiveSqlDateTimeFormatter(pattern, true);
     assertEquals(toDate(expectedOutput), formatter.parseDate(input));
   }
 
@@ -185,7 +185,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private void verifyBadPattern(String string, boolean forParsing) {
     try {
-      formatter.setPattern(string, forParsing);
+      formatter = new HiveSqlDateTimeFormatter(string, forParsing);
       fail();
     } catch (Exception e) {
       assertEquals(e.getClass().getName(), IllegalArgumentException.class.getName());
@@ -205,7 +205,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private void verifyPatternParsing(String pattern, int expectedPatternLength,
       String expectedPattern, ArrayList<TemporalField> temporalFields)  {
-    formatter.setPattern(pattern, false);
+    formatter = new HiveSqlDateTimeFormatter(pattern, false);
     assertEquals(temporalFields.size(), formatter.tokens.size());
     StringBuilder sb = new StringBuilder();
     int actualPatternLength = 0;
@@ -222,7 +222,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   private void verifyBadParseString(String pattern, String string) {
     try {
-      formatter.setPattern(pattern, true);
+      formatter = new HiveSqlDateTimeFormatter(pattern, true);
       formatter.parseTimestamp(string);
       fail();
     } catch (Exception e) {

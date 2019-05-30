@@ -21,10 +21,14 @@ package org.apache.hadoop.hive.common.format.datetime;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.TimeZone;
+
 /**
  * Interface used for formatting and parsing timestamps. Initially created so that user is able to
  * optionally format datetime objects into strings and parse strings into datetime objects with
- * SQL:2016 semantics.
+ * SQL:2016 semantics, as well as with the legacy (java.text.SimpleDateFormat) format.
  */
 public interface HiveDateTimeFormatter {
   /**
@@ -54,19 +58,6 @@ public interface HiveDateTimeFormatter {
    * @throws IllegalArgumentException if string cannot be parsed.
    */
   Date parseDate(String string);
-
-  /**
-   * Set the format pattern to be used for formatting timestamps or parsing strings.
-   * This method parses the pattern into tokens, so it comes with some performance overhead.
-   *
-   * @param pattern string representing a pattern
-   * @param forParsing true if the pattern will be used to parse a string; false if for formatting
-   *                   a datetime object
-   *
-   * @throws IllegalArgumentException if contains invalid patterns: generally invalid patterns,
-   * or patterns specifically not allowed for parsing or formatting)
-   */
-  void setPattern(String pattern, boolean forParsing);
 
   /**
    * Get the format pattern to be used for formatting datetime objects or parsing strings.
