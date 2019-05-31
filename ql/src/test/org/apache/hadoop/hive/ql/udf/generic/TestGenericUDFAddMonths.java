@@ -35,9 +35,9 @@ import org.apache.hadoop.io.Text;
 
 public class TestGenericUDFAddMonths extends TestCase {
 
-  private final Text fmtTextWithTime = new Text("yyyy-MM-dd HH:mm:ss");
-  private final Text fmtTextWithTimeAndms = new Text("yyyy-MM-dd HH:mm:ss.SSS");
-  private final Text fmtTextWithoutTime = new Text("yyyy-MM-dd");
+  private final Text fmtTextWithTime = new Text("YYYY-MM-dd HH:mm:ss");
+  private final Text fmtTextWithTimeAndms = new Text("YYYY-MM-dd HH:mm:ss.SSS");
+  private final Text fmtTextWithoutTime = new Text("YYYY-MM-dd");
   private final Text fmtTextInvalid = new Text("YYYY-abcdz");
 
   public void testAddMonthsInt() throws HiveException {
@@ -213,6 +213,7 @@ public class TestGenericUDFAddMonths extends TestCase {
           "add_months only takes INT/SHORT/BYTE types as 2nd argument, got LONG", e.getMessage());
     }
   }
+
 
 
   private void runAndVerify(String str, int months, String expResult, GenericUDF udf)
