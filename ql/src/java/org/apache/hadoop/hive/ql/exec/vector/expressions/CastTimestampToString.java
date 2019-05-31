@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
-import org.apache.hadoop.hive.common.format.datetime.WrongFormatterException;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 
@@ -58,12 +57,7 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
   }
 
   private void initFormatter() {
-    try {
-      format = new HiveJavaDateTimeFormatter();
-      format.setFormatter(PRINT_FORMATTER);
-    } catch (WrongFormatterException e) {
-      // this will never happen
-    }
+    format = new HiveJavaDateTimeFormatter(PRINT_FORMATTER);
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
