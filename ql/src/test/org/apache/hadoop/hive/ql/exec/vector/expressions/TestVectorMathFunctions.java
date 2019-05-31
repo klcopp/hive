@@ -412,10 +412,7 @@ public class TestVectorMathFunctions {
   }
 
   private static java.sql.Timestamp getSqlTimestamp(String s) {
-    java.sql.Timestamp ts = java.sql.Timestamp.valueOf(s);
-    // subtract 8 hours because sql timestamps are assumed to be given in US/Pacific time
-    ts.setHours(ts.getHours() - 8);
-    return ts;
+    return Timestamp.valueOf(s).toSqlTimestamp();
   }
 
   static long SECONDS_LIMIT = 60L * 24L * 365L * 9999L;
