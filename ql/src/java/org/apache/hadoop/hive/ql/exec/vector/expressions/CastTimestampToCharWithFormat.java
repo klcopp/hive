@@ -48,12 +48,6 @@ public class CastTimestampToCharWithFormat extends CastTimestampToChar {
         new HiveSqlDateTimeFormatter(new String(patternBytes, StandardCharsets.UTF_8), false);
   }
 
-  public CastTimestampToCharWithFormat(
-      int inputColumn, byte[] patternBytes, int maxLength, int outputColumnNum) {
-    this(inputColumn, patternBytes, outputColumnNum);
-    setMaxLength(maxLength);
-  }
-
   @Override
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
     super.func(outV, inV, i, formatter);

@@ -2169,9 +2169,9 @@ import com.google.common.annotations.VisibleForTesting;
       DataTypePhysicalVariation returnDataTypePhysicalVariation, Object...args)
       throws HiveException {
     VectorExpression ve = null;
-    int argsLength = (args == null) ? 0 : args.length;
-    Constructor<?> ctor = getConstructor(vclass, argsLength);
+    Constructor<?> ctor = getConstructor(vclass);
     int numParams = ctor.getParameterTypes().length;
+    int argsLength = (args == null) ? 0 : args.length;
     if (numParams == 0) {
       try {
         ve = (VectorExpression) ctor.newInstance();
@@ -2179,7 +2179,7 @@ import com.google.common.annotations.VisibleForTesting;
         throw new HiveException("Could not instantiate " + vclass.getSimpleName() + " with 0 arguments, exception: " +
             getStackTraceAsSingleLine(ex));
       }
-    } else if (numParams == argsLength) { // frogmethod this causes problems
+    } else if (numParams == argsLength) {
       try {
         ve = (VectorExpression) ctor.newInstance(args);
       } catch (Exception ex) {
@@ -4119,7 +4119,7 @@ import com.google.common.annotations.VisibleForTesting;
     return ((org.apache.hadoop.hive.common.type.Timestamp) java).toSqlTimestamp();
   }
 
-  private Constructor<?> getConstructor(Class<?> cl, int argsCount) throws HiveException {
+  private Constructor<?> getConstructor(Class<?> cl) throws HiveException {
     try {
       Constructor<?> [] ctors = cl.getDeclaredConstructors();
       if (ctors.length == 1) {
@@ -4127,12 +4127,11 @@ import com.google.common.annotations.VisibleForTesting;
       }
       Constructor<?> defaultCtor = cl.getConstructor();
       for (Constructor<?> ctor : ctors) {
-        if (!ctor.equals(defaultCtor) && ctor.getParameterCount() - 1 == argsCount) {
+        if (!ctor.equals(defaultCtor)) {
           return ctor;
         }
       }
-      throw new HiveException("Only default constructor found, or no constructor found with " +
-          argsCount + "arguments");
+      throw new HiveException("Only default constructor found");
     } catch (Exception ex) {
       throw new HiveException(ex);
     }
