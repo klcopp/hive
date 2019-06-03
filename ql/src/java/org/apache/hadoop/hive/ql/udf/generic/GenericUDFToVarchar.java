@@ -68,11 +68,6 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
           "The function VARCHAR takes only primitive types");
     }
 
-    // Third argument could be char length.
-    if (typeInfo == null && arguments.length > 2 && arguments[2] != null) {
-      typeInfo = new VarcharTypeInfo(getConstantIntValue(arguments, 2));
-    }
-
     // Check if this UDF has been provided with type params for the output varchar type
     SettableHiveVarcharObjectInspector outputOI;
     outputOI = (SettableHiveVarcharObjectInspector)
@@ -101,16 +96,12 @@ public class GenericUDFToVarchar extends GenericUDF implements SettableUDF, Seri
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length >= 1 && children.length <= 3);
+    assert (children.length == 1 || children.length == 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
     sb.append(" AS varchar(");
-    if (typeInfo != null) {
-      sb.append(typeInfo.getLength());
-    } else if (children.length > 2) {
-      sb.append(children[2]);
-    }
+    sb.append(typeInfo.getLength());
     sb.append(")");
     if (children.length > 1) {
       sb.append(" FORMAT ");
