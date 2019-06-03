@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Serializable;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -34,12 +35,14 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 
 @Description(name = "char",
-value = "CAST(<value> as CHAR(length)) - Converts the argument to a char value.",
+value = "CAST(<value> as CHAR(length) [FORMAT <pattern>]) - Converts the argument to a char"
+    + "value.",
 extended = "Values will be truncated if the input value is too long to fit"
-+ " within the char length."
-+ "Example:\n "
-+ "  > SELECT CAST(1234 AS char(10)) FROM src LIMIT 1;\n"
-+ "  '1234'")
+    + " within the char length. If format is specified with FORMAT argument then SQL:2016 datetime"
+    + " formats will be used.\n"
+    + "Example:\n "
+    + "  > SELECT CAST(1234 AS char(10)) FROM src LIMIT 1;\n"
+    + "  '1234'")
 public class GenericUDFToChar extends GenericUDF implements SettableUDF, Serializable {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFToChar.class.getName());
 
@@ -55,7 +58,7 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-    if (arguments.length != 1) {
+    if (arguments.length < 1) {
       throw new UDFArgumentException("CHAR cast requires a value argument");
     }
     try {
@@ -71,6 +74,13 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
           PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
 
     converter = new HiveCharConverter(argumentOI, outputOI);
+
+    // for CAST WITH FORMAT
+    if (arguments.length > 1 && arguments[1] != null) {
+      converter.setDateTimeFormatter(
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), false));
+    }
+
     return outputOI;
   }
 
@@ -86,13 +96,17 @@ public class GenericUDFToChar extends GenericUDF implements SettableUDF, Seriali
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1);
+    assert (children.length == 1 || children.length == 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
     sb.append(" AS CHAR(");
     sb.append("" + typeInfo.getLength());
     sb.append(")");
+    if (children.length == 2) {
+      sb.append(" FORMAT ");
+      sb.append(children[1]);
+    }
     sb.append(")");
     return sb.toString();
   }

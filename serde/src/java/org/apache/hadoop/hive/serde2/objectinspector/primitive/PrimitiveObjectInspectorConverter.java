@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.serde2.objectinspector.primitive;
 
 import java.time.ZoneId;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -250,6 +251,7 @@ public class PrimitiveObjectInspectorConverter {
     PrimitiveObjectInspector inputOI;
     SettableDateObjectInspector outputOI;
     Object r;
+    private HiveDateTimeFormatter formatter = null;
 
     public DateConverter(PrimitiveObjectInspector inputOI,
         SettableDateObjectInspector outputOI) {
@@ -263,7 +265,11 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getDate(input,
-          inputOI));
+          inputOI, formatter));
+    }
+
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
@@ -272,6 +278,7 @@ public class PrimitiveObjectInspectorConverter {
     SettableTimestampObjectInspector outputOI;
     boolean intToTimestampInSeconds = false;
     Object r;
+    private HiveDateTimeFormatter formatter = null;
 
     public TimestampConverter(PrimitiveObjectInspector inputOI,
         SettableTimestampObjectInspector outputOI) {
@@ -289,7 +296,11 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       return outputOI.set(r, PrimitiveObjectInspectorUtils.getTimestamp(input,
-          inputOI, intToTimestampInSeconds));
+          inputOI, intToTimestampInSeconds, formatter));
+    }
+
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 
@@ -416,6 +427,7 @@ public class PrimitiveObjectInspectorConverter {
 
     private static byte[] trueBytes = {'T', 'R', 'U', 'E'};
     private static byte[] falseBytes = {'F', 'A', 'L', 'S', 'E'};
+    private HiveDateTimeFormatter formatter = null;
 
     public TextConverter(PrimitiveObjectInspector inputOI) {
       // The output ObjectInspector is writableStringObjectInspector.
@@ -486,11 +498,12 @@ public class PrimitiveObjectInspectorConverter {
         }
         return t;
       case DATE:
-        t.set(((DateObjectInspector) inputOI).getPrimitiveWritableObject(input).toString());
+        t.set(((DateObjectInspector) inputOI)
+            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case TIMESTAMP:
         t.set(((TimestampObjectInspector) inputOI)
-            .getPrimitiveWritableObject(input).toString());
+            .getPrimitiveWritableObject(input).toStringFormatted(formatter));
         return t;
       case TIMESTAMPLOCALTZ:
         t.set(((TimestampLocalTZObjectInspector) inputOI).getPrimitiveWritableObject(input).toString());
@@ -520,6 +533,10 @@ public class PrimitiveObjectInspectorConverter {
         throw new RuntimeException("Hive 2 Internal error: type = " + inputOI.getTypeName());
       }
     }
+
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
+    }
   }
 
   /**
@@ -545,6 +562,7 @@ public class PrimitiveObjectInspectorConverter {
     PrimitiveObjectInspector inputOI;
     SettableHiveVarcharObjectInspector outputOI;
     Object hc;
+    private HiveDateTimeFormatter formatter;
 
     public HiveVarcharConverter(PrimitiveObjectInspector inputOI,
         SettableHiveVarcharObjectInspector outputOI) {
@@ -567,21 +585,26 @@ public class PrimitiveObjectInspectorConverter {
         return null;
       }
       switch (inputOI.getPrimitiveCategory()) {
-        case BOOLEAN:
-          return outputOI.set(hc,
-              ((BooleanObjectInspector) inputOI).get(input) ?
-                  new HiveVarchar("TRUE", -1) : new HiveVarchar("FALSE", -1));
-        default:
-          return outputOI.set(hc, PrimitiveObjectInspectorUtils.getHiveVarchar(input, inputOI));
+      case BOOLEAN:
+        return outputOI.set(hc,
+            ((BooleanObjectInspector) inputOI).get(input) ? new HiveVarchar("TRUE",
+                -1) : new HiveVarchar("FALSE", -1));
+      default:
+        return outputOI
+            .set(hc, PrimitiveObjectInspectorUtils.getHiveVarchar(input, inputOI, formatter));
       }
     }
 
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
+    }
   }
 
   public static class HiveCharConverter implements Converter {
     PrimitiveObjectInspector inputOI;
     SettableHiveCharObjectInspector outputOI;
     Object hc;
+    private HiveDateTimeFormatter formatter;
 
     public HiveCharConverter(PrimitiveObjectInspector inputOI,
         SettableHiveCharObjectInspector outputOI) {
@@ -601,8 +624,13 @@ public class PrimitiveObjectInspectorConverter {
             ((BooleanObjectInspector) inputOI).get(input) ?
                 new HiveChar("TRUE", -1) : new HiveChar("FALSE", -1));
       default:
-        return outputOI.set(hc, PrimitiveObjectInspectorUtils.getHiveChar(input, inputOI));
+        return outputOI.set(hc,
+            PrimitiveObjectInspectorUtils.getHiveChar(input, inputOI, formatter));
       }
+    }
+
+    public void setDateTimeFormatter(HiveDateTimeFormatter formatter) {
+      this.formatter = formatter;
     }
   }
 }

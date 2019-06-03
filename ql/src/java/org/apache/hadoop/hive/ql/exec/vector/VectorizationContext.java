@@ -42,8 +42,11 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastBooleanToStringViaL
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastBooleanToVarCharViaLongToVarChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastCharToBinary;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToChar;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToCharWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToString;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToStringWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToVarChar;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDateToVarCharWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToChar;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToString;
@@ -67,10 +70,13 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringGroupToVarCha
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToBoolean;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToChar;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToCharWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDouble;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToString;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToStringWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToVarChar;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToVarCharWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.ConstantVectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.ConvertDecimal64ToDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.Decimal64ColumnInList;
@@ -3139,9 +3145,17 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastDateToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else { //second argument will be format string
+        return createVectorExpression(CastDateToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isTimestampFamily(inputType)) {
-      return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastTimestampToString.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else { //second argument will be format string
+        return createVectorExpression(CastTimestampToStringWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isStringFamily(inputType)) {
 
       // STRING and VARCHAR types require no conversion, so use a no-op.
@@ -3173,9 +3187,17 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      return createVectorExpression(CastDateToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastDateToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastDateToCharWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isTimestampFamily(inputType)) {
-      return createVectorExpression(CastTimestampToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastTimestampToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastTimestampToCharWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringGroupToChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     }
@@ -3203,9 +3225,17 @@ import com.google.common.annotations.VisibleForTesting;
     } else if (isDecimalFamily(inputType)) {
       return createVectorExpression(CastDecimalToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     } else if (isDateFamily(inputType)) {
-      return createVectorExpression(CastDateToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastDateToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastDateToVarCharWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isTimestampFamily(inputType)) {
-      return createVectorExpression(CastTimestampToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      if (childExpr.size() < 2) {
+        return createVectorExpression(CastTimestampToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastTimestampToVarCharWithFormat.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
+      }
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringGroupToVarChar.class, childExpr, VectorExpressionDescriptor.Mode.PROJECTION, returnType);
     }

@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
+import org.apache.hadoop.hive.common.format.datetime.HiveJavaDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 
@@ -42,12 +44,20 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     PRINT_FORMATTER = builder.toFormatter();
   }
 
+  private transient HiveDateTimeFormatter format;
+
   public CastTimestampToString() {
     super();
+    initFormatter();
   }
 
   public CastTimestampToString(int inputColumn, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
+    initFormatter();
+  }
+
+  private void initFormatter() {
+    format = new HiveJavaDateTimeFormatter(PRINT_FORMATTER);
   }
 
   // The assign method will be overridden for CHAR and VARCHAR.
@@ -55,14 +65,27 @@ public class CastTimestampToString extends TimestampToStringUnaryUDF {
     outV.setVal(i, bytes, 0, length);
   }
 
-  @Override
-  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
-    byte[] temp = LocalDateTime.ofInstant(Instant.ofEpochMilli(inV.time[i]), ZoneOffset.UTC)
-        .withNano(inV.nanos[i])
-        .format(PRINT_FORMATTER).getBytes();
-    assign(outV, i, temp, temp.length);
+  private void assignNull(BytesColumnVector outV, int i) {
+    outV.isNull[i] = true;
+    outV.noNulls = false;
   }
 
+  @Override
+  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
+    func(outV, inV, i, format);
+  }
+
+  protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i, HiveDateTimeFormatter formatter) {
+    try {
+      String formattedLocalDateTime = formatter.format(
+          org.apache.hadoop.hive.common.type.Timestamp.ofEpochMilli(inV.time[i], inV.nanos[i]));
+
+      byte[] temp = formattedLocalDateTime.getBytes();
+      assign(outV, i, temp, temp.length);
+    } catch (Exception e) {
+      assignNull(outV, i);
+    }
+  }
   public static String getTimestampString(Timestamp ts) {
     return
         LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.getTime()), ZoneOffset.UTC)

@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.common.type;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 
 import java.math.BigDecimal;
@@ -170,6 +171,18 @@ public class TimestampUtils {
   }
 
   private static final int DATE_LENGTH = "YYYY-MM-DD".length();
+
+  public static Timestamp stringToTimestamp(String s, HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return stringToTimestamp(s);
+    }
+
+    try {
+      return Timestamp.valueOf(s, formatter);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
 
   public static Timestamp stringToTimestamp(String s) {
     s = s.trim();

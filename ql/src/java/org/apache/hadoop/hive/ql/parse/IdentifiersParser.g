@@ -248,7 +248,8 @@ castExpression
           expression
           KW_AS
           primitiveType
-    RPAREN -> ^(TOK_FUNCTION primitiveType expression)
+          (KW_FORMAT expression)?
+    RPAREN -> ^(TOK_FUNCTION primitiveType expression*)
     ;
 
 caseExpression

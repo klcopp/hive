@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -151,10 +152,21 @@ public class CastStringToDate extends VectorExpression {
     }
   }
 
-  private void evaluate(LongColumnVector outputColVector, BytesColumnVector inV, int i) {
+  /**
+   * Used by CastStringToDate.
+   */
+  protected void evaluate(LongColumnVector outputColVector, BytesColumnVector inV, int i) {
+    evaluate(outputColVector, inV, i, null);
+  }
+
+  /**
+   * Used by CastStringToDateWithFormat.
+   */
+  protected void evaluate(LongColumnVector outputColVector, BytesColumnVector inV, int i,
+      HiveDateTimeFormatter formatter) {
     String dateString = new String(inV.vector[i], inV.start[i], inV.length[i], StandardCharsets.UTF_8);
     Date hDate = new Date();
-    if (dateParser.parseDate(dateString, hDate)) {
+    if (dateParser.parseDate(dateString, hDate, formatter)) {
       outputColVector.vector[i] = DateWritableV2.dateToDays(hDate);
       return;
     }

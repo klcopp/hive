@@ -17,11 +17,13 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDate;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToDateWithFormat;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastTimestampToDate;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -36,12 +38,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
  * GenericUDFToDate
  */
 @Description(name = "date",
-    value = "CAST(<Date string> as DATE) - Returns the date represented by the date string.",
-    extended = "date_string is a string in the format 'yyyy-MM-dd.'"
+    value = "CAST(<Date string> as DATE [FORMAT <STRING>]) - Returns the date represented by the date string.",
+    extended = "date_string is a string in the format 'yyyy-MM-dd.' "
+    + "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
+    + "used for parsing."
     + "Example:\n "
     + "  > SELECT CAST('2009-01-01' AS DATE) FROM src LIMIT 1;\n"
     + "  '2009-01-01'")
-@VectorizedExpressions({CastStringToDate.class, CastTimestampToDate.class})
+@VectorizedExpressions({CastStringToDate.class, CastTimestampToDate.class,
+    CastStringToDateWithFormat.class})
 public class GenericUDFToDate extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
@@ -75,6 +80,13 @@ public class GenericUDFToDate extends GenericUDF {
 
     dc = new DateConverter(argumentOI,
         PrimitiveObjectInspectorFactory.writableDateObjectInspector);
+
+    // for CAST WITH FORMAT
+    if (arguments.length > 1 && arguments[1] != null) {
+      dc.setDateTimeFormatter(
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), true));
+    }
+
     return PrimitiveObjectInspectorFactory.writableDateObjectInspector;
   }
 
@@ -90,11 +102,16 @@ public class GenericUDFToDate extends GenericUDF {
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1);
+    assert (children.length == 1 || children.length == 2);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS DATE)");
+    sb.append(" AS DATE");
+    if (children.length == 2) {
+      sb.append(" FORMAT ");
+      sb.append(children[1]);
+    }
+    sb.append(")");
     return sb.toString();
   }
 

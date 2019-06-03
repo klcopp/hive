@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 package org.apache.hadoop.hive.common.type;
+
+
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -70,6 +73,17 @@ public class Date implements Comparable<Date> {
   @Override
   public String toString() {
     return localDate.format(PRINT_FORMATTER);
+  }
+
+  public String toStringFormatted(HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return toString();
+    }
+    try {
+      return formatter.format(this);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   public int hashCode() {
@@ -135,6 +149,13 @@ public class Date implements Comparable<Date> {
       throw new IllegalArgumentException("Cannot create date, parsing error");
     }
     return new Date(localDate);
+  }
+
+  public static Date valueOf(String s, HiveDateTimeFormatter formatter) {
+    if (formatter == null) {
+      return valueOf(s);
+    }
+    return formatter.parseDate(s);
   }
 
   public static Date ofEpochDay(int epochDay) {
