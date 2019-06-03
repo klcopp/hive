@@ -61,7 +61,7 @@ public class GenericUDFToString extends GenericUDF {
     // for CAST WITH FORMAT
     if (arguments.length > 1 && arguments[1] != null) {
       converter.setDateTimeFormatter(
-          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), true));
+          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), false));
     }
 
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
