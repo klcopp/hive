@@ -62,8 +62,8 @@ public class CastDateToString extends LongToStringUnaryUDF {
 
   protected void func(BytesColumnVector outV, long[] vector, int i, HiveDateTimeFormatter formatter) {
     try {
-      byte[] temp = formatter.format(Timestamp.ofEpochMilli(
-          org.apache.hadoop.hive.common.type.Date.ofEpochDay((int) vector[i]).toEpochMilli())).getBytes();
+      byte[] temp = formatter.format(
+          org.apache.hadoop.hive.common.type.Date.ofEpochDay((int) vector[i])).getBytes();
       assign(outV, i, temp, temp.length);
     } catch (Exception e) {
       assignNull(outV, i);
