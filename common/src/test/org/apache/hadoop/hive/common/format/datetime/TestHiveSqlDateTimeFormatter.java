@@ -122,16 +122,31 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   public void testParseTimestamp() {
+    String thisYearString = String.valueOf(LocalDateTime.now().getYear());
+    int firstTwoDigits = getFirstTwoDigits();
+
+    //y
+    checkParseTimestamp("y-mm-dd", "0-02-03", thisYearString.substring(0, 3) + "0-02-03 00:00:00");
+    checkParseTimestamp("yy-mm-dd", "00-02-03", thisYearString.substring(0, 2) + "00-02-03 00:00:00");
+    checkParseTimestamp("yyy-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03 00:00:00");
+    checkParseTimestamp("yyyy-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03 00:00:00");
+    checkParseTimestamp("rr-mm-dd", "0-02-03", thisYearString.substring(0, 3) + "0-02-03 00:00:00");
+    checkParseTimestamp("rrrr-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03 00:00:00");
+
+    //rr, rrrr
+    checkParseTimestamp("rr-mm-dd", "00-02-03", firstTwoDigits + 1 + "00-02-03 00:00:00");
+    checkParseTimestamp("rr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03 00:00:00");
+    checkParseTimestamp("rr-mm-dd", "50-02-03", firstTwoDigits + "50-02-03 00:00:00");
+    checkParseTimestamp("rr-mm-dd", "99-02-03", firstTwoDigits + "99-02-03 00:00:00");
+    checkParseTimestamp("rrrr-mm-dd", "00-02-03", firstTwoDigits + 1 + "00-02-03 00:00:00");
+    checkParseTimestamp("rrrr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03 00:00:00");
+    checkParseTimestamp("rrrr-mm-dd", "50-02-03", firstTwoDigits + "50-02-03 00:00:00");
+    checkParseTimestamp("rrrr-mm-dd", "99-02-03", firstTwoDigits + "99-02-03 00:00:00");
+
+    //everything else
     checkParseTimestamp("yyyy-mm-ddThh24:mi:ss.ff8z", "2018-02-03T04:05:06.5665Z", "2018-02-03 04:05:06.5665");
     checkParseTimestamp("yyyy-mm-dd hh24:mi:ss.ff", "2018-02-03 04:05:06.555555555", "2018-02-03 04:05:06.555555555");
-    checkParseTimestamp("yy-mm-dd hh12:mi:ss", "99-2-03 04:05:06", "2099-02-03 04:05:06");
-    checkParseTimestamp("rr-mm-dd", "00-02-03", "2000-02-03 00:00:00");
-    checkParseTimestamp("rr-mm-dd", "49-02-03", "2049-02-03 00:00:00");
-    checkParseTimestamp("rr-mm-dd", "50-02-03", "1950-02-03 00:00:00");
-    checkParseTimestamp("rrrr-mm-dd", "00-02-03", "2000-02-03 00:00:00");
-    checkParseTimestamp("rrrr-mm-dd", "49-02-03", "2049-02-03 00:00:00");
-    checkParseTimestamp("rrrr-mm-dd", "50-02-03", "1950-02-03 00:00:00");
-    checkParseTimestamp("yyy-mm-dd", "018-01-01", "2018-01-01 00:00:00");
+    checkParseTimestamp("yyyy-mm-dd hh12:mi:ss", "2099-2-03 04:05:06", "2099-02-03 04:05:06");
     checkParseTimestamp("yyyyddd", "2018284", "2018-10-11 00:00:00");
     checkParseTimestamp("yyyyddd", "20184", "2018-01-04 00:00:00");
     checkParseTimestamp("yyyy-mm-ddThh24:mi:ss.ffz", "2018-02-03t04:05:06.444Z", "2018-02-03 04:05:06.444");
@@ -154,16 +169,43 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM-0515", "2018-12-31 13:15:00");
   }
 
+  private int getFirstTwoDigits() {
+    int thisYear = LocalDateTime.now().getYear();
+    int firstTwoDigits = thisYear / 100;
+    if (thisYear % 100 < 50) {
+      firstTwoDigits -= 1;
+    }
+    return firstTwoDigits;
+  }
+
   private void checkParseTimestamp(String pattern, String input, String expectedOutput) {
     formatter = new HiveSqlDateTimeFormatter(pattern, true);
     assertEquals(toTimestamp(expectedOutput), formatter.parseTimestamp(input));
   }
 
   public void testParseDate() {
-    checkParseDate("yyyy-mm-dd hh mi ss", "2018/01/01 2.2.2", "2018-01-01");
-    checkParseDate("rr-mm-dd", "00-02-03", "2000-02-03");
-    checkParseDate("rr-mm-dd", "49-02-03", "2049-02-03");
-    checkParseDate("rr-mm-dd", "50-02-03", "1950-02-03");
+
+    String thisYearString = String.valueOf(LocalDateTime.now().getYear());
+    int firstTwoDigits = getFirstTwoDigits();
+    //y
+    checkParseDate("y-mm-dd", "0-02-03", thisYearString.substring(0, 3) + "0-02-03");
+    checkParseDate("yy-mm-dd", "00-02-03", thisYearString.substring(0, 2) + "00-02-03");
+    checkParseDate("yyy-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03");
+    checkParseDate("yyyy-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03");
+    checkParseDate("rr-mm-dd", "0-02-03", thisYearString.substring(0, 3) + "0-02-03");
+    checkParseDate("rrrr-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03");
+
+    //rr, rrrr
+    checkParseDate("rr-mm-dd", "00-02-03", firstTwoDigits + 1 + "00-02-03");
+    checkParseDate("rr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03");
+    checkParseDate("rr-mm-dd", "50-02-03", firstTwoDigits + "50-02-03");
+    checkParseDate("rr-mm-dd", "99-02-03", firstTwoDigits + "99-02-03");
+    checkParseDate("rrrr-mm-dd", "00-02-03", firstTwoDigits + 1 + "00-02-03");
+    checkParseDate("rrrr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03");
+    checkParseDate("rrrr-mm-dd", "50-02-03", firstTwoDigits + "50-02-03");
+    checkParseDate("rrrr-mm-dd", "99-02-03", firstTwoDigits + "99-02-03");
+
+    checkParseDate("yyyy-mm-dd hh mi ss.ff7", "2018/01/01 2.2.2.55", "2018-01-01");
   }
 
   private void checkParseDate(String pattern, String input, String expectedOutput) {
@@ -206,14 +248,14 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   private void verifyPatternParsing(String pattern, int expectedPatternLength,
       String expectedPattern, ArrayList<TemporalField> temporalFields)  {
     formatter = new HiveSqlDateTimeFormatter(pattern, false);
-    assertEquals(temporalFields.size(), formatter.tokens.size());
+    assertEquals(temporalFields.size(), formatter.getTokens().size());
     StringBuilder sb = new StringBuilder();
     int actualPatternLength = 0;
     for (int i = 0; i < temporalFields.size(); i++) {
       assertEquals("Generated list of tokens not correct", temporalFields.get(i),
-          formatter.tokens.get(i).temporalField);
-      sb.append(formatter.tokens.get(i).string);
-      actualPatternLength += formatter.tokens.get(i).length;
+          formatter.getTokens().get(i).temporalField);
+      sb.append(formatter.getTokens().get(i).string);
+      actualPatternLength += formatter.getTokens().get(i).length;
     }
     assertEquals("Token strings concatenated don't match original pattern string",
         expectedPattern, sb.toString());

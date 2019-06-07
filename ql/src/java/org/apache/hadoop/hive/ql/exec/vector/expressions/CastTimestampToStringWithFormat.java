@@ -52,18 +52,4 @@ public class CastTimestampToStringWithFormat extends CastTimestampToString {
   protected void func(BytesColumnVector outV, TimestampColumnVector inV, int i) {
     super.func(outV, inV, i, formatter);
   }
-
-  @Override
-  public VectorExpressionDescriptor.Descriptor getDescriptor() {
-    VectorExpressionDescriptor.Builder b = new VectorExpressionDescriptor.Builder();
-    b.setMode(VectorExpressionDescriptor.Mode.PROJECTION)
-        .setNumArguments(2)
-        .setArgumentTypes(
-            VectorExpressionDescriptor.ArgumentType.TIMESTAMP,
-            VectorExpressionDescriptor.ArgumentType.STRING)
-        .setInputExpressionTypes(
-            VectorExpressionDescriptor.InputExpressionType.COLUMN,
-            VectorExpressionDescriptor.InputExpressionType.SCALAR);
-    return b.build();
-  }
 }

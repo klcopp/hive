@@ -36,7 +36,7 @@ public class CastDateToVarCharWithFormat extends CastDateToVarChar {
     super();
   }
 
-  public CastDateToVarCharWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
+  public CastDateToVarCharWithFormat(int inputColumn, byte[] patternBytes, int len, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {

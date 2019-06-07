@@ -221,7 +221,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   public static final int AM = 0;
   public static final int PM = 1;
   private String pattern;
-  protected List<Token> tokens = new ArrayList<>();
+  private List<Token> tokens = new ArrayList<>();
 
   private static final Map<String, TemporalField> VALID_TEMPORAL_TOKENS =
       ImmutableMap.<String, TemporalField>builder()
@@ -827,5 +827,12 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
   @Override public String getPattern() {
     return pattern;
+  }
+
+  /**
+   * @return a copy of token list
+   */
+  protected List<Token> getTokens() {
+    return new ArrayList<>(tokens);
   }
 }

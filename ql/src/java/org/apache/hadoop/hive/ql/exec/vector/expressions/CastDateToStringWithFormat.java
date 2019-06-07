@@ -58,18 +58,4 @@ public class CastDateToStringWithFormat extends CastDateToString {
   protected void func(BytesColumnVector outV, long[] vector, int i) {
     super.func(outV, vector, i, formatter);
   }
-
-  @Override
-  public VectorExpressionDescriptor.Descriptor getDescriptor() {
-    VectorExpressionDescriptor.Builder b = new VectorExpressionDescriptor.Builder();
-    b.setMode(VectorExpressionDescriptor.Mode.PROJECTION)
-        .setNumArguments(2)
-        .setArgumentTypes(
-            VectorExpressionDescriptor.ArgumentType.INT_FAMILY,
-            VectorExpressionDescriptor.ArgumentType.STRING)
-        .setInputExpressionTypes(
-            VectorExpressionDescriptor.InputExpressionType.COLUMN,
-            VectorExpressionDescriptor.InputExpressionType.SCALAR);
-    return b.build();
-  }
 }

@@ -17,7 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -28,9 +29,9 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDoubleToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastLongToTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestamp;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToTimestampWithFormat;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter.TimestampConverter;
@@ -47,12 +48,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
  *
  */
 @Description(name = "timestamp",
-    value = "cast(<primitive> as timestamp [format <string>]) - Returns timestamp",
-    extended = "If format is specified with FORMAT argument then SQL:2016 datetime formats will be "
-    + "used.")
+value = "cast(date as timestamp) - Returns timestamp")
 @VectorizedExpressions({CastLongToTimestamp.class, CastDateToTimestamp.class,
-    CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class,
-    CastStringToTimestampWithFormat.class})
+  CastDoubleToTimestamp.class, CastDecimalToTimestamp.class, CastStringToTimestamp.class})
 public class GenericUDFTimestamp extends GenericUDF {
 
   private transient PrimitiveObjectInspector argumentOI;
@@ -90,12 +88,6 @@ public class GenericUDFTimestamp extends GenericUDF {
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector);
     tc.setIntToTimestampInSeconds(intToTimestampInSeconds);
 
-    // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null) {
-      tc.setDateTimeFormatter(
-          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), true));
-    }
-
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
   }
 
@@ -105,21 +97,17 @@ public class GenericUDFTimestamp extends GenericUDF {
     if (o0 == null) {
       return null;
     }
+
     return tc.convert(o0);
   }
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (1 <= children.length && children.length <= 2);
+    assert (children.length == 1);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS TIMESTAMP");
-    if (children.length == 2) {
-      sb.append(" FORMAT ");
-      sb.append(children[1]);
-    }
-    sb.append(")");
+    sb.append(" AS TIMESTAMP)");
     return sb.toString();
   }
 
