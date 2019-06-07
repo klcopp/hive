@@ -1,73 +1,53 @@
-PREHOOK: query: drop table if exists timestamps
-PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists timestamps
-POSTHOOK: type: DROPTABLE
-PREHOOK: query: drop table if exists dates
-PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists dates
-POSTHOOK: type: DROPTABLE
-PREHOOK: query: drop table if exists strings
-PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists strings
-POSTHOOK: type: DROPTABLE
-PREHOOK: query: drop table if exists chars
-PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists chars
-POSTHOOK: type: DROPTABLE
-PREHOOK: query: drop table if exists varchars
-PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists varchars
-POSTHOOK: type: DROPTABLE
-PREHOOK: query: create table timestamps (t timestamp) stored as parquet
+PREHOOK: query: create table timestamp1 (t timestamp) stored as parquet
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
-PREHOOK: Output: default@timestamps
-POSTHOOK: query: create table timestamps (t timestamp) stored as parquet
+PREHOOK: Output: default@timestamp1
+POSTHOOK: query: create table timestamp1 (t timestamp) stored as parquet
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
-POSTHOOK: Output: default@timestamps
-PREHOOK: query: insert into timestamps values
+POSTHOOK: Output: default@timestamp1
+PREHOOK: query: insert into timestamp1 values
 ("2020-02-03"),
 ("1969-12-31 23:59:59.999999999")
 PREHOOK: type: QUERY
 PREHOOK: Input: _dummy_database@_dummy_table
-PREHOOK: Output: default@timestamps
-POSTHOOK: query: insert into timestamps values
+PREHOOK: Output: default@timestamp1
+POSTHOOK: query: insert into timestamp1 values
 ("2020-02-03"),
 ("1969-12-31 23:59:59.999999999")
 POSTHOOK: type: QUERY
 POSTHOOK: Input: _dummy_database@_dummy_table
-POSTHOOK: Output: default@timestamps
-POSTHOOK: Lineage: timestamps.t SCRIPT []
-PREHOOK: query: from timestamps select cast (t as string      format "yyyy hh24...PM ff")
+POSTHOOK: Output: default@timestamp1
+POSTHOOK: Lineage: timestamp1.t SCRIPT []
+PREHOOK: query: from timestamp1 select cast (t as string      format "yyyy hh24...PM ff")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: from timestamps select cast (t as string      format "yyyy hh24...PM ff")
+POSTHOOK: query: from timestamp1 select cast (t as string      format "yyyy hh24...PM ff")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020 00...AM 0
 1969 23...PM 999999999
-PREHOOK: query: from timestamps select cast (t as char(11)    format "yyyy hh24...PM ff")
+PREHOOK: query: from timestamp1 select cast (t as char(11)    format "yyyy hh24...PM ff")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: from timestamps select cast (t as char(11)    format "yyyy hh24...PM ff")
+POSTHOOK: query: from timestamp1 select cast (t as char(11)    format "yyyy hh24...PM ff")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020 00...A
 1969 23...P
 PREHOOK: query: -- will be truncated
-from timestamps select cast (t as varchar(11) format "yyyy hh24...PM ff")
+from timestamp1 select cast (t as varchar(11) format "yyyy hh24...PM ff")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 POSTHOOK: query: -- will be truncated
-from timestamps select cast (t as varchar(11) format "yyyy hh24...PM ff")
+from timestamp1 select cast (t as varchar(11) format "yyyy hh24...PM ff")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020 00...A
 1969 23...P
@@ -267,7 +247,7 @@ STAGE PLANS:
           alias: strings
           Statistics: Num rows: 2 Data size: 188 Basic stats: COMPLETE Column stats: COMPLETE
           Select Operator
-            expressions: CAST( s AS TIMESTAMP FORMAT 'yyy.mm.dd') (type: timestamp)
+            expressions: CAST( s AS timestamp FORMAT 'yyy.mm.dd' ) (type: timestamp)
             outputColumnNames: _col0
             Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
             ListSink
@@ -292,18 +272,18 @@ STAGE PLANS:
           alias: strings
           Statistics: Num rows: 2 Data size: 188 Basic stats: COMPLETE Column stats: COMPLETE
           Select Operator
-            expressions: CAST( s AS DATE FORMAT 'yyy.mm.dd') (type: date)
+            expressions: CAST( s AS date FORMAT 'yyy.mm.dd' ) (type: date)
             outputColumnNames: _col0
             Statistics: Num rows: 2 Data size: 112 Basic stats: COMPLETE Column stats: COMPLETE
             ListSink
 
-PREHOOK: query: explain from timestamps select cast (t as string      format "yyyy")
+PREHOOK: query: explain from timestamp1 select cast (t as string      format "yyyy")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: explain from timestamps select cast (t as string      format "yyyy")
+POSTHOOK: query: explain from timestamp1 select cast (t as string      format "yyyy")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
@@ -314,21 +294,21 @@ STAGE PLANS:
       limit: -1
       Processor Tree:
         TableScan
-          alias: timestamps
+          alias: timestamp1
           Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
           Select Operator
-            expressions: CAST( t AS STRING FORMAT 'yyyy') (type: string)
+            expressions: CAST( t AS string FORMAT 'yyyy' ) (type: string)
             outputColumnNames: _col0
             Statistics: Num rows: 2 Data size: 368 Basic stats: COMPLETE Column stats: COMPLETE
             ListSink
 
-PREHOOK: query: explain from timestamps select cast (t as varchar(12) format "yyyy")
+PREHOOK: query: explain from timestamp1 select cast (t as varchar(12) format "yyyy")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: explain from timestamps select cast (t as varchar(12) format "yyyy")
+POSTHOOK: query: explain from timestamp1 select cast (t as varchar(12) format "yyyy")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
@@ -339,21 +319,21 @@ STAGE PLANS:
       limit: -1
       Processor Tree:
         TableScan
-          alias: timestamps
+          alias: timestamp1
           Statistics: Num rows: 2 Data size: 80 Basic stats: COMPLETE Column stats: COMPLETE
           Select Operator
-            expressions: CAST( t AS  AS VARCHAR(12) FORMAT 'yyyy') (type: varchar(12))
+            expressions: CAST( t AS varchar(12) FORMAT 'yyyy' ) (type: varchar(12))
             outputColumnNames: _col0
             Statistics: Num rows: 2 Data size: 192 Basic stats: COMPLETE Column stats: COMPLETE
             ListSink
 
-PREHOOK: query: from timestamps select cast (t as string      format "yyyy")
+PREHOOK: query: from timestamp1 select cast (t as string      format "yyyy")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: from timestamps select cast (t as string      format "yyyy")
+POSTHOOK: query: from timestamp1 select cast (t as string      format "yyyy")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020
 1969
@@ -367,13 +347,13 @@ POSTHOOK: Input: default@dates
 #### A masked pattern was here ####
 2020
 1969
-PREHOOK: query: from timestamps select cast (t as varchar(11) format "yyyy")
+PREHOOK: query: from timestamp1 select cast (t as varchar(11) format "yyyy")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: from timestamps select cast (t as varchar(11) format "yyyy")
+POSTHOOK: query: from timestamp1 select cast (t as varchar(11) format "yyyy")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020
 1969
@@ -387,13 +367,13 @@ POSTHOOK: Input: default@dates
 #### A masked pattern was here ####
 2020
 1969
-PREHOOK: query: from timestamps select cast (t as char(11)    format "yyyy")
+PREHOOK: query: from timestamp1 select cast (t as char(11)    format "yyyy")
 PREHOOK: type: QUERY
-PREHOOK: Input: default@timestamps
+PREHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
-POSTHOOK: query: from timestamps select cast (t as char(11)    format "yyyy")
+POSTHOOK: query: from timestamp1 select cast (t as char(11)    format "yyyy")
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@timestamps
+POSTHOOK: Input: default@timestamp1
 #### A masked pattern was here ####
 2020       
 1969       
