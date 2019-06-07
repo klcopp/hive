@@ -132,7 +132,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("yyyy-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03 00:00:00");
     checkParseTimestamp("rr-mm-dd", "0-02-03", thisYearString.substring(0, 3) + "0-02-03 00:00:00");
     checkParseTimestamp("rrrr-mm-dd", "000-02-03", thisYearString.substring(0, 1) + "000-02-03 00:00:00");
-    
+
     //rr, rrrr
     checkParseTimestamp("rr-mm-dd", "00-02-03", firstTwoDigits + 1 + "00-02-03 00:00:00");
     checkParseTimestamp("rr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03 00:00:00");
@@ -204,7 +204,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseDate("rrrr-mm-dd", "49-02-03", firstTwoDigits + 1 + "49-02-03");
     checkParseDate("rrrr-mm-dd", "50-02-03", firstTwoDigits + "50-02-03");
     checkParseDate("rrrr-mm-dd", "99-02-03", firstTwoDigits + "99-02-03");
-    
+
     checkParseDate("yyyy-mm-dd hh mi ss.ff7", "2018/01/01 2.2.2.55", "2018-01-01");
   }
 
