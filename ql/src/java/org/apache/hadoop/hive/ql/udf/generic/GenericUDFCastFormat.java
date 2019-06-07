@@ -93,7 +93,7 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
         && outputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP
         || inputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP
         && outputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.STRING_GROUP
-        || outputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.VOID_GROUP)) {
+        || inputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.VOID_GROUP)) {
       throw new UDFArgumentException(
           "Function CAST...as ... FORMAT ... only converts datetime objects to string types"
               + " and string or void objects to datetime types. Type of object provided: "
