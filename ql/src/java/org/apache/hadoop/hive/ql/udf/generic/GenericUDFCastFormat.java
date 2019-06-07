@@ -33,7 +33,7 @@ import java.util.Map;
  * CastXToStringWithFormat, CastXToVarCharWithFormat would have same description.
  */
 @Description(name = "cast_format",
-    value = "CAST(<value> AS <type> [FORMAT <STRING>]) - Converts a datetime value to string or" 
+    value = "CAST(<value> AS <type> [FORMAT <STRING>]) - Converts a datetime value to string or"
         + " string-type value to datetime based on the format pattern specified.",
     extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
         + "be used.\n"
@@ -41,8 +41,9 @@ import java.util.Map;
         + "  > SELECT CAST(\"2018-01-01 4 PM\" AS timestamp FORMAT \"yyyy-mm-dd hh12 AM\");\n"
         + "  2018-01-01 16:00:00")
 public class GenericUDFCastFormat extends GenericUDF implements Serializable {
+
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFCastFormat.class.getName());
-  
+
   private static final Map<Integer, String> OUTPUT_TYPES = ImmutableMap.<Integer, String>builder()
       .put(HiveParser_IdentifiersParser.TOK_STRING, serdeConstants.STRING_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_VARCHAR, serdeConstants.VARCHAR_TYPE_NAME)
@@ -64,10 +65,9 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
    */
   @Override public ObjectInspector initialize(ObjectInspector[] arguments)
       throws UDFArgumentException {
-    
     if (arguments.length != 3 && arguments.length != 4) {
       throw new UDFArgumentException(
-          "Function cast_format requires 3 or 4 arguments (int, expression, StringLiteral" 
+          "Function cast_format requires 3 or 4 arguments (int, expression, StringLiteral"
               + "[, var/char length]), got " + arguments.length);
     }
 
@@ -101,11 +101,11 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
               + ", type provided: " + inputOI.getPrimitiveCategory() + " in primitive grouping "
               + outputPG);
     }
-    
+
     boolean forParsing = (outputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP);
     converter = getConverter(inputOI, outputOI);
     if (converter == null) {
-      throw new UDFArgumentException("Function Function CAST...as ... FORMAT ... couldn't create " 
+      throw new UDFArgumentException("Function Function CAST...as ... FORMAT ... couldn't create "
           + "converter from inputOI " + inputOI + " and outputOI " + outputOI);
     }
     converter.setDateTimeFormatter(
@@ -118,7 +118,7 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
       throws UDFArgumentException {
     int key = getConstantIntValue(arguments, 0);
     if (!OUTPUT_TYPES.keySet().contains(key)) {
-      throw new UDFArgumentException("Cast...format can only convert to DATE, TIMESTAMP, STRING," 
+      throw new UDFArgumentException("Cast...format can only convert to DATE, TIMESTAMP, STRING,"
           + "VARCHAR, CHAR. Can't convert to HiveParser_IdentifiersParser constant with value "
           + key);
     }
@@ -183,5 +183,4 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
     sb.append(" )");
     return sb.toString();
   }
-  
 }
