@@ -37,7 +37,7 @@ public class CastTimestampToCharWithFormat extends CastTimestampToChar {
     super();
   }
 
-  public CastTimestampToCharWithFormat(int inputColumn, byte[] patternBytes, int outputColumnNum) {
+  public CastTimestampToCharWithFormat(int inputColumn, byte[] patternBytes, int len, int outputColumnNum) {
     super(inputColumn, outputColumnNum);
 
     if (patternBytes == null) {

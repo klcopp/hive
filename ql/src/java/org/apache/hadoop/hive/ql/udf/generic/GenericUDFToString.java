@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -29,12 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Description(name = "string",
-    value = "CAST(<value> as STRING [FORMAT <STRING>]) - Converts the argument to a string value.",
-    extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
-        + "be used.\n"
-        + "Example:\n "
-        + "  > SELECT CAST(1234 AS string) FROM src LIMIT 1;\n"
-        + "  '1234'")
+value = "CAST(<value> as STRING) - Converts the argument to a string value.",
+extended = "Example:\n "
++ "  > SELECT CAST(1234 AS string) FROM src LIMIT 1;\n"
++ "  '1234'")
 public class GenericUDFToString extends GenericUDF {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFToString.class.getName());
 
@@ -46,7 +43,7 @@ public class GenericUDFToString extends GenericUDF {
 
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-    if (arguments.length < 1) {
+    if (arguments.length != 1) {
       throw new UDFArgumentException("STRING cast requires a value argument");
     }
     try {
@@ -57,38 +54,26 @@ public class GenericUDFToString extends GenericUDF {
     }
 
     converter = new TextConverter(argumentOI);
-
-    // for CAST WITH FORMAT
-    if (arguments.length > 1 && arguments[1] != null) {
-      converter.setDateTimeFormatter(
-          new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 1), false));
-    }
-
     return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
   }
 
   @Override
   public Object evaluate(DeferredObject[] arguments) throws HiveException {
-    Object o0 = arguments[0].get();
-    if (o0 == null) {
-      return null;
-    }
+      Object o0 = arguments[0].get();
+      if (o0 == null) {
+        return null;
+      }
 
-    return converter.convert(o0);
+      return converter.convert(o0);
   }
 
   @Override
   public String getDisplayString(String[] children) {
-    assert (children.length == 1 || children.length == 2);
+    assert (children.length == 1);
     StringBuilder sb = new StringBuilder();
     sb.append("CAST( ");
     sb.append(children[0]);
-    sb.append(" AS STRING");
-    if (children.length == 2) {
-      sb.append(" FORMAT ");
-      sb.append(children[1]);
-    }
-    sb.append(")");
+    sb.append(" AS STRING)");
     return sb.toString();
   }
 }

@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
+import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.JavaStringObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
@@ -45,7 +46,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableTimestamp
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableTimestampLocalTZObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.VoidObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableStringObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 
 /**
  * ObjectInspectorConverters.
@@ -60,6 +60,9 @@ public final class ObjectInspectorConverters {
   @InterfaceStability.Stable
   public static interface Converter {
     Object convert(Object input);
+  }
+  public interface ConverterWithFormatOption extends Converter {
+    void setDateTimeFormatter(HiveDateTimeFormatter formatter);
   }
 
   /**

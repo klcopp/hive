@@ -33,6 +33,7 @@ import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazyLong;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.ConverterWithFormatOption;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TimestampLocalTZTypeInfo;
 import org.apache.hadoop.io.BytesWritable;
@@ -247,7 +248,7 @@ public class PrimitiveObjectInspectorConverter {
     }
   }
 
-  public static class DateConverter implements Converter {
+  public static class DateConverter implements ConverterWithFormatOption {
     PrimitiveObjectInspector inputOI;
     SettableDateObjectInspector outputOI;
     Object r;
@@ -273,7 +274,7 @@ public class PrimitiveObjectInspectorConverter {
     }
   }
 
-  public static class TimestampConverter implements Converter {
+  public static class TimestampConverter implements ConverterWithFormatOption {
     PrimitiveObjectInspector inputOI;
     SettableTimestampObjectInspector outputOI;
     boolean intToTimestampInSeconds = false;
@@ -420,7 +421,7 @@ public class PrimitiveObjectInspectorConverter {
   /**
    * A helper class to convert any primitive to Text.
    */
-  public static class TextConverter implements Converter {
+  public static class TextConverter implements ConverterWithFormatOption {
     private final PrimitiveObjectInspector inputOI;
     private final Text t = new Text();
     private final ByteStream.Output out = new ByteStream.Output();
@@ -557,7 +558,7 @@ public class PrimitiveObjectInspectorConverter {
   }
 
 
-  public static class HiveVarcharConverter implements Converter {
+  public static class HiveVarcharConverter implements ConverterWithFormatOption {
 
     PrimitiveObjectInspector inputOI;
     SettableHiveVarcharObjectInspector outputOI;
@@ -600,7 +601,7 @@ public class PrimitiveObjectInspectorConverter {
     }
   }
 
-  public static class HiveCharConverter implements Converter {
+  public static class HiveCharConverter implements ConverterWithFormatOption {
     PrimitiveObjectInspector inputOI;
     SettableHiveCharObjectInspector outputOI;
     Object hc;
