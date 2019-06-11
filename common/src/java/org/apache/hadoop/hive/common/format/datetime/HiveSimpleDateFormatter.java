@@ -43,8 +43,9 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
     return format.format(date);
   }
 
-  @Override public String format(org.apache.hadoop.hive.common.type.Date date) {
-    return null;
+  @Override public String format(org.apache.hadoop.hive.common.type.Date d) {
+    Date date = new Date(d.toEpochMilli());
+    return format.format(date);
   }
 
   @Override public Timestamp parseTimestamp(String string) {

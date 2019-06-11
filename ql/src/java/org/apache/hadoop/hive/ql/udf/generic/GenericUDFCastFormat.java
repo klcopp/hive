@@ -1,5 +1,6 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -44,7 +45,8 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFCastFormat.class.getName());
 
-  private static final Map<Integer, String> OUTPUT_TYPES = ImmutableMap.<Integer, String>builder()
+  @VisibleForTesting
+  protected static final Map<Integer, String> OUTPUT_TYPES = ImmutableMap.<Integer, String>builder()
       .put(HiveParser_IdentifiersParser.TOK_STRING, serdeConstants.STRING_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_VARCHAR, serdeConstants.VARCHAR_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_CHAR, serdeConstants.CHAR_TYPE_NAME)

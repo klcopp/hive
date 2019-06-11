@@ -97,7 +97,8 @@ public class TestVectorTypeCastsWithFormat {
     TimestampColumnVector resultV;
     resultV = new TimestampColumnVector();
     b.cols[1] = resultV;
-    VectorExpression expr = new CastStringToTimestampWithFormat(0, "yyyy.mm.dd HH24.mi.ss.ff".getBytes(), 1);
+    VectorExpression expr =
+        new CastStringToTimestampWithFormat(0, "yyyy.mm.dd HH24.mi.ss.ff".getBytes(), 1);
     expr.evaluate(b);
 
     verifyTimestamp("2019-12-31 00:00:00.999999999", resultV, 0);
@@ -123,7 +124,7 @@ public class TestVectorTypeCastsWithFormat {
     VectorExpression expr = new CastStringToDateWithFormat(0, "yyyy.mm.dd".getBytes(), 1);
     expr.evaluate(b);
 
-    Assert.assertEquals(Date.valueOf("2019-12-31").toEpochDay(), resultV.vector[0]);
+    Assert.assertEquals(Date.valueOf("2019-12-31").toEpochDay(), resultV.vector[0]); // frogmethod why does this work - it doesn't have the extra char
     Assert.assertEquals(Date.valueOf("1776-07-04").toEpochDay(), resultV.vector[1]);
     Assert.assertEquals(Date.valueOf("2012-02-29").toEpochDay(), resultV.vector[2]);
     Assert.assertEquals(Date.valueOf("1580-08-08").toEpochDay(), resultV.vector[3]);

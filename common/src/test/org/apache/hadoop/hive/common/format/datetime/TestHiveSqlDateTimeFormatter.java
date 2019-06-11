@@ -42,7 +42,7 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.time.temporal.ChronoField.YEAR;
 
 /**
- * Test class for HiveSqlDateTimeFormatter.
+ * Tests HiveSqlDateTimeFormatter.
  */
 
 public class TestHiveSqlDateTimeFormatter extends TestCase {
@@ -51,7 +51,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
 
   public void testSetPattern() {
     verifyPatternParsing(" ---yyyy-\'-:-  -,.;/MM-dd--", new ArrayList<>(List.of(
-        null,
+        null, // represents separator, which has no temporal field
         ChronoField.YEAR,
         null,
         ChronoField.MONTH_OF_YEAR,
