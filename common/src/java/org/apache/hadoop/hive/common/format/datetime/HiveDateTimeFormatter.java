@@ -21,10 +21,6 @@ package org.apache.hadoop.hive.common.format.datetime;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
-import java.util.TimeZone;
-
 /**
  * Interface used for formatting and parsing timestamps. Initially created so that user is able to
  * optionally format datetime objects into strings and parse strings into datetime objects with

@@ -3344,6 +3344,7 @@ import com.google.common.annotations.VisibleForTesting;
       if (returnType.getTypeName().startsWith(serdeConstants.CHAR_TYPE_NAME)) {
         return CastDateToCharWithFormat.class;
       }
+    default: //keep going
     }
     if (inputType.equals(serdeConstants.STRING_TYPE_NAME)
         || inputType.startsWith(serdeConstants.CHAR_TYPE_NAME)
@@ -3353,6 +3354,7 @@ import com.google.common.annotations.VisibleForTesting;
         return CastStringToTimestampWithFormat.class;
       case serdeConstants.DATE_TYPE_NAME:
         return CastStringToDateWithFormat.class;
+      default: //keep going
       }
     }
     throw new HiveException(

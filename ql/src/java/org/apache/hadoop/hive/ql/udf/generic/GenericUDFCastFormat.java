@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,14 +45,16 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
+ * CAST(<value> AS <type> FORMAT <STRING>).
+ *
  * Vector expressions: CastDateToCharWithFormat, CastDateToStringWithFormat,
  *     CastDateToVarCharWithFormat, CastTimestampToCharWithFormat,
- *     CastTimestampToStringWithFormat, CastTimestampToVarCharWithFormat
+ *     CastTimestampToStringWithFormat, CastTimestampToVarCharWithFormat.
  * Could not use @VectorizedExpressions annotation because e.g. CastXToCharWithFormat,
  * CastXToStringWithFormat, CastXToVarCharWithFormat would have same description.
  */
 @Description(name = "cast_format",
-    value = "CAST(<value> AS <type> [FORMAT <STRING>]) - Converts a datetime value to string or"
+    value = "CAST(<value> AS <type> FORMAT <STRING>) - Converts a datetime value to string or"
         + " string-type value to datetime based on the format pattern specified.",
     extended =  "If format is specified with FORMAT argument then SQL:2016 datetime formats will "
         + "be used.\n"
@@ -153,8 +173,9 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
     case DATE:
       return new PrimitiveObjectInspectorConverter.DateConverter(inputOI,
           (SettableDateObjectInspector) outputOI);
+    default:
+      return null;
     }
-    return null;
   }
 
   @Override public Object evaluate(DeferredObject[] arguments) throws HiveException {
@@ -177,8 +198,8 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
     } else {
       sb.append(OUTPUT_TYPES.get(typeKey));
       if (children.length == 4) {
-          sb.append("(").append(children[3]).append(")");
-       }
+        sb.append("(").append(children[3]).append(")");
+      }
     }
     sb.append(" FORMAT ");
     sb.append(children[2]);

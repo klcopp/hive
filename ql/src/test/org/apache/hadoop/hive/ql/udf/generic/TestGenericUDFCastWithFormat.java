@@ -39,7 +39,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Tests CAST (<TIMESTAMP/DATE> AS STRING/CHAR/VARCHAR FORMAT <STRING>) and
- * CAST (<STRING/CHAR/VARCHAR> AS TIMESTAMP/DATE FORMAT <STRING>)
+ * CAST (<STRING/CHAR/VARCHAR> AS TIMESTAMP/DATE FORMAT <STRING>).
  */
 public class TestGenericUDFCastWithFormat {
 
@@ -57,11 +57,11 @@ public class TestGenericUDFCastWithFormat {
     testCast(STRING, inputOI, date("2009-07-30"), "yyyy", "2009");
     testCast(STRING, inputOI, date("1969-07-30"), "dd", "30");
 
-    testCast(CHAR, 3, inputOI, date("2009-07-30"),"yyyy-MM-dd", "200");
+    testCast(CHAR, 3, inputOI, date("2009-07-30"), "yyyy-MM-dd", "200");
     testCast(CHAR, 3, inputOI, date("2009-07-30"), "yyyy", "200");
     testCast(CHAR, 3, inputOI, date("1969-07-30"), "dd", "30 ");
 
-    testCast(VARCHAR, 3, inputOI, date("2009-07-30"),"yyyy-MM-dd", "200");
+    testCast(VARCHAR, 3, inputOI, date("2009-07-30"), "yyyy-MM-dd", "200");
     testCast(VARCHAR, 3, inputOI, date("2009-07-30"), "yyyy", "200");
     testCast(VARCHAR, 3, inputOI, date("1969-07-30"), "dd", "30");
   }
@@ -170,7 +170,7 @@ public class TestGenericUDFCastWithFormat {
     GenericUDF.DeferredObject inputObj = new GenericUDF.DeferredJavaObject(input);
     GenericUDF.DeferredObject formatObj = new GenericUDF.DeferredJavaObject(new Text(format));
     GenericUDF.DeferredObject lengthObj = new GenericUDF.DeferredJavaObject(length);
-    GenericUDF.DeferredObject[] evalArgs = { typeCodeObj, inputObj, formatObj, lengthObj };
+    GenericUDF.DeferredObject[] evalArgs = {typeCodeObj, inputObj, formatObj, lengthObj};
     Object output = udf.evaluate(evalArgs);
     if (output == null) {
       fail(
@@ -183,7 +183,7 @@ public class TestGenericUDFCastWithFormat {
 
     // Try with null input
     GenericUDF.DeferredObject[] nullArgs =
-        { typeCodeObj, new GenericUDF.DeferredJavaObject(null), formatObj, lengthObj };
+        {typeCodeObj, new GenericUDF.DeferredJavaObject(null), formatObj, lengthObj};
     assertNull(udf.getFuncName() + " with NULL arguments failed", udf.evaluate(nullArgs));
   }
 }

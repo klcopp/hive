@@ -164,7 +164,8 @@ public class CastStringToDate extends VectorExpression {
    */
   protected void evaluate(LongColumnVector outputColVector, BytesColumnVector inV, int i,
       HiveDateTimeFormatter formatter) {
-    String dateString = new String(inV.vector[i], inV.start[i], inV.length[i], StandardCharsets.UTF_8);
+    String dateString = new String(inV.vector[i], inV.start[i], inV.length[i], StandardCharsets.UTF_8)
+        .replaceAll("\u0000", "");
     Date hDate = new Date();
     if (dateParser.parseDate(dateString, hDate, formatter)) {
       outputColVector.vector[i] = DateWritableV2.dateToDays(hDate);

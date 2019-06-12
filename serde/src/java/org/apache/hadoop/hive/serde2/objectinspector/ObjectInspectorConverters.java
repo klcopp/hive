@@ -61,6 +61,11 @@ public final class ObjectInspectorConverters {
   public static interface Converter {
     Object convert(Object input);
   }
+
+  /**
+   * A converter which will convert objects with one ObjectInspector to another with the option
+   * to provide a HiveDateTimeFormatter; for string type <-> datetime type conversion.
+   */
   public interface ConverterWithFormatOption extends Converter {
     void setDateTimeFormatter(HiveDateTimeFormatter formatter);
   }
