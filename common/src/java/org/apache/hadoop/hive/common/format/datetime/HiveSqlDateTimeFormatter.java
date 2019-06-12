@@ -481,7 +481,15 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         timeZoneTemporalUnits.add(token.temporalUnit);
       }
     }
-
+    if (!(temporalFields.contains(ChronoField.YEAR))) {
+      throw new IllegalArgumentException("Missing year token.");
+    }
+    if (!(temporalFields.contains(ChronoField.MONTH_OF_YEAR) &&
+            temporalFields.contains(ChronoField.DAY_OF_MONTH) ||
+            temporalFields.contains(ChronoField.DAY_OF_YEAR))) {
+      throw new IllegalArgumentException("Missing day of year or (month of year + day of month)"
+          + " tokens.");
+    }
     if (roundYearCount > 0 && yearCount > 0) {
       throw new IllegalArgumentException("Invalid duplication of format element: Both year and"
           + "round year are provided");
@@ -496,7 +504,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
         !(temporalFields.contains(ChronoField.HOUR_OF_DAY) ||
             temporalFields.contains(ChronoField.HOUR_OF_AMPM))) {
-      throw new IllegalArgumentException("Missing hour token.");
+      throw new IllegalArgumentException("Missing hour token."); //frogmethod todo
     }
     if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
         temporalFields.contains(ChronoField.HOUR_OF_DAY)) {
@@ -703,11 +711,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         //do nothing
       }
     }
-    // time zone hours -- process here because hh/hh24 may be parsed after tzh
-    ldt = ldt.minus(timeZoneSign * timeZoneHours, ChronoUnit.HOURS);
-    // time zone minutes -- process here because sign depends on tzh sign
-    ldt = ldt.minus(
-        timeZoneSign * timeZoneMinutes, ChronoUnit.MINUTES);
 
     // anything left unparsed at end of string? throw error
     if (!fullInput.substring(index).isEmpty()) {

@@ -74,11 +74,20 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
   }
 
   public void testSetPatternWithBadPatterns() {
-    verifyBadPattern("e", true);
-    verifyBadPattern("yyyy-1", true);
+    verifyBadPattern("eyyyy-ddd", true);
+    verifyBadPattern("1yyyy-mm-dd", true);
 
+    //duplicates
     verifyBadPattern("yyyy Y", true);
     verifyBadPattern("yyyy R", true);
+    
+    //missing year or (month + dayofmonth or dayofyear)
+    verifyBadPattern("yyyy", true);
+    verifyBadPattern("yyyy-mm", true);
+    verifyBadPattern("yyyy-dd", true);
+    verifyBadPattern("mm-dd", true);
+    verifyBadPattern("ddd", true);
+    
     verifyBadPattern("yyyy-MM-DDD", true);
     verifyBadPattern("yyyy-mm-DD DDD", true);
     verifyBadPattern("yyyy-mm-dd HH24 HH12", true);
@@ -150,12 +159,12 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("yyyyddd", "2018284", "2018-10-11 00:00:00");
     checkParseTimestamp("yyyyddd", "20184", "2018-01-04 00:00:00");
     checkParseTimestamp("yyyy-mm-ddThh24:mi:ss.ffz", "2018-02-03t04:05:06.444Z", "2018-02-03 04:05:06.444");
-    checkParseTimestamp("hh:mi:ss A.M.", "04:05:06 P.M.", "1970-01-01 16:05:06");
-    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00--1:-30", "2019-01-01 15:30:00");
-    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00-1:30", "2019-01-01 12:30:00");
-    checkParseTimestamp("TZM:TZH", "1 -3", "1970-01-01 03:01:00");
-    checkParseTimestamp("TZH:TZM", "-0:30", "1970-01-01 00:30:00");
-    checkParseTimestamp("TZM/YYY-MM-TZH/DD", "0/333-01-11/02", "2333-01-01 13:00:00");
+    checkParseTimestamp("yyyy-mm-dd hh:mi:ss A.M.", "2018-02-03 04:05:06 P.M.", "2018-02-03 16:05:06");
+    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00--1:-30", "2019-01-01 14:00:00");
+    checkParseTimestamp("YYYY-MM-DD HH24:MI TZH:TZM", "2019-1-1 14:00-1:30", "2019-01-01 14:00:00");
+    checkParseTimestamp("yyyy-mm-dd TZM:TZH", "2019-01-01 1 -3", "2019-01-01 00:00:00");
+    checkParseTimestamp("yyyy-mm-dd TZH:TZM", "2019-01-01 -0:30", "2019-01-01 00:00:00");
+    checkParseTimestamp("TZM/YYY-MM-TZH/DD", "0/333-01-11/02", "2333-01-02 00:00:00");
     checkParseTimestamp("YYYY-MM-DD HH12:MI AM", "2019-01-01 11:00 p.m.", "2019-01-01 23:00:00");
     checkParseTimestamp("YYYY-MM-DD HH12:MI A.M..", "2019-01-01 11:00 pm.", "2019-01-01 23:00:00");
 
@@ -164,9 +173,9 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("YYYY DDD", "2000 61", "2000-03-01 00:00:00");
     checkParseTimestamp("YYYY DDD", "2000 366", "2000-12-31 00:00:00");
     //Test timezone offset parsing without separators
-    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM+0515", "2018-12-31 02:45:00");
-    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM0515", "2018-12-31 02:45:00");
-    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM-0515", "2018-12-31 13:15:00");
+    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM+0515", "2018-12-31 08:00:00");
+    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM0515", "2018-12-31 08:00:00");
+    checkParseTimestamp("YYYYMMDDHH12MIA.M.TZHTZM", "201812310800AM-0515", "2018-12-31 08:00:00");
   }
 
   private int getFirstTwoDigits() {
