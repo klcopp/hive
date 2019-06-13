@@ -92,26 +92,27 @@ public class TestGenericUDFCastWithFormat {
 
   @Test public void testStringTypesToDateWithFormat() throws HiveException {
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    testCast(DATE, inputOI, "2009-07-30", "yyyy-MM-dd", "2009-07-30");
-    testCast(DATE, inputOI, "2009", "yyyy", "2009-01-01");
-    testCast(DATE, inputOI, "30", "dd", "1970-01-30");
+    testCast(DATE, inputOI, "1969-07-30 13:00", "yyyy-MM-dd hh24:mi", "1969-07-30");
+    testCast(DATE, inputOI, "307-2009", "ddmm-yyyy", "2009-07-30");
+    testCast(DATE, inputOI, "307-2009", "ddd-yyyy", "2009-11-03");
 
     inputOI = PrimitiveObjectInspectorFactory.javaHiveCharObjectInspector;
-    testCast(DATE, inputOI, new HiveChar("2009-07-30", 7), "yyyy-MM", "2009-07-01");
-    testCast(DATE, inputOI, new HiveChar("2009", 7), "yyyy", "2009-01-01");
-    testCast(DATE, inputOI, new HiveChar("30", 7), "dd", "1970-01-30");
+    testCast(DATE, inputOI, new HiveChar("1969-07-30 13:00", 15), "yyyy-MM-dd hh24:mi",
+        "1969-07-30");
+    testCast(DATE, inputOI, new HiveChar("307-2009", 7), "ddmm-yyyy", "2200-07-30");
+    testCast(DATE, inputOI, new HiveChar("307-2009", 7), "ddd-yyyy", "2200-11-03");
 
     inputOI = PrimitiveObjectInspectorFactory.javaHiveVarcharObjectInspector;
-    testCast(DATE, inputOI, new HiveVarchar("2009-07-30", 7), "yyyy-MM", "2009-07-01");
-    testCast(DATE, inputOI, new HiveVarchar("2009", 7), "yyyy", "2009-01-01");
-    testCast(DATE, inputOI, new HiveVarchar("30", 7), "dd", "1970-01-30");
+    testCast(DATE, inputOI, new HiveVarchar("1969-07-30 13:00", 15), "yyyy-MM-dd hh24:mi",
+        "1969-07-30");
+    testCast(DATE, inputOI, new HiveVarchar("307-2009", 7), "ddmm-yyyy", "2200-07-30");
+    testCast(DATE, inputOI, new HiveVarchar("307-2009", 7), "ddd-yyyy", "2200-11-03");
   }
 
   @Test public void testStringTypesToTimestampWithFormat() throws HiveException {
     ObjectInspector inputOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     testCast(TIMESTAMP, inputOI, "2009-07-30 01:02:03", "yyyy-MM-dd HH24:mi:ss",
         "2009-07-30 01:02:03");
-    testCast(TIMESTAMP, inputOI, "2009", "yyyy", "2009-01-01 00:00:00");
     testCast(TIMESTAMP, inputOI, "07/30/2009 11:0200", "MM/dd/yyyy hh24:miss",
         "2009-07-30 11:02:00");
     testCast(TIMESTAMP, inputOI, "969.07.30.", "yyy.MM.dd.", "2969-07-30 00:00:00");
@@ -119,20 +120,18 @@ public class TestGenericUDFCastWithFormat {
     inputOI = PrimitiveObjectInspectorFactory.javaHiveCharObjectInspector;
     testCast(TIMESTAMP, 13, inputOI, new HiveChar("2009-07-30 01:02:03", 13), "yyyy-MM-dd HH24",
         "2009-07-30 01:00:00");
-    testCast(TIMESTAMP, 7, inputOI, new HiveChar("2009", 7), "yyyy", "2009-01-01 00:00:00");
     testCast(TIMESTAMP, 18, inputOI, new HiveChar("07/30/2009 11:0200", 18), "MM/dd/yyyy hh24:miss",
         "2009-07-30 11:02:00");
-    testCast(TIMESTAMP, 7, inputOI, new HiveChar("969.07.30.", 7), "yyy.MM.",
-        "2969-07-01 00:00:00");
+    testCast(TIMESTAMP, 10, inputOI, new HiveChar("969.07.30.12:00", 10), "yyy.MM.dd.",
+        "2969-07-30 00:00:00");
 
     inputOI = PrimitiveObjectInspectorFactory.javaHiveVarcharObjectInspector;
     testCast(TIMESTAMP, 13, inputOI, new HiveVarchar("2009-07-30 01:02:03", 13), "yyyy-MM-dd HH24",
         "2009-07-30 01:00:00");
-    testCast(TIMESTAMP, 7, inputOI, new HiveVarchar("2009", 7), "yyyy", "2009-01-01 00:00:00");
     testCast(TIMESTAMP, 18, inputOI, new HiveVarchar("07/30/2009 11:0200", 18),
         "MM/dd/yyyy hh24:miss", "2009-07-30 11:02:00");
-    testCast(TIMESTAMP, 7, inputOI, new HiveVarchar("969.07.30.", 7), "yyy.MM.",
-        "2969-07-01 00:00:00");
+    testCast(TIMESTAMP, 10, inputOI, new HiveVarchar("969.07.30.12:00", 10), "yyy.MM.dd.",
+        "2969-07-30 00:00:00");
   }
 
   private TimestampWritableV2 timestamp(String s) {
