@@ -216,7 +216,6 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
   private static final int LONGEST_TOKEN_LENGTH = 5;
   private static final int LONGEST_ACCEPTED_PATTERN = 100; // for sanity's sake
   private static final long MINUTES_PER_HOUR = 60;
-  private static final int FIFTY = 50;
   private static final int NANOS_MAX_LENGTH = 9;
   public static final int AM = 0;
   public static final int PM = 1;
@@ -504,7 +503,7 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
         !(temporalFields.contains(ChronoField.HOUR_OF_DAY) ||
             temporalFields.contains(ChronoField.HOUR_OF_AMPM))) {
-      throw new IllegalArgumentException("Missing hour token."); //frogmethod todo
+      throw new IllegalArgumentException("AM/PM provided but missing hour token.");
     }
     if (temporalFields.contains(ChronoField.AMPM_OF_DAY) &&
         temporalFields.contains(ChronoField.HOUR_OF_DAY)) {
@@ -591,8 +590,11 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
       if (token.string.startsWith("A") || token.string.startsWith("P")) {
         output = output.toUpperCase();
       }
-    } else {
-      // it's a numeric value
+    } else { // it's a numeric value
+
+      if (token.temporalField == ChronoField.HOUR_OF_AMPM && value == 0) {
+        value = 12;
+      }
       try {
         output = String.valueOf(value);
         output = padOrTruncateNumericTemporal(token, output);
@@ -769,6 +771,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
     if (token.temporalField == ChronoField.AMPM_OF_DAY) {
       return substring.toLowerCase().startsWith("a") ? AM : PM;
 
+    } else if (token.temporalField == ChronoField.HOUR_OF_AMPM && "12".equals(substring)) {
+      substring = "0";
+
     } else if (token.temporalField == ChronoField.YEAR) {
       String currentYearString = String.valueOf(LocalDateTime.now().getYear());
       //deal with round years
@@ -776,9 +781,9 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
         int currFirst2Digits = Integer.parseInt(currentYearString.substring(0, 2));
         int currLast2Digits = Integer.parseInt(currentYearString.substring(2));
         int valLast2Digits = Integer.parseInt(substring);
-        if (valLast2Digits < FIFTY && currLast2Digits >= FIFTY) {
+        if (valLast2Digits < 50 && currLast2Digits >= 50) {
           currFirst2Digits += 1;
-        } else if (valLast2Digits >= FIFTY && currLast2Digits < FIFTY) {
+        } else if (valLast2Digits >= 50 && currLast2Digits < 50) {
           currFirst2Digits -= 1;
         }
         substring = String.valueOf(currFirst2Digits) + substring;
@@ -817,7 +822,8 @@ public class HiveSqlDateTimeFormatter implements HiveDateTimeFormatter {
 
     while (index < fullInput.length() &&
         VALID_SEPARATORS.contains(fullInput.substring(index, index + 1))) {
-      if (!isLastCharacterOfSeparator(index, fullInput) || !(nextTokenIs("tzh", token))
+      if (!isLastCharacterOfSeparator(index, fullInput)
+          || !("-".equals(fullInput.substring(index, index + 1)) && (nextTokenIs("tzh", token)))
           || separatorsFound == 0) {
         separatorsFound++;
       }

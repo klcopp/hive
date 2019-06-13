@@ -108,6 +108,9 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkFormatTs("hh24:mi:ss.ff1", "2018-02-03 01:02:03.999999999", "01:02:03.9");
     checkFormatTs("y yyy hh:mi:ss.ffz", "2018-02-03 01:02:03.0070070", "8 018 01:02:03.007007Z");
     checkFormatTs("am a.m. pm p.m. AM A.M. PM P.M.", "2018-02-03 01:02:03.0070070", "am a.m. am a.m. AM A.M. AM A.M.");
+    checkFormatTs("HH12 P.M.", "2019-01-01 00:15:10", "12 A.M.");
+    checkFormatTs("HH12 AM", "2019-01-01 12:15:10", "12 PM");
+    checkFormatTs("YYYY-MM-DD HH12PM", "2017-05-05 00:00:00", "2017-05-05 12AM");
   }
 
   private void checkFormatTs(String pattern, String input, String expectedOutput) {
@@ -119,7 +122,7 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkFormatDate("rr rrrr ddd", "2018-01-03", "18 2018 003");
     checkFormatDate("yyyy-mm-ddtsssss.ff4z", "2018-02-03", "2018-02-03T00000.0000Z");
     checkFormatDate("hh24:mi:ss.ff1", "2018-02-03", "00:00:00.0");
-    checkFormatDate("y yyy T hh:mi:ss.ffz", "2018-02-03", "8 018 T 00:00:00.0Z");
+    checkFormatDate("y yyy T hh:mi:ss.ff am z", "2018-02-03", "8 018 T 12:00:00.0 am Z");
     checkFormatDate("am a.m. pm p.m. AM A.M. PM P.M.", "2018-02-03", "am a.m. am a.m. AM A.M. AM A.M.");
     checkFormatDate("DDD", "2019-12-31", "365");
     checkFormatDate("DDD", "2020-12-31", "366");
@@ -167,6 +170,12 @@ public class TestHiveSqlDateTimeFormatter extends TestCase {
     checkParseTimestamp("TZM/YYY-MM-TZH/DD", "0/333-01-11/02", "2333-01-02 00:00:00");
     checkParseTimestamp("YYYY-MM-DD HH12:MI AM", "2019-01-01 11:00 p.m.", "2019-01-01 23:00:00");
     checkParseTimestamp("YYYY-MM-DD HH12:MI A.M..", "2019-01-01 11:00 pm.", "2019-01-01 23:00:00");
+    checkParseTimestamp("MI DD-TZM-YYYY-MM TZHPM SS:HH12.FF9", "59 03-30-2017-05 01PM 01:08.123456789", "2017-05-03 20:59:01.123456789"); //frogmethod
+    checkParseTimestamp("YYYYDDMMHH12MISSFFAMTZHTZM", "20170501123159123456789AM-0130", "2017-01-05 00:31:59.123456789");
+    checkParseTimestamp("YYYY-MM-DD AMHH12", "2017-05-06 P.M.12", "2017-05-06 12:00:00");
+    checkParseTimestamp("YYYY-MM-DD HH12PM", "2017-05-05 12AM", "2017-05-05 00:00:00");
+    checkParseTimestamp("YYYY-MM-DD HH12:MI:SS.FF9PM TZH:TZM", "2017-05-03 08:59:01.123456789PM 01:30", "2017-05-03 20:59:01.123456789");
+    checkParseTimestamp("YYYYDDMMHH12MISSFFAMTZHTZM", "20170501120159123456789AM-0130", "2017-01-05 00:01:59.123456789");
 
     //Test "day in year" token in a leap year scenario
     checkParseTimestamp("YYYY DDD", "2000 60", "2000-02-29 00:00:00");
