@@ -21,23 +21,31 @@ package org.apache.hadoop.hive.ql.udf.generic;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.common.format.datetime.HiveSqlDateTimeFormatter;
+import org.apache.hadoop.hive.common.type.Date;
+import org.apache.hadoop.hive.common.type.HiveChar;
+import org.apache.hadoop.hive.common.type.HiveVarchar;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorConverter;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DateObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.HiveCharObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.HiveVarcharObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableDateObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableHiveCharObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableHiveVarcharObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.SettableTimestampObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.TimestampObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,15 +74,17 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDFCastFormat.class.getName());
 
   @VisibleForTesting
-  protected static final Map<Integer, String> OUTPUT_TYPES = ImmutableMap.<Integer, String>builder()
+  static final Map<Integer, String> OUTPUT_TYPES = ImmutableMap.<Integer, String>builder()
       .put(HiveParser_IdentifiersParser.TOK_STRING, serdeConstants.STRING_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_VARCHAR, serdeConstants.VARCHAR_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_CHAR, serdeConstants.CHAR_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_TIMESTAMP, serdeConstants.TIMESTAMP_TYPE_NAME)
       .put(HiveParser_IdentifiersParser.TOK_DATE, serdeConstants.DATE_TYPE_NAME).build();
 
-  private transient ObjectInspectorConverters.ConverterWithFormatOption converter;
-
+  private HiveSqlDateTimeFormatter formatter;
+  private PrimitiveObjectInspector outputOI;
+  private PrimitiveObjectInspector inputOI;
+  
   public GenericUDFCastFormat() {
   }
 
@@ -93,8 +103,7 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
               + "[, var/char length]), got " + arguments.length);
     }
 
-    PrimitiveObjectInspector outputOI = getOutputOI(arguments);
-    PrimitiveObjectInspector inputOI;
+    outputOI = getOutputOI(arguments);
     try {
       inputOI = (PrimitiveObjectInspector) arguments[1];
     } catch (ClassCastException e) {
@@ -125,14 +134,7 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
     }
 
     boolean forParsing = (outputPG == PrimitiveObjectInspectorUtils.PrimitiveGrouping.DATE_GROUP);
-    converter = getConverter(inputOI, outputOI);
-    if (converter == null) {
-      throw new UDFArgumentException("Function Function CAST...as ... FORMAT ... couldn't create "
-          + "converter from inputOI " + inputOI + " and outputOI " + outputOI);
-    }
-    converter.setDateTimeFormatter(
-        new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 2), forParsing));
-
+    formatter =  new HiveSqlDateTimeFormatter(getConstantStringValue(arguments, 2), forParsing);
     return outputOI;
   }
 
@@ -156,34 +158,82 @@ public class GenericUDFCastFormat extends GenericUDF implements Serializable {
     return PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(typeInfo);
   }
 
-  private ObjectInspectorConverters.ConverterWithFormatOption getConverter(
-      PrimitiveObjectInspector inputOI, PrimitiveObjectInspector outputOI) {
-    switch (outputOI.getPrimitiveCategory()) {
-    case STRING:
-      return new PrimitiveObjectInspectorConverter.TextConverter(inputOI);
-    case CHAR:
-      return new PrimitiveObjectInspectorConverter.HiveCharConverter(inputOI,
-          (SettableHiveCharObjectInspector) outputOI);
-    case VARCHAR:
-      return new PrimitiveObjectInspectorConverter.HiveVarcharConverter(inputOI,
-          (SettableHiveVarcharObjectInspector) outputOI);
-    case TIMESTAMP:
-      return new PrimitiveObjectInspectorConverter.TimestampConverter(inputOI,
-          (SettableTimestampObjectInspector) outputOI);
-    case DATE:
-      return new PrimitiveObjectInspectorConverter.DateConverter(inputOI,
-          (SettableDateObjectInspector) outputOI);
-    default:
-      return null;
-    }
-  }
-
   @Override public Object evaluate(DeferredObject[] arguments) throws HiveException {
     Object o0 = arguments[1].get();
     if (o0 == null) {
       return null;
     }
-    return converter.convert(o0);
+    try {
+      return convert(o0);
+    } catch (ClassCastException e) {
+      throw new HiveException("", e); //todo frogmethod
+    }
+  }
+
+  private Object convert(Object o) throws HiveException {
+    Object input;
+    switch (inputOI.getPrimitiveCategory()) {
+    case STRING:
+      input = ((StringObjectInspector) inputOI).getPrimitiveJavaObject(o);
+      break;
+    case CHAR:
+      input = ((HiveCharObjectInspector) inputOI).getPrimitiveJavaObject(o).getStrippedValue();
+      break;
+    case VARCHAR:
+      input = ((HiveVarcharObjectInspector) inputOI).getPrimitiveJavaObject(o).toString();
+      break;
+    case TIMESTAMP:
+      input = ((TimestampObjectInspector) inputOI).getPrimitiveWritableObject(o).getTimestamp();
+      break;
+    case DATE:
+      input = ((DateObjectInspector) inputOI).getPrimitiveWritableObject(o).get();
+      break;
+    default: //won't happen
+      input = null;
+    }
+    if (input == null) {
+      return null;
+    }
+
+    // format here
+    Object formattedOutput = null;
+    if (inputOI.getPrimitiveCategory() == PrimitiveObjectInspector.PrimitiveCategory.DATE) {
+      formattedOutput = formatter.format((Date) input);
+      if (formattedOutput == null) {
+        return null;
+      }
+    } else if (inputOI.getPrimitiveCategory() == PrimitiveObjectInspector.PrimitiveCategory.TIMESTAMP) {
+      formattedOutput = formatter.format((Timestamp) input);
+      if (formattedOutput == null) {
+        return null;
+      }
+    }
+
+    // parse and create Writables
+    switch (outputOI.getPrimitiveCategory()) {
+    case STRING:
+      return new Text((String) formattedOutput);
+    case CHAR:
+      return ((SettableHiveCharObjectInspector) outputOI)
+          .create(new HiveChar((String) formattedOutput, -1));
+    case VARCHAR:
+      return ((SettableHiveVarcharObjectInspector) outputOI)
+          .create(new HiveVarchar((String) formattedOutput, -1));
+    case TIMESTAMP:
+      Timestamp t = formatter.parseTimestamp((String) input);
+      if (t == null) {
+        return null;
+      }
+      return ((SettableTimestampObjectInspector) outputOI).create(t);
+    case DATE:
+      Date d = formatter.parseDate((String) input);
+      if (d == null) {
+        return null;
+      }
+      return ((SettableDateObjectInspector) outputOI).create(d);
+    default:
+      throw new HiveException("");
+    }
   }
 
   @Override public String getDisplayString(String[] children) {
