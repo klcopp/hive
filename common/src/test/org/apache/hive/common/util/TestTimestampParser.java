@@ -116,7 +116,8 @@ public class TestTimestampParser {
     };
 
     String[] invalidCases = {
-        "12345"
+        "1945-12-31-23:59:59",
+        "12345",
     };
 
     testValidCases(tp, validCases);
@@ -146,7 +147,8 @@ public class TestTimestampParser {
     };
 
     String[] invalidCases = {
-        "1420509274123-"
+        "1945-12-31-23:59:59",
+        "1420509274123-",
     };
 
     testValidCases(tp, validCases);

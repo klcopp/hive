@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.common.format.datetime;
 import org.apache.hadoop.hive.common.type.Timestamp;
 
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -43,8 +42,9 @@ public class HiveSimpleDateFormatter implements HiveDateTimeFormatter {
     return format.format(date);
   }
 
-  @Override public String format(org.apache.hadoop.hive.common.type.Date date) {
-    return null;
+  @Override public String format(org.apache.hadoop.hive.common.type.Date d) {
+    Date date = new Date(d.toEpochMilli());
+    return format.format(date);
   }
 
   @Override public Timestamp parseTimestamp(String string) {

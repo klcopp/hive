@@ -17,7 +17,6 @@
  */
 package org.apache.hive.common.util;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 
 /**
@@ -37,13 +36,9 @@ public class DateParser {
   }
 
   public boolean parseDate(String strValue, Date result) {
-    return parseDate(strValue, result, null);
-  }
-
-  public boolean parseDate(String strValue, Date result, HiveDateTimeFormatter formatter) {
     Date parsedVal;
     try {
-      parsedVal = Date.valueOf(strValue, formatter);
+      parsedVal = Date.valueOf(strValue);
     } catch (IllegalArgumentException e) {
       parsedVal = null;
     }

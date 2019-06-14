@@ -19,9 +19,8 @@
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import java.util.Arrays;
+import java.sql.Timestamp;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
-import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
@@ -144,38 +143,19 @@ public class CastStringToTimestamp extends VectorExpression {
     }
   }
 
-  /**
-   * This is used by CastStringToTimestamp.
-   */
-  protected void evaluate(TimestampColumnVector outputColVector, BytesColumnVector inputColVector, int i) {
-    evaluate(outputColVector, inputColVector, i, null);
-  }
-
-  /**
-   * This is used by CastStringToTimestampWithFormat.
-   */
-  protected void evaluate(TimestampColumnVector outputColVector, BytesColumnVector inputColVector,
-      int i, HiveDateTimeFormatter formatter) {
+  private void evaluate(TimestampColumnVector outputColVector, BytesColumnVector inputColVector, int i) {
     try {
-      Timestamp timestamp = PrimitiveObjectInspectorUtils.getTimestampFromString(
+      org.apache.hadoop.hive.common.type.Timestamp timestamp =
+          PrimitiveObjectInspectorUtils.getTimestampFromString(
               new String(
                   inputColVector.vector[i], inputColVector.start[i], inputColVector.length[i],
-                  "UTF-8"),
-              formatter);
-      if (timestamp != null) {
-        outputColVector.set(i, timestamp.toSqlTimestamp());
-      } else {
-        setNullValue(outputColVector, i);
-      }
+                  "UTF-8"));
+      outputColVector.set(i, timestamp.toSqlTimestamp());
     } catch (Exception e) {
-      setNullValue(outputColVector, i);
+      outputColVector.setNullValue(i);
+      outputColVector.isNull[i] = true;
+      outputColVector.noNulls = false;
     }
-  }
-
-  private void setNullValue(TimestampColumnVector outputColVector, int i) {
-    outputColVector.setNullValue(i);
-    outputColVector.isNull[i] = true;
-    outputColVector.noNulls = false;
   }
 
   @Override

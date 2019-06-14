@@ -21,7 +21,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
@@ -146,10 +145,6 @@ public class DateWritableV2 implements WritableComparable<DateWritableV2> {
   @Override
   public String toString() {
     return date.toString();
-  }
-
-  public String toStringFormatted(HiveDateTimeFormatter formatter) {
-    return date.toStringFormatted(formatter);
   }
 
   @Override

@@ -29,7 +29,6 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
-import org.apache.hadoop.hive.common.format.datetime.HiveDateTimeFormatter;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -892,18 +891,12 @@ public final class PrimitiveObjectInspectorUtils {
     return (float) getDouble(o, oi);
   }
 
-  public static String getString(Object o, PrimitiveObjectInspector oi) {
-    return getString(o, oi, null);
-  }
-
   /**
    * Get the String value out of a primitive object. Note that
    * NullPointerException will be thrown if o is null. Note that
    * RuntimeException will be thrown if o is not a valid string.
-   * HiveDateTimeFormatter is optional.
    */
-  public static String getString(Object o, PrimitiveObjectInspector oi,
-      HiveDateTimeFormatter formatter) {
+  public static String getString(Object o, PrimitiveObjectInspector oi) {
 
     if (o == null) {
       return null;
@@ -958,12 +951,10 @@ public final class PrimitiveObjectInspectorUtils {
       result = hcoi.getPrimitiveJavaObject(o).toString();
       break;
     case DATE:
-      result = ((DateObjectInspector) oi).getPrimitiveWritableObject(o)
-          .toStringFormatted(formatter);
+      result = ((DateObjectInspector) oi).getPrimitiveWritableObject(o).toString();
       break;
     case TIMESTAMP:
-      result = ((TimestampObjectInspector) oi).getPrimitiveWritableObject(o)
-          .toStringFormatted(formatter);
+      result = ((TimestampObjectInspector) oi).getPrimitiveWritableObject(o).toString();
       break;
     case TIMESTAMPLOCALTZ:
       result = ((TimestampLocalTZObjectInspector) oi).getPrimitiveWritableObject(o).toString();
@@ -987,35 +978,25 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static HiveChar getHiveChar(Object o, PrimitiveObjectInspector oi) {
-    return getHiveChar(o, oi, null);
-  }
-
-  public static HiveChar getHiveChar(Object o, PrimitiveObjectInspector oi,
-      HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }
 
     HiveChar result = null;
     switch (oi.getPrimitiveCategory()) {
-    case CHAR:
-      result = ((HiveCharObjectInspector) oi).getPrimitiveJavaObject(o);
-      break;
-    default:
-      // No char length available, copy whole string value here.
-      result = new HiveChar();
-      result.setValue(getString(o, oi, formatter));
-      break;
+      case CHAR:
+        result = ((HiveCharObjectInspector) oi).getPrimitiveJavaObject(o);
+        break;
+      default:
+        // No char length available, copy whole string value here.
+        result = new HiveChar();
+        result.setValue(getString(o, oi));
+        break;
     }
     return result;
   }
 
   public static HiveVarchar getHiveVarchar(Object o, PrimitiveObjectInspector oi) {
-    return getHiveVarchar(o, oi, null);
-  }
-
-  public static HiveVarchar getHiveVarchar(Object o, PrimitiveObjectInspector oi,
-      HiveDateTimeFormatter formatter) {
 
     if (o == null) {
       return null;
@@ -1023,16 +1004,16 @@ public final class PrimitiveObjectInspectorUtils {
 
     HiveVarchar result = null;
     switch (oi.getPrimitiveCategory()) {
-    case VARCHAR:
-      result = ((HiveVarcharObjectInspector) oi).getPrimitiveJavaObject(o);
-      break;
-    default:
-      // Is there a way to provide char length here?
-      // It might actually be ok as long as there is an object inspector (with char length)
-      // receiving this value.
-      result = new HiveVarchar();
-      result.setValue(getString(o, oi, formatter));
-      break;
+      case VARCHAR:
+        result = ((HiveVarcharObjectInspector)oi).getPrimitiveJavaObject(o);
+        break;
+      default:
+        // Is there a way to provide char length here?
+        // It might actually be ok as long as there is an object inspector (with char length)
+        // receiving this value.
+        result = new HiveVarchar();
+        result.setValue(getString(o, oi));
+        break;
     }
     return result;
   }
@@ -1132,11 +1113,6 @@ public final class PrimitiveObjectInspectorUtils {
   }
 
   public static Date getDate(Object o, PrimitiveObjectInspector oi) {
-    return getDate(o, oi, null);
-  }
-
-  public static Date getDate(
-      Object o, PrimitiveObjectInspector oi, HiveDateTimeFormatter formatter) {
     if (o == null) {
       return null;
     }
@@ -1149,9 +1125,13 @@ public final class PrimitiveObjectInspectorUtils {
       StringObjectInspector soi = (StringObjectInspector) oi;
       String s = soi.getPrimitiveJavaObject(o).trim();
       try {
-        Date date = getDateFromString(s, formatter);
-        if (date != null) {
-          result = date;
+        if (s.length() == DATE_LENGTH) {
+          result = Date.valueOf(s);
+        } else {
+          Timestamp ts = getTimestampFromString(s);
+          if (ts != null) {
+            result = Date.ofEpochMilli(ts.toEpochMilli());
+          }
         }
       } catch (IllegalArgumentException e) {
         // Do nothing
@@ -1161,9 +1141,13 @@ public final class PrimitiveObjectInspectorUtils {
     case VARCHAR: {
       String val = getString(o, oi).trim();
       try {
-        Date date = getDateFromString(val, formatter);
-        if (date != null) {
-          result = date;
+        if (val.length() == DATE_LENGTH) {
+          result = Date.valueOf(val);
+        } else {
+          Timestamp ts = getTimestampFromString(val);
+          if (ts != null) {
+            result = Date.ofEpochMilli(ts.toEpochMilli());
+          }
         }
       } catch (IllegalArgumentException e) {
         // Do nothing
@@ -1193,46 +1177,11 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
-  private final static int DATE_LENGTH = "YYYY-MM-DD".length();
-  private static Date getDateFromString(String s, HiveDateTimeFormatter formatter) {
-
-    // with SQL formats
-    if (formatter != null) {
-      try {
-        return Date.valueOf(s, formatter);
-      } catch (IllegalArgumentException e) {
-        return null;
-      }
-    }
-
-    // without SQL formats
-    if (s.length() == DATE_LENGTH) {
-      return Date.valueOf(s);
-    } else {
-      Timestamp ts = getTimestampFromString(s);
-      if (ts != null) {
-        return Date.ofEpochMilli(ts.toEpochMilli());
-      }
-    }
-    return null;
-  }
-
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector oi) {
     return getTimestamp(o, oi, false);
   }
 
-  public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector oi, HiveDateTimeFormatter formatter) {
-    return getTimestamp(o, oi, false, formatter);
-  }
-
   public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI, boolean intToTimestampInSeconds) {
-    return getTimestamp(o, inputOI, intToTimestampInSeconds, null);
-  }
-
-  public static Timestamp getTimestamp(Object o,
-                                       PrimitiveObjectInspector inputOI,
-                                       boolean intToTimestampInSeconds,
-                                       HiveDateTimeFormatter format) {
     if (o == null) {
       return null;
     }
@@ -1276,11 +1225,11 @@ public final class PrimitiveObjectInspectorUtils {
     case STRING:
       StringObjectInspector soi = (StringObjectInspector) inputOI;
       String s = soi.getPrimitiveJavaObject(o);
-      result = getTimestampFromString(s, format);
+      result = getTimestampFromString(s);
       break;
     case CHAR:
     case VARCHAR:
-      result = getTimestampFromString(getString(o, inputOI), format);
+      result = getTimestampFromString(getString(o, inputOI));
       break;
     case DATE:
       result = Timestamp.ofEpochMilli(
@@ -1305,17 +1254,15 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
+  private final static int TS_LENGTH = "yyyy-mm-dd hh:mm:ss".length();
+  private final static int DATE_LENGTH = "YYYY-MM-DD".length();
+
   public static Timestamp getTimestampFromString(String s) {
-    return getTimestampFromString(s, null);
-  }
-
-  public static Timestamp getTimestampFromString(String s, HiveDateTimeFormatter formatter) {
-
     s = s.trim();
     s = trimNanoTimestamp(s);
 
     try {
-      return TimestampUtils.stringToTimestamp(s, formatter);
+      return TimestampUtils.stringToTimestamp(s);
     } catch (IllegalArgumentException e) {
       return null;
     }
@@ -1335,6 +1282,19 @@ public final class PrimitiveObjectInspectorUtils {
       }
     }
     return s;
+  }
+
+  private static boolean isValidTimeStamp(final String s) {
+    if (s.length() == TS_LENGTH ||
+            (s.contains(".") &&
+                    s.substring(0, s.indexOf('.')).length() == TS_LENGTH)) {
+      // Possible timestamp
+      if (s.charAt(DATE_LENGTH) == '-') {
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   public static TimestampTZ getTimestampLocalTZ(Object o, PrimitiveObjectInspector oi,
