@@ -228,6 +228,59 @@ public class TestCrudCompactorOnTez extends CompactorOnTezTest {
     conf.setBoolVar(HiveConf.ConfVars.HIVE_WRITE_ACID_VERSION_FILE, originalEnableVersionFile);
   }
 
+  @Test public void testJustDeletes() throws Exception {
+    /*
+    CREATE TABLE test_update_bucketed(id string, value string) CLUSTERED BY(id) INTO 10 BUCKETS STORED AS ORC TBLPROPERTIES('transactional'='true');
+insert into test_update_bucketed values ('1','one'),('2','two'),('3','three'),('4','four'),('5','five'),('6','six'),('7','seven'),('8','eight'),('9','nine'),('10','ten'),('11','eleven'),('12','twelve'),('13','thirteen'),('14','fourteen'),('15','fifteen'),('16','sixteen'),('17','seventeen'),('18','eighteen'),('19','nineteen'),('20','twenty');
+delete from test_update_bucketed where id in ('2', '11', '10');delete from test_update_bucketed where id in ('2', '4', '12', '15');
+
+     */
+    
+    String dbName = "default";
+    String tblName = "test_update_bucketed";
+    executeStatementOnDriver("CREATE TABLE test_update_bucketed(id string, value string) " 
+        + "CLUSTERED BY(id) INTO 10 BUCKETS STORED AS ORC TBLPROPERTIES('transactional'='true')"
+        , driver);
+    executeStatementOnDriver("insert into test_update_bucketed values ('1','one'),('2','two')," 
+        + "('3','three'),('4','four'),('5','five'),('6','six'),('7','seven'),('8','eight'),('9'," 
+        + "'nine'),('10','ten'),('11','eleven'),('12','twelve'),('13','thirteen'),('14'," 
+        + "'fourteen'),('15','fifteen'),('16','sixteen'),('17','seventeen'),('18','eighteen')," 
+        + "('19','nineteen'),('20','twenty')", driver);
+    executeStatementOnDriver("delete from test_update_bucketed where id in ('2', '11', '10')",
+        driver);
+    executeStatementOnDriver("delete from test_update_bucketed where id in ('2', '4', '12', '15')",
+        driver);
+
+    driver.getConf().setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
+    conf.setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
+    executeStatementOnDriver("select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, " 
+        + "ROW__ID.rowId) from default.test_update_bucketed", driver);
+
+
+//    CompactorTestUtil.runCompaction(conf, "default", tblName, CompactionType.MAJOR,
+//        true);
+//    CompactorTestUtil.runCleaner(conf);
+//
+//    Table table = msClient.getTable(dbName, tblName);
+//    FileSystem fs = FileSystem.get(conf);
+//    String expectedBase = "base_0000004_v0000005";
+//    Assert.assertEquals("Base directory does not match after major compaction",
+//        Collections.singletonList(expectedBase),
+//        CompactorTestUtil.getBaseOrDeltaNames(fs, AcidUtils.baseFileFilter, table, null));
+//    Assert.assertEquals("Bucket names are not matching after compaction", Arrays.asList(
+//        "bucket_00000", 
+//        "bucket_00001",
+//        "bucket_00002",
+//        "bucket_00003",
+//        "bucket_00004",
+//        "bucket_00005",
+//        "bucket_00006",
+//        "bucket_00007",
+//        "bucket_00008"),
+//        CompactorTestUtil
+//            .getBucketFileNames(fs, table, null, "base_0000003_v0000009"));
+  }
+
   @Test
   public void testMajorCompactionPartitionedWithoutBuckets() throws Exception {
     String dbName = "default";
