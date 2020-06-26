@@ -233,7 +233,6 @@ public class TestCrudCompactorOnTez extends CompactorOnTezTest {
     CREATE TABLE test_update_bucketed(id string, value string) CLUSTERED BY(id) INTO 10 BUCKETS STORED AS ORC TBLPROPERTIES('transactional'='true');
 insert into test_update_bucketed values ('1','one'),('2','two'),('3','three'),('4','four'),('5','five'),('6','six'),('7','seven'),('8','eight'),('9','nine'),('10','ten'),('11','eleven'),('12','twelve'),('13','thirteen'),('14','fourteen'),('15','fifteen'),('16','sixteen'),('17','seventeen'),('18','eighteen'),('19','nineteen'),('20','twenty');
 delete from test_update_bucketed where id in ('2', '11', '10');delete from test_update_bucketed where id in ('2', '4', '12', '15');
-
      */
     
     String dbName = "default";
@@ -253,13 +252,32 @@ delete from test_update_bucketed where id in ('2', '11', '10');delete from test_
 
     driver.getConf().setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
     conf.setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
-    executeStatementOnDriver("select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, " 
-        + "ROW__ID.rowId) from default.test_update_bucketed", driver);
+    
+    executeStatementOnDriver("CREATE temporary external table default_tmp_compactor_major_compaction\n"
+        + "(`operation` int, `originalTransaction` bigint, `bucket` int, `rowId` bigint, `currentTransaction` bigint,\n"
+        + "`row` struct<`id` :string, `value` :string>)\n"
+        + "stored as orc LOCATION '${system:test.tmp.dir}/test_update_bucketed/base_0000004_v0000020'\n"
+        + "TBLPROPERTIES ('compactiontable'='true', 'transactional'='false')", driver);
+    
+    System.out.println(executeStatementOnDriverAndReturnResults("explain INSERT into table " 
+        + "default_tmp_compactor_major_compaction\n"
+        + "select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId),\n"
+        + "ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId, ROW__ID.writeId, NAMED_STRUCT('id', id, 'value', value)\n"
+        + "from default.test_update_bucketed", driver));
+    
+//    driver.getConf().setBoolVar(HiveConf.ConfVars.HIVE_IN_TEZ_TEST, false);
+//    conf.setBoolVar(HiveConf.ConfVars.HIVE_IN_TEZ_TEST, false);
+//    driver.getConf().setBoolean("tez.local.mode", false);
+//    conf.setBoolean("tez.local.mode", false);
+    
+//    executeStatementOnDriverAndReturnResults("select ROW__ID.writeId, ROW__ID.bucketId, ROW__ID" 
+//        + ".rowId from default.test_update_bucketed", driver);
+//    executeStatementOnDriverAndReturnResults("select validate_acid_sort_order(ROW__ID.writeId, " 
+//            + "ROW__ID.bucketId, ROW__ID.rowId) from default.test_update_bucketed)", driver);
 
-
-//    CompactorTestUtil.runCompaction(conf, "default", tblName, CompactionType.MAJOR,
-//        true);
-//    CompactorTestUtil.runCleaner(conf);
+    CompactorTestUtil.runCompaction(conf, "default", tblName, CompactionType.MAJOR,
+        true);
+    CompactorTestUtil.runCleaner(conf);
 //
 //    Table table = msClient.getTable(dbName, tblName);
 //    FileSystem fs = FileSystem.get(conf);

@@ -96,7 +96,7 @@ public class CompactorOnTezTest {
     conf.set("tez.staging-dir", TEST_DATA_DIR);
     conf.setBoolean("tez.ignore.lib.uris", true);
     conf.set("hive.tez.container.size", "128");
-    conf.setBoolean("hive.merge.tezfiles", false);
+//    conf.setBoolean("hive.merge.tezfiles", false);
     conf.setBoolean("hive.in.tez.test", true);
     if (!mmCompaction) {
       // We need these settings to create a table which is not bucketed, but contains multiple files.
