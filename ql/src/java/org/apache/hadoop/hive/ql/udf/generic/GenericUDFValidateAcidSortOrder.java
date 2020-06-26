@@ -41,7 +41,7 @@ public class GenericUDFValidateAcidSortOrder extends GenericUDF {
   private transient PrimitiveCategory[] inputTypes = new PrimitiveCategory[3];
   private transient Converter[] converters = new Converter[3];
   private final LongWritable output = new LongWritable();
-  // See {@link org.apache.hadoop.hive.ql.exec.tez.SplitGrouper#getCompactorGroups}
+  // See {@link org.apache.hadoop.hive.ql.exec.tez.SplitGrouper#generateGroupedSplits}
   // Each writer is handling only one logical bucket (i.e. all files with same bucket number end up in one writer)
   private int bucketNumForWriter = -1;
   private WriteIdRowId previousWriteIdRowId = null;
