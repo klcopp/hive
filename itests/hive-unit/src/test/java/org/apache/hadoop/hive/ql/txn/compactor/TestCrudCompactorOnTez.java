@@ -250,8 +250,17 @@ delete from test_update_bucketed where id in ('2', '11', '10');delete from test_
     executeStatementOnDriver("delete from test_update_bucketed where id in ('2', '4', '12', '15')",
         driver);
 
-    driver.getConf().setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
-    conf.setBoolVar(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
+//    def keep
+    setConf(HiveConf.ConfVars.HIVEMERGETEZFILES, true);
+
+//    from setup
+//    conf.setBoolean("tez.local.mode", false);
+//    driver.getConf().setBoolean("tez.local.mode", false);
+//
+//    conf.setBoolean("tez.runtime.optimize.local.fetch", false);
+//    driver.getConf().setBoolean("tez.runtime.optimize.local.fetch", false);
+    
+    
     
     executeStatementOnDriver("CREATE temporary external table default_tmp_compactor_major_compaction\n"
         + "(`operation` int, `originalTransaction` bigint, `bucket` int, `rowId` bigint, `currentTransaction` bigint,\n"
@@ -269,9 +278,9 @@ delete from test_update_bucketed where id in ('2', '11', '10');delete from test_
         + "from default.test_update_bucketed", driver);
 
     
-    System.out.println(executeStatementOnDriverAndReturnResults("select ROW__ID.writeId, ROW__ID" 
-        + ".bucketId, ROW__ID" 
-        + ".rowId, * from default.default_tmp_compactor_major_compaction", driver));
+//    System.out.println(executeStatementOnDriverAndReturnResults("select ROW__ID.writeId, ROW__ID" 
+//        + ".bucketId, ROW__ID" 
+//        + ".rowId, * from default.default_tmp_compactor_major_compaction", driver));
 //    executeStatementOnDriverAndReturnResults("select validate_acid_sort_order(ROW__ID.writeId, " 
 //            + "ROW__ID.bucketId, ROW__ID.rowId) from default.test_update_bucketed", driver);
 
@@ -297,6 +306,11 @@ delete from test_update_bucketed where id in ('2', '11', '10');delete from test_
 //        "bucket_00008"),
 //        CompactorTestUtil
 //            .getBucketFileNames(fs, table, null, "base_0000003_v0000009"));
+  }
+
+  private void setConf(HiveConf.ConfVars var, boolean val) {
+    driver.getConf().setBoolVar(var, val);
+    conf.setBoolVar(var, val);
   }
 
   @Test

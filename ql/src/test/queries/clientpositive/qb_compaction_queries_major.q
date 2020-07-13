@@ -1,8 +1,7 @@
 set hive.mapred.mode=nonstrict;
 set hive.support.concurrency=true;
 set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
-set hive.compactor.crud.query.based=true;
-set hive.merge.tezfiles=true; -- we want to check merge tasks
+set hive.merge.tezfiles=true; -- we want to check merge tasks frogmethod
 
 -- The point of this test is to make sure that the files and data resulting from query-based compaction are correct.
 -- DO NOT CHANGE THE Q.OUT FILES. THERE IS NO REASON THAT WILL JUSTIFY CHANGING THEM, except for ACID file schema 

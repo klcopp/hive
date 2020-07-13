@@ -474,7 +474,8 @@ class DriverTxnHandler {
     return nonSharedLockedTables;
   }
 
-  private boolean checkWriteIds(String currentTxnString, Set<String> nonSharedLockedTables, String txnWriteIdListString)
+  private boolean checkWriteIds(String currentTxnString, Set<String> nonSharedLockedTables,
+      String txnWriteIdListString)
       throws LockException {
     ValidTxnWriteIdList txnWriteIdList = new ValidTxnWriteIdList(txnWriteIdListString);
     Map<String, Table> writtenTables = getTables(false, true);

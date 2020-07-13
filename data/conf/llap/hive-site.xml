@@ -402,4 +402,51 @@
   <description>Using property defined in HiveConf.ConfVars to test System property overriding</description>
 </property>
 
+  <!-- ACID -->
+  <property>
+    <name>hive.txn.manager</name>
+    <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.initiator.on</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.worker.threads</name>
+    <value>3</value>
+  </property>
+
+  <property>
+    <name>metastore.compactor.worker.threads</name>
+    <value>4</value>
+  </property>
+
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.exec.dynamic.partition.mode</name>
+    <value>nonstrict</value>
+  </property>
+
+  <property>
+    <name>hive.lock.manager</name>
+    <value>org.apache.hadoop.hive.ql.lockmgr.DbLockManager</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.crud.query.based</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.metastore.runworker.in</name>
+    <value>hs2</value>
+  </property>
+
+
 </configuration>
