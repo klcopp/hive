@@ -65,7 +65,7 @@ import java.util.stream.IntStream;
   private static final KafkaBrokerResource BROKER_RESOURCE = new KafkaBrokerResource();
   private static final List<ConsumerRecord<byte[], byte[]>> RECORDS = getRecords(TOPIC);
   private static final List<ConsumerRecord<byte[], byte[]>> TX_RECORDS = getRecords(TX_TOPIC);
-  private static final long POLL_TIMEOUT_MS = 3000L;
+  private static final long POLL_TIMEOUT_MS = 900L;
   private static KafkaProducer<byte[], byte[]> producer;
 
   @Parameterized.Parameters public static Iterable<Object[]> data() {
@@ -101,6 +101,7 @@ import java.util.stream.IntStream;
     BROKER_RESOURCE.before();
     sendData(RECORDS, null);
     sendData(TX_RECORDS, UUID.randomUUID().toString());
+    Thread.sleep(60000);
   }
 
   @Before public void setUp() {
