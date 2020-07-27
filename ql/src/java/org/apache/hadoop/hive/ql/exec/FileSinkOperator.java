@@ -288,8 +288,15 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
             }
 
             if (!fs.rename(outPaths[idx], finalPaths[idx])) {
+//              StringBuilder sb = new StringBuilder();
+//              for (Path outPath : outPaths) {
+//                sb.append(", ").append(outPath);
+//              }
+              boolean outpathsexists = fs.exists(outPaths[idx]);
+              boolean finalPathsexistss = fs.exists(finalPaths[idx]);
+              
               throw new HiveException("Unable to rename output from: "
-                + outPaths[idx] + " to: " + finalPaths[idx]);
+                + outPaths[idx] + " (exists: "+ outpathsexists +") to: " + finalPaths[idx] + "(exists: "+ finalPathsexistss+")");
             }
         }
       }
