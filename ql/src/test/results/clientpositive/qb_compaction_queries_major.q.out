@@ -1,0 +1,185 @@
+PREHOOK: query: CREATE TABLE major_compaction_p(id string, value string) partitioned by (p int)
+CLUSTERED BY(id) INTO 10 BUCKETS
+STORED AS ORC TBLPROPERTIES('transactional'='true')
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@major_compaction_p
+POSTHOOK: query: CREATE TABLE major_compaction_p(id string, value string) partitioned by (p int)
+CLUSTERED BY(id) INTO 10 BUCKETS
+STORED AS ORC TBLPROPERTIES('transactional'='true')
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@major_compaction_p
+PREHOOK: query: insert into major_compaction_p partition (p=1) values 
+('1','one'),('2','two'),('3','three'),('4','four'),('5','five'),
+('6','six'),('7','seven'),('8','eight'),('9','nine'),('10','ten'),
+('11','eleven'),('12','twelve'),('13','thirteen'),('14','fourteen'),('15','fifteen'),
+('16','sixteen'),('17','seventeen'),('18','eighteen'),('19','nineteen'),('20','twenty')
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@major_compaction_p@p=1
+POSTHOOK: query: insert into major_compaction_p partition (p=1) values 
+('1','one'),('2','two'),('3','three'),('4','four'),('5','five'),
+('6','six'),('7','seven'),('8','eight'),('9','nine'),('10','ten'),
+('11','eleven'),('12','twelve'),('13','thirteen'),('14','fourteen'),('15','fifteen'),
+('16','sixteen'),('17','seventeen'),('18','eighteen'),('19','nineteen'),('20','twenty')
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@major_compaction_p@p=1
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=1).id SCRIPT []
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=1).value SCRIPT []
+PREHOOK: query: delete from major_compaction_p where id in ('2', '11', '10')
+PREHOOK: type: QUERY
+PREHOOK: Input: default@major_compaction_p
+PREHOOK: Input: default@major_compaction_p@p=1
+PREHOOK: Output: default@major_compaction_p@p=1
+POSTHOOK: query: delete from major_compaction_p where id in ('2', '11', '10')
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@major_compaction_p
+POSTHOOK: Input: default@major_compaction_p@p=1
+POSTHOOK: Output: default@major_compaction_p@p=1
+PREHOOK: query: delete from major_compaction_p where id in ('2', '4', '12', '15')
+PREHOOK: type: QUERY
+PREHOOK: Input: default@major_compaction_p
+PREHOOK: Input: default@major_compaction_p@p=1
+PREHOOK: Output: default@major_compaction_p@p=1
+POSTHOOK: query: delete from major_compaction_p where id in ('2', '4', '12', '15')
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@major_compaction_p
+POSTHOOK: Input: default@major_compaction_p@p=1
+POSTHOOK: Output: default@major_compaction_p@p=1
+PREHOOK: query: insert into major_compaction_p values ('21', 'twenty-one', 2)
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@major_compaction_p
+POSTHOOK: query: insert into major_compaction_p values ('21', 'twenty-one', 2)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@major_compaction_p
+POSTHOOK: Output: default@major_compaction_p@p=1
+POSTHOOK: Output: default@major_compaction_p@p=2
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=1).id SCRIPT []
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=1).value SCRIPT []
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=2).id SCRIPT []
+POSTHOOK: Lineage: major_compaction_p PARTITION(p=2).value SCRIPT []
+PREHOOK: query: CREATE temporary external table default_tmp_compactor_major_compaction
+(`operation` int, `originalTransaction` bigint, `bucket` int, `rowId` bigint, `currentTransaction` bigint,
+`row` struct<`id` :string, `value` :string>)
+stored as orc
+
+TBLPROPERTIES ('compactiontable'='true', 'transactional'='false')
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@default_tmp_compactor_major_compaction
+POSTHOOK: query: CREATE temporary external table default_tmp_compactor_major_compaction
+(`operation` int, `originalTransaction` bigint, `bucket` int, `rowId` bigint, `currentTransaction` bigint,
+`row` struct<`id` :string, `value` :string>)
+stored as orc
+
+TBLPROPERTIES ('compactiontable'='true', 'transactional'='false')
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@default_tmp_compactor_major_compaction
+PREHOOK: query: select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId),
+ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId, ROW__ID.writeId, NAMED_STRUCT('id', id, 'value', value)
+from major_compaction_p
+where p=1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@major_compaction_p
+PREHOOK: Input: default@major_compaction_p@p=1
+PREHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-16_801_1827411058699032728-1/-mr-10001
+POSTHOOK: query: select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId),
+ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId, ROW__ID.writeId, NAMED_STRUCT('id', id, 'value', value)
+from major_compaction_p
+where p=1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@major_compaction_p
+POSTHOOK: Input: default@major_compaction_p@p=1
+POSTHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-16_801_1827411058699032728-1/-mr-10001
+0	1	537395200	0	1	{"id":"17","value":"seventeen"}
+0	1	537395200	1	1	{"id":"18","value":"eighteen"}
+0	1	537264128	0	1	{"id":"14","value":"fourteen"}
+0	1	537264128	2	1	{"id":"9","value":"nine"}
+0	1	536936448	1	1	{"id":"13","value":"thirteen"}
+0	1	537133056	0	1	{"id":"20","value":"twenty"}
+0	1	537133056	1	1	{"id":"3","value":"three"}
+0	1	537133056	2	1	{"id":"7","value":"seven"}
+0	1	537329664	0	1	{"id":"19","value":"nineteen"}
+0	1	537067520	2	1	{"id":"5","value":"five"}
+0	1	537067520	3	1	{"id":"6","value":"six"}
+0	1	536870912	0	1	{"id":"1","value":"one"}
+0	1	536870912	1	1	{"id":"8","value":"eight"}
+0	1	537198592	0	1	{"id":"16","value":"sixteen"}
+PREHOOK: query: INSERT into table default_tmp_compactor_major_compaction
+select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId),
+ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId, ROW__ID.writeId, NAMED_STRUCT('id', id, 'value', value)
+from major_compaction_p
+PREHOOK: type: QUERY
+PREHOOK: Input: default@major_compaction_p
+PREHOOK: Input: default@major_compaction_p@p=1
+PREHOOK: Input: default@major_compaction_p@p=2
+PREHOOK: Output: default@default_tmp_compactor_major_compaction
+POSTHOOK: query: INSERT into table default_tmp_compactor_major_compaction
+select validate_acid_sort_order(ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId),
+ROW__ID.writeId, ROW__ID.bucketId, ROW__ID.rowId, ROW__ID.writeId, NAMED_STRUCT('id', id, 'value', value)
+from major_compaction_p
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@major_compaction_p
+POSTHOOK: Input: default@major_compaction_p@p=1
+POSTHOOK: Input: default@major_compaction_p@p=2
+POSTHOOK: Output: default@default_tmp_compactor_major_compaction
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.bucket EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:ROW__ID, type:struct<writeId:bigint,bucketId:int,rowId:bigint>, comment:), ]
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.currenttransaction EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:ROW__ID, type:struct<writeId:bigint,bucketId:int,rowId:bigint>, comment:), ]
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.operation EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:ROW__ID, type:struct<writeId:bigint,bucketId:int,rowId:bigint>, comment:), ]
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.originaltransaction EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:ROW__ID, type:struct<writeId:bigint,bucketId:int,rowId:bigint>, comment:), ]
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.row EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:id, type:string, comment:null), (major_compaction_p)major_compaction_p.FieldSchema(name:value, type:string, comment:null), ]
+POSTHOOK: Lineage: default_tmp_compactor_major_compaction.rowid EXPRESSION [(major_compaction_p)major_compaction_p.FieldSchema(name:ROW__ID, type:struct<writeId:bigint,bucketId:int,rowId:bigint>, comment:), ]
+PREHOOK: query: select * from default_tmp_compactor_major_compaction
+PREHOOK: type: QUERY
+PREHOOK: Input: default@default_tmp_compactor_major_compaction
+PREHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-27_243_2631307434269922321-1/-mr-10001
+POSTHOOK: query: select * from default_tmp_compactor_major_compaction
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@default_tmp_compactor_major_compaction
+POSTHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-27_243_2631307434269922321-1/-mr-10001
+PREHOOK: query: select count(*) from default_tmp_compactor_major_compaction
+PREHOOK: type: QUERY
+PREHOOK: Input: default@default_tmp_compactor_major_compaction
+PREHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-27_344_2417395716220517032-1/-mr-10001
+POSTHOOK: query: select count(*) from default_tmp_compactor_major_compaction
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@default_tmp_compactor_major_compaction
+POSTHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-27_344_2417395716220517032-1/-mr-10001
+0
+PREHOOK: query: select * from default_tmp_compactor_major_compaction
+PREHOOK: type: QUERY
+PREHOOK: Input: default@default_tmp_compactor_major_compaction
+PREHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-29_552_8634881501513813035-1/-mr-10001
+POSTHOOK: query: select * from default_tmp_compactor_major_compaction
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@default_tmp_compactor_major_compaction
+POSTHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-29_552_8634881501513813035-1/-mr-10001
+PREHOOK: query: select ROW__ID, *, INPUT__FILE__NAME from default_tmp_compactor_major_compaction
+PREHOOK: type: QUERY
+PREHOOK: Input: default@default_tmp_compactor_major_compaction
+PREHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-29_644_1209589494836685626-1/-mr-10001
+POSTHOOK: query: select ROW__ID, *, INPUT__FILE__NAME from default_tmp_compactor_major_compaction
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@default_tmp_compactor_major_compaction
+POSTHOOK: Output: file:/Users/karencoppage/upstream/hive/itests/qtest/target/tmp/localscratchdir/7c55cde2-dfce-4554-ba27-922f68b921d7/hive_2020-07-30_00-29-29_644_1209589494836685626-1/-mr-10001
+PREHOOK: query: drop table default_tmp_compactor_major_compaction
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@default_tmp_compactor_major_compaction
+PREHOOK: Output: default@default_tmp_compactor_major_compaction
+POSTHOOK: query: drop table default_tmp_compactor_major_compaction
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@default_tmp_compactor_major_compaction
+POSTHOOK: Output: default@default_tmp_compactor_major_compaction
+PREHOOK: query: drop table major_compaction_p
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@major_compaction_p
+PREHOOK: Output: default@major_compaction_p
+POSTHOOK: query: drop table major_compaction_p
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@major_compaction_p
+POSTHOOK: Output: default@major_compaction_p

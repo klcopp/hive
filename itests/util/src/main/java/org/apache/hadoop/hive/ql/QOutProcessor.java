@@ -167,6 +167,8 @@ public class QOutProcessor {
   }
 
   public void maskPatterns(String fname, String tname) throws Exception {
+  }
+  public void maskPatterns(String fname, String tname, int i) throws Exception {
 
     String line;
     BufferedReader in;
@@ -206,7 +208,9 @@ public class QOutProcessor {
 
   public LineProcessingResult processLine(String line, String tname) {
     LineProcessingResult result = new LineProcessingResult(line);
-    
+
+    result.line = replaceHandler.processLine(result.line);
+
     Matcher matcher = null;
 
     if (fsType == FsType.ENCRYPTED_HDFS) {
@@ -299,9 +303,6 @@ public class QOutProcessor {
         result.line = pattern.matcher(result.line).replaceAll(MASK_PATTERN);
       }
     }
-
-    result.line = replaceHandler.processLine(result.line);
-
     return result;
   }
 

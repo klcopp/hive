@@ -37,6 +37,7 @@ import java.util.function.BiFunction;
 import com.google.common.collect.Lists;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -287,16 +288,14 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
               }
             }
 
+            try {
+              fs.mkdirs(finalPaths[idx].getParent());
+            } catch (FileAlreadyExistsException e) {
+              // this is fine, we don't want to overwrite anything, we just want this rename to work:
+            }
             if (!fs.rename(outPaths[idx], finalPaths[idx])) {
-//              StringBuilder sb = new StringBuilder();
-//              for (Path outPath : outPaths) {
-//                sb.append(", ").append(outPath);
-//              }
-              boolean outpathsexists = fs.exists(outPaths[idx]);
-              boolean finalPathsexistss = fs.exists(finalPaths[idx]);
-              
               throw new HiveException("Unable to rename output from: "
-                + outPaths[idx] + " (exists: "+ outpathsexists +") to: " + finalPaths[idx] + "(exists: "+ finalPathsexistss+")");
+                  + outPaths[idx] + " to: " + finalPaths[idx]);
             }
         }
       }
