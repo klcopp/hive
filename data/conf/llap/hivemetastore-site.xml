@@ -18,4 +18,23 @@
 -->
 
 <configuration>
+  <property>
+    <name>hive.compactor.initiator.on</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.worker.threads</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>metastore.compactor.worker.threads</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>hive.metastore.runworker.in</name>
+    <value>metastore</value>
+  </property>
 </configuration>

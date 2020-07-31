@@ -402,4 +402,29 @@
   <description>Using property defined in HiveConf.ConfVars to test System property overriding</description>
 </property>
 
+  <property>
+    <name>hive.in.ide.test</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.initiator.on</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.compactor.worker.threads</name>
+    <value>3</value>
+  </property>
+
+  <property>
+    <name>metastore.compactor.worker.threads</name>
+    <value>3</value>
+  </property>
+
+  <property>
+    <name>hive.metastore.runworker.in</name>
+    <value>metastore</value>
+  </property>
+
 </configuration>

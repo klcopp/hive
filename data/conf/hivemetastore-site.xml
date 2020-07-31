@@ -47,4 +47,13 @@
   <name>hive.compactor.worker.threads</name>
   <value>1</value>
 </property>
+  <property>
+    <name>metastore.compactor.worker.threads</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>hive.metastore.runworker.in</name>
+    <value>metastore</value>
+  </property>
 </configuration>
